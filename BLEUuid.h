@@ -15,8 +15,8 @@ class BLEUuid
   public:
     BLEUuid(const char * str);
   
-    const char *str();
-    char * data();
+    const char* str();
+    char* data();
     unsigned int length();
 
   private:

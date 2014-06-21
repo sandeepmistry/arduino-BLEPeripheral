@@ -1,7 +1,8 @@
 #ifndef _BLE_ATTRIBUTE_H_
 #define _BLE_ATTRIBUTE_H_
 
-#define BLE_TYPE_SERVICE 0x2800
+#define BLE_TYPE_SERVICE        0x2800
+#define BLE_TYPE_CHARACTERISTIC 0x2803
 
 class BLEAttribute
 {

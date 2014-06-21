@@ -15,7 +15,9 @@
 BLEPeripheral blePeripheral = BLEPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
 
 BLEService test1Service = BLEService("fff0");
+BLECharacteristic test1Characteristic = BLECharacteristic("fff1", BLE_CHARACTERISTIC_PROPERTY_READ, 2);
 BLEService test2Service = BLEService("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFF0");
+BLECharacteristic test2Characteristic = BLECharacteristic("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFF1", BLE_CHARACTERISTIC_PROPERTY_READ, 5);
 
 void setup() {                
   Serial.begin(57600);
@@ -32,7 +34,12 @@ void setup() {
   blePeripheral.setAppearance(0x0080);
 
   blePeripheral.addAttribute(test1Service);
+  blePeripheral.addAttribute(test1Characteristic);
   blePeripheral.addAttribute(test2Service);
+  blePeripheral.addAttribute(test2Characteristic);
+
+  test1Characteristic.setValue("hi", 2);
+  test2Characteristic.setValue("there", 5);
 
   blePeripheral.begin();
   

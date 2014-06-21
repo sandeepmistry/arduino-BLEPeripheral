@@ -264,6 +264,64 @@ bool BLEPeripheral::begin() {
       memcpy(&service_setup_message->buffer[13], uuid.data(), uuid.length());
 
       gatt_setup_msg_offset += 9 + uuid.length();
+    } else if (attribute->type() == BLE_TYPE_CHARACTERISTIC) {
+      BLECharacteristic* characteristic = (BLECharacteristic *)attribute;
+
+      hal_aci_data_t* characteristic_setup_message = (hal_aci_data_t*)&setup_msgs[next_setup_msg_index];
+
+      characteristic_setup_message->status_byte = 0;
+      characteristic_setup_message->buffer[0] = 15 + uuid.length();
+      characteristic_setup_message->buffer[1] = 0x06;
+      characteristic_setup_message->buffer[2] = 0x20;
+      characteristic_setup_message->buffer[3] = gatt_setup_msg_offset;
+
+      characteristic_setup_message->buffer[4] = 0x04;
+      characteristic_setup_message->buffer[5] = 0x04;
+      characteristic_setup_message->buffer[6] = 3 + uuid.length();
+      characteristic_setup_message->buffer[7] = 3 + uuid.length();
+
+      characteristic_setup_message->buffer[8] = (characteristic->handle() >> 8) & 0xff;
+      characteristic_setup_message->buffer[9] = characteristic->handle() & 0xff;
+
+      characteristic_setup_message->buffer[10] = (characteristic->type() >> 8) & 0xff;
+      characteristic_setup_message->buffer[11] = characteristic->type() & 0xff;
+
+      characteristic_setup_message->buffer[12] = 0x01;
+      characteristic_setup_message->buffer[13] = characteristic->properties();
+
+      characteristic_setup_message->buffer[14] = characteristic->valueHandle() & 0xff;
+      characteristic_setup_message->buffer[15] = (characteristic->valueHandle() >> 8) & 0xff;
+
+      memcpy(&characteristic_setup_message->buffer[16], uuid.data(), uuid.length());
+
+      gatt_setup_msg_offset += 12 + uuid.length();
+      next_setup_msg_index++;
+
+      // characteristic value
+      hal_aci_data_t* characteristic_value_setup_message = (hal_aci_data_t*)&setup_msgs[next_setup_msg_index];
+
+      characteristic_value_setup_message->status_byte = 0;
+      characteristic_value_setup_message->buffer[0] = 12 + characteristic->valueSize();
+      characteristic_value_setup_message->buffer[1] = 0x06;
+      characteristic_value_setup_message->buffer[2] = 0x20;
+      characteristic_value_setup_message->buffer[3] = gatt_setup_msg_offset;
+
+      characteristic_value_setup_message->buffer[4] = 0x04;
+      characteristic_value_setup_message->buffer[5] = 0x04;
+      characteristic_value_setup_message->buffer[6] = characteristic->valueSize();
+      characteristic_value_setup_message->buffer[7] = characteristic->valueLength();
+
+      characteristic_value_setup_message->buffer[8] = (characteristic->valueHandle() >> 8) & 0xff;
+      characteristic_value_setup_message->buffer[9] = characteristic->valueHandle() & 0xff;
+
+      characteristic_value_setup_message->buffer[10] = 0x00;
+      characteristic_value_setup_message->buffer[11] = 0x00;
+
+      characteristic_value_setup_message->buffer[12] = 0x01;
+
+      memcpy(&characteristic_value_setup_message->buffer[13], characteristic->value(), characteristic->valueLength());
+
+      gatt_setup_msg_offset += 9 + characteristic->valueSize();
     }
 
     next_setup_msg_index++;
@@ -465,4 +523,13 @@ void BLEPeripheral::addAttribute(BLEAttribute& attribute) {
   this->_numAttributes++;
 
   this->_numCustomSetupMessages++;
+
+  if (attribute.type() == BLE_TYPE_CHARACTERISTIC) {
+    BLECharacteristic& characteristic = (BLECharacteristic&)attribute;
+
+    characteristic.setValueHandle(this->_nextHandle);
+    this->_nextHandle++;
+
+    this->_numCustomSetupMessages++;
+  }
 }

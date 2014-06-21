@@ -2,13 +2,14 @@
 #define _BLE_PERIPHERAL_H_
 
 #if ARDUINO >= 100
- #include "Arduino.h"
+  #include "Arduino.h"
 #else
- #include "WProgram.h"
+  #include "WProgram.h"
 #endif
 
 #include "BLEAttribute.h"
 #include "BLEService.h"
+#include "BLECharacteristic.h"
 
 class BLEPeripheral
 {
