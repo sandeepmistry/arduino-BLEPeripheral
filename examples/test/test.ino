@@ -14,6 +14,9 @@ void setup() {
   blePeripheral.setLocalName("test");
   blePeripheral.setAdvertisedServiceUuid("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFF0");
   
+//  const char manufacturerData[4] = {0x12, 0x34, 0x56, 0x78};
+//  blePeripheral.setManufacturerData(manufacturerData, sizeof(manufacturerData));
+
   blePeripheral.begin();
   
   Serial.println(F("BLE Peripheral"));

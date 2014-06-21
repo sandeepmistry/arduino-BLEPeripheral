@@ -7,6 +7,11 @@
 
 #include "BLEPeripheral.h"
 
+#define MAX_BLE_DATA_LENGTH 20
+
+#define DEFAULT_DEVICE_NAME "Arduino"
+#define DEFAULT_APPEARANCE 0x0000
+
 static struct aci_state_t aci_state;
 
 #define NB_SETUP_MESSAGES 8
@@ -104,7 +109,11 @@ uint16_t crc_16_ccitt(uint16_t crc, uint8_t * data_in, uint16_t data_len) {
 
 BLEPeripheral::BLEPeripheral(int8_t req, int8_t rdy, int8_t rst) {
   this->setLocalName(NULL);
+  this->setManufacturerData(NULL, 0);
   this->setAdvertisedServiceUuid(NULL);
+
+  this->setDeviceName(DEFAULT_DEVICE_NAME);
+  this->setAppearance(DEFAULT_APPEARANCE);
 
   aci_state.aci_pins.reqn_pin               = req;
   aci_state.aci_pins.rdyn_pin               = rdy;
@@ -133,6 +142,20 @@ bool BLEPeripheral::begin() {
   aci_state.aci_setup_info.setup_msgs         = setup_msgs;
   aci_state.aci_setup_info.num_setup_msgs     = NB_SETUP_MESSAGES;
 
+  if (this->_manufacturerData && this->_manufacturerDataLength > 0) {
+    if (this->_manufacturerDataLength > 20) {
+      this->_manufacturerDataLength = MAX_BLE_DATA_LENGTH;
+    }
+
+    // assigned the EIR data
+    setup_msgs[5].buffer[4] = 0xff;
+    setup_msgs[5].buffer[5] = this->_manufacturerDataLength;
+    memcpy(&setup_msgs[5].buffer[6], this->_manufacturerData, this->_manufacturerDataLength);
+
+    // enable advertising data
+    setup_msgs[2].buffer[26] = 0x40;
+  }
+
   if (this->_advertisedServiceUuid) {
     BLEUuid advertisedServiceUuid = BLEUuid(this->_advertisedServiceUuid);
 
@@ -151,8 +174,8 @@ bool BLEPeripheral::begin() {
     char localNameLength = strlen(this->_localName);
     char localNameType = 0x09;
 
-    if (localNameLength > 20) {
-      localNameLength = 20;
+    if (localNameLength > MAX_BLE_DATA_LENGTH) {
+      localNameLength = MAX_BLE_DATA_LENGTH;
       localNameType = 0x08;
     }
 
@@ -318,6 +341,19 @@ void BLEPeripheral::setAdvertisedServiceUuid(const char* advertisedServiceUuid) 
   this->_advertisedServiceUuid = advertisedServiceUuid;
 }
 
+void BLEPeripheral::setManufacturerData(const char* manufacturerData, int manufacturerDataLength) {
+  this->_manufacturerData = manufacturerData;
+  this->_manufacturerDataLength = manufacturerDataLength;
+}
+
 void BLEPeripheral::setLocalName(const char *localName) {
   this->_localName = localName;
+}
+
+void BLEPeripheral::setDeviceName(const char* deviceName) {
+  this->_deviceName = deviceName;
+}
+
+void BLEPeripheral::setAppearance(unsigned short appearance) {
+  this->_appearance = appearance;
 }

@@ -16,6 +16,7 @@ class BLEPeripheral
     void poll(void);
 
     void setAdvertisedServiceUuid(const char* advertisedServiceUuid);
+    void setManufacturerData(const char* manufacturerData, int manufacturerDataLength);
     void setLocalName(const char *localName);
 
     void setDeviceName(const char* deviceName);
@@ -24,6 +25,11 @@ class BLEPeripheral
   private:
     const char*    _localName;
     const char*    _advertisedServiceUuid;
+    const char*    _manufacturerData;
+    int            _manufacturerDataLength;
+
+    const char*    _deviceName;
+    unsigned short _appearance;
 };
 
 #endif
