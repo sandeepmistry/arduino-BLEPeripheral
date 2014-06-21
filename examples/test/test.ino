@@ -12,7 +12,7 @@ void setup() {
   Serial.begin(57600);
   
   blePeripheral.setLocalName("test");
-  blePeripheral.setAdvertisedServiceUuid("B9407F30-F5F8-466E-AFF9-25556B57FE6D");
+  blePeripheral.setAdvertisedServiceUuid("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFF0");
   
   blePeripheral.begin();
   
