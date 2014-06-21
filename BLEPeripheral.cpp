@@ -131,6 +131,10 @@ BLEPeripheral::BLEPeripheral(int8_t req, int8_t rdy, int8_t rst) {
   this->setDeviceName(DEFAULT_DEVICE_NAME);
   this->setAppearance(DEFAULT_APPEARANCE);
 
+  this->_numCustomSetupMessages = 0;
+  this->_nextHandle             = 0x0006;
+  this->_numAttributes          = 0;
+
   aci_state.aci_pins.reqn_pin               = req;
   aci_state.aci_pins.rdyn_pin               = rdy;
   aci_state.aci_pins.mosi_pin               = MOSI;
@@ -153,6 +157,8 @@ bool BLEPeripheral::begin() {
   } else {
     aci_state.aci_setup_info.services_pipe_type_mapping = NULL;
   }
+
+  num_setup_msgs += this->_numCustomSetupMessages;
 
   setup_msgs = (hal_aci_data_t*)malloc(sizeof(hal_aci_data_t) * num_setup_msgs);
   memcpy_P(setup_msgs, base_setup_msgs, sizeof(base_setup_msgs));
@@ -225,7 +231,43 @@ bool BLEPeripheral::begin() {
   setup_msgs[9].buffer[26] = (this->_appearance >> 8) & 0xff;
 
   uint8_t gatt_setup_msg_offset = 79;
+  int next_setup_msg_index = NB_BASE_SETUP_MESSAGES;
 
+  for (int i = 0; i < this->_numAttributes; i++) {
+    BLEAttribute* attribute = this->_attributes[i];
+    BLEUuid uuid = BLEUuid(attribute->uuid());
+
+    if (attribute->type() == BLE_TYPE_SERVICE) {
+      BLEService* service = (BLEService *)attribute;
+
+      hal_aci_data_t* service_setup_message = (hal_aci_data_t*)&setup_msgs[next_setup_msg_index];
+
+      service_setup_message->status_byte = 0;
+      service_setup_message->buffer[0] = 12 + uuid.length();
+      service_setup_message->buffer[1] = 0x06;
+      service_setup_message->buffer[2] = 0x20;
+      service_setup_message->buffer[3] = gatt_setup_msg_offset;
+
+      service_setup_message->buffer[4] = 0x04;
+      service_setup_message->buffer[5] = 0x04;
+      service_setup_message->buffer[6] = uuid.length();
+      service_setup_message->buffer[7] = uuid.length();
+
+      service_setup_message->buffer[8] = (service->handle() >> 8) & 0xff;
+      service_setup_message->buffer[9] = service->handle() & 0xff;
+
+      service_setup_message->buffer[10] = (service->type() >> 8) & 0xff;
+      service_setup_message->buffer[11] = service->type() & 0xff;
+
+      service_setup_message->buffer[12] = 0x01;
+
+      memcpy(&service_setup_message->buffer[13], uuid.data(), uuid.length());
+
+      gatt_setup_msg_offset += 9 + uuid.length();
+    }
+
+    next_setup_msg_index++;
+  }
 
   // terminator
   hal_aci_data_t* gatt_terminator_setup_msg = &setup_msgs[num_setup_msgs - 2];
@@ -413,4 +455,14 @@ void BLEPeripheral::setDeviceName(const char* deviceName) {
 
 void BLEPeripheral::setAppearance(unsigned short appearance) {
   this->_appearance = appearance;
+}
+
+void BLEPeripheral::addAttribute(BLEAttribute& attribute) {
+  attribute.setHandle(this->_nextHandle);
+  this->_nextHandle++;
+
+  this->_attributes[this->_numAttributes] = &attribute;
+  this->_numAttributes++;
+
+  this->_numCustomSetupMessages++;
 }

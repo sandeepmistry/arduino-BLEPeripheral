@@ -14,6 +14,9 @@
 
 BLEPeripheral blePeripheral = BLEPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
 
+BLEService test1Service = BLEService("fff0");
+BLEService test2Service = BLEService("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFF0");
+
 void setup() {                
   Serial.begin(57600);
   
@@ -27,6 +30,9 @@ void setup() {
 
   blePeripheral.setDeviceName("Test");
   blePeripheral.setAppearance(0x0080);
+
+  blePeripheral.addAttribute(test1Service);
+  blePeripheral.addAttribute(test2Service);
 
   blePeripheral.begin();
   

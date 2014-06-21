@@ -7,6 +7,9 @@
  #include "WProgram.h"
 #endif
 
+#include "BLEAttribute.h"
+#include "BLEService.h"
+
 class BLEPeripheral
 {
   public:
@@ -22,6 +25,8 @@ class BLEPeripheral
     void setDeviceName(const char* deviceName);
     void setAppearance(unsigned short appearance);
 
+    void addAttribute(BLEAttribute& attribute);
+
   private:
     const char*    _localName;
     const char*    _advertisedServiceUuid;
@@ -30,6 +35,11 @@ class BLEPeripheral
 
     const char*    _deviceName;
     unsigned short _appearance;
+
+    int            _numCustomSetupMessages;
+    unsigned short _nextHandle;
+    int            _numAttributes;
+    BLEAttribute*  _attributes[10];
 };
 
 #endif
