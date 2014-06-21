@@ -4,7 +4,6 @@
 #include "BLEAttribute.h"
 
 #define BLE_CHARACTERISTIC_MAX_VALUE_LENGTH 19
-#define BLE_CHARACTERISTIC_PROPERTY_READ    0x02
 
 class BLECharacteristic : public BLEAttribute
 {

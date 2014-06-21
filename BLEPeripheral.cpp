@@ -322,6 +322,33 @@ bool BLEPeripheral::begin() {
       memcpy(&characteristic_value_setup_message->buffer[13], characteristic->value(), characteristic->valueLength());
 
       gatt_setup_msg_offset += 9 + characteristic->valueSize();
+    } else if (attribute->type() == BLE_TYPE_DESCRIPTOR) {
+      BLEDescriptor* descriptor = (BLEDescriptor *)attribute;
+
+      hal_aci_data_t* descriptor_setup_message = (hal_aci_data_t*)&setup_msgs[next_setup_msg_index];
+
+      descriptor_setup_message->status_byte = 0;
+      descriptor_setup_message->buffer[0] = 12 + descriptor->valueSize();
+      descriptor_setup_message->buffer[1] = 0x06;
+      descriptor_setup_message->buffer[2] = 0x20;
+      descriptor_setup_message->buffer[3] = gatt_setup_msg_offset;
+
+      descriptor_setup_message->buffer[4] = 0x04;
+      descriptor_setup_message->buffer[5] = 0x04;
+      descriptor_setup_message->buffer[6] = descriptor->valueSize();
+      descriptor_setup_message->buffer[7] = descriptor->valueLength();
+
+      descriptor_setup_message->buffer[8] = (descriptor->handle() >> 8) & 0xff;
+      descriptor_setup_message->buffer[9] = descriptor->handle() & 0xff;
+
+      descriptor_setup_message->buffer[10] = uuid.data()[1];
+      descriptor_setup_message->buffer[11] = uuid.data()[0];
+
+      descriptor_setup_message->buffer[12] = 0x01;
+
+      memcpy(&descriptor_setup_message->buffer[13], descriptor->value(), descriptor->valueLength());
+
+      gatt_setup_msg_offset += 9 + descriptor->valueSize();
     }
 
     next_setup_msg_index++;

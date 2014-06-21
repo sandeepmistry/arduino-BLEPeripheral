@@ -10,6 +10,7 @@
 #include "BLEAttribute.h"
 #include "BLEService.h"
 #include "BLECharacteristic.h"
+#include "BLEDescriptor.h"
 
 class BLEPeripheral
 {
@@ -40,7 +41,7 @@ class BLEPeripheral
     int            _numCustomSetupMessages;
     unsigned short _nextHandle;
     int            _numAttributes;
-    BLEAttribute*  _attributes[10];
+    BLEAttribute*  _attributes[15];
 };
 
 #endif
