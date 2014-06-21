@@ -14,9 +14,6 @@
 
 static struct aci_state_t aci_state;
 
-#define NB_SETUP_MESSAGES 8
-#define SETUP_MESSAGES_CONTENT {
-
 #ifdef SERVICES_PIPE_TYPE_MAPPING_CONTENT
     static services_pipe_type_mapping_t
         services_pipe_type_mapping[NUMBER_OF_PIPES] = SERVICES_PIPE_TYPE_MAPPING_CONTENT;
@@ -25,7 +22,10 @@ static struct aci_state_t aci_state;
     static services_pipe_type_mapping_t * services_pipe_type_mapping = NULL;
 #endif
 
-static hal_aci_data_t setup_msgs[NB_SETUP_MESSAGES]  = {\
+#define NB_BASE_SETUP_MESSAGES 10
+
+/* Store the setup for the nRF8001 in the flash of the AVR to save on RAM */
+static hal_aci_data_t base_setup_msgs[NB_BASE_SETUP_MESSAGES] PROGMEM = {\
   {0x00,\
     {\
       0x07,0x06,0x00,0x00,0x03,0x02,0x41,0xfe,\
@@ -68,10 +68,26 @@ static hal_aci_data_t setup_msgs[NB_SETUP_MESSAGES]  = {\
   },\
   {0x00,\
     {\
-      0x06,0x06,0xf0,0x00,0x03,0x00,0x00,\
+      0x1f,0x06,0x20,0x00,0x04,0x04,0x02,0x02,0x00,0x01,0x28,0x00,0x01,0x00,0x18,0x04,0x04,0x05,0x05,0x00,\
+      0x02,0x28,0x03,0x01,0x02,0x03,0x00,0x00,0x2a,0x04,0x04,0x14,\
+    },\
+  },\
+  {0x00,\
+    {\
+      0x1f,0x06,0x20,0x1c,0x00,0x00,0x03,0x2a,0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,\
+      0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x04,0x04,\
+    },\
+  },\
+  {0x00,\
+    {\
+      0x1a,0x06,0x20,0x38,0x05,0x05,0x00,0x04,0x28,0x03,0x01,0x02,0x05,0x00,0x01,0x2a,0x06,0x04,0x03,0x02,\
+      0x00,0x05,0x2a,0x01,0x01,0x00,0x00,\
     },\
   },\
 };
+
+static hal_aci_data_t* setup_msgs = NULL;
+static uint8_t num_setup_msgs = NB_BASE_SETUP_MESSAGES + 2;
 
 /*
 Temporary buffers for sending ACI commands
@@ -138,33 +154,42 @@ bool BLEPeripheral::begin() {
     aci_state.aci_setup_info.services_pipe_type_mapping = NULL;
   }
 
+  setup_msgs = (hal_aci_data_t*)malloc(sizeof(hal_aci_data_t) * num_setup_msgs);
+  memcpy_P(setup_msgs, base_setup_msgs, sizeof(base_setup_msgs));
+
+  Serial.println();
+  Serial.print(F("ACI setup message size = "));
+  Serial.print((sizeof(hal_aci_data_t) * num_setup_msgs));
+  Serial.println();
+
   aci_state.aci_setup_info.number_of_pipes    = NUMBER_OF_PIPES;
   aci_state.aci_setup_info.setup_msgs         = setup_msgs;
-  aci_state.aci_setup_info.num_setup_msgs     = NB_SETUP_MESSAGES;
+  aci_state.aci_setup_info.num_setup_msgs     = num_setup_msgs;
 
-  if (this->_manufacturerData && this->_manufacturerDataLength > 0) {
-    if (this->_manufacturerDataLength > 20) {
-      this->_manufacturerDataLength = MAX_BLE_DATA_LENGTH;
-    }
-
-    // assigned the EIR data
-    setup_msgs[5].buffer[4] = 0xff;
-    setup_msgs[5].buffer[5] = this->_manufacturerDataLength;
-    memcpy(&setup_msgs[5].buffer[6], this->_manufacturerData, this->_manufacturerDataLength);
-
-    // enable advertising data
-    setup_msgs[2].buffer[26] = 0x40;
-  }
+  hal_aci_data_t* advertising_data_setup_msg = &setup_msgs[5];
+  hal_aci_data_t* scan_response_data_setup_msg = &setup_msgs[6];
 
   if (this->_advertisedServiceUuid) {
     BLEUuid advertisedServiceUuid = BLEUuid(this->_advertisedServiceUuid);
 
     char advertisedServiceUuidLength = advertisedServiceUuid.length();
 
-    // assigned the EIR data
-    setup_msgs[5].buffer[4] = (advertisedServiceUuidLength > 2) ? 0x06 : 0x02;
-    setup_msgs[5].buffer[5] = advertisedServiceUuidLength;
-    memcpy(&setup_msgs[5].buffer[6], advertisedServiceUuid.data(), advertisedServiceUuidLength);
+    // assign the EIR data
+    advertising_data_setup_msg->buffer[4] = (advertisedServiceUuidLength > 2) ? 0x06 : 0x02;
+    advertising_data_setup_msg->buffer[5] = advertisedServiceUuidLength;
+    memcpy(&advertising_data_setup_msg->buffer[6], advertisedServiceUuid.data(), advertisedServiceUuidLength);
+
+    // enable advertising data
+    setup_msgs[2].buffer[26] = 0x40;
+  } else if (this->_manufacturerData && this->_manufacturerDataLength > 0) {
+    if (this->_manufacturerDataLength > 20) {
+      this->_manufacturerDataLength = MAX_BLE_DATA_LENGTH;
+    }
+
+    // assign the EIR data
+    advertising_data_setup_msg->buffer[4] = 0xff;
+    advertising_data_setup_msg->buffer[5] = this->_manufacturerDataLength;
+    memcpy(&advertising_data_setup_msg->buffer[6], this->_manufacturerData, this->_manufacturerDataLength);
 
     // enable advertising data
     setup_msgs[2].buffer[26] = 0x40;
@@ -179,22 +204,46 @@ bool BLEPeripheral::begin() {
       localNameType = 0x08;
     }
 
-    // assigned the EIR data
-    setup_msgs[6].buffer[4] = localNameType;
-    setup_msgs[6].buffer[5] = localNameLength;
-    memcpy(&setup_msgs[6].buffer[6], this->_localName, localNameLength);
+    // assign the EIR data
+    scan_response_data_setup_msg->buffer[4] = localNameType;
+    scan_response_data_setup_msg->buffer[5] = localNameLength;
+    memcpy(&scan_response_data_setup_msg->buffer[6], this->_localName, localNameLength);
 
     // enable scan response data
     setup_msgs[3].buffer[16] = 0x40;
   }
+
+  if (this->_deviceName) {
+    uint8_t deviceNameLength = min(strlen(this->_deviceName), MAX_BLE_DATA_LENGTH);
+
+    setup_msgs[8].buffer[4] = deviceNameLength;
+    memcpy(&setup_msgs[8].buffer[10], this->_deviceName, deviceNameLength);
+  }
+
+  // appearance
+  setup_msgs[9].buffer[25] = this->_appearance & 0xff;
+  setup_msgs[9].buffer[26] = (this->_appearance >> 8) & 0xff;
+
+  uint8_t gatt_setup_msg_offset = 79;
+
+
+  // terminator
+  hal_aci_data_t* gatt_terminator_setup_msg = &setup_msgs[num_setup_msgs - 2];
+
+  gatt_terminator_setup_msg->status_byte = 0;
+  gatt_terminator_setup_msg->buffer[0] = 0x04;
+  gatt_terminator_setup_msg->buffer[1] = 0x06;
+  gatt_terminator_setup_msg->buffer[2] = 0x20;
+  gatt_terminator_setup_msg->buffer[3] = gatt_setup_msg_offset;
+  gatt_terminator_setup_msg->buffer[4] = 0x00;
 
   uint16_t crc_seed = 0xFFFF;
   uint8_t msg_len;
   uint8_t crc_loop;
 
   //Run the CRC algorithm on the modified Setup to find the new CRC
-  for (crc_loop = 0; crc_loop < NB_SETUP_MESSAGES; crc_loop++) {
-    if (NB_SETUP_MESSAGES-1 == crc_loop) {
+  for (crc_loop = 0; crc_loop < num_setup_msgs; crc_loop++) {
+    if (num_setup_msgs - 1 == crc_loop) {
       msg_len = setup_msgs[crc_loop].buffer[0] - 1; //since the 2 bytes of CRC itself should not be used
                                                     //to calculate the CRC
     } else {
@@ -204,8 +253,16 @@ bool BLEPeripheral::begin() {
   }
 
   // update the CRC
-  setup_msgs[NB_SETUP_MESSAGES - 1].buffer[5] = (crc_seed >> 8) & 0xff;
-  setup_msgs[NB_SETUP_MESSAGES - 1].buffer[6] = crc_seed & 0xff;
+  hal_aci_data_t* crc_setup_msg = &setup_msgs[num_setup_msgs - 1];
+
+  crc_setup_msg->status_byte = 0;
+  crc_setup_msg->buffer[0] = 0x06;
+  crc_setup_msg->buffer[1] = 0x06;
+  crc_setup_msg->buffer[2] = 0xf0;
+  crc_setup_msg->buffer[3] = 0x00;
+  crc_setup_msg->buffer[4] = 0x03;
+  crc_setup_msg->buffer[5] = (crc_seed >> 8) & 0xff;
+  crc_setup_msg->buffer[6] = crc_seed & 0xff;
 
   //We reset the nRF8001 here by toggling the RESET line connected to the nRF8001
   //If the RESET line is not available we call the ACI Radio Reset to soft reset the nRF8001
@@ -247,7 +304,7 @@ void BLEPeripheral::poll() {
               delay(20); //Handle the HW error event correctly.
             } else {
               lib_aci_connect(0/* in seconds : 0 means forever */, 0x0050 /* advertising interval 50ms*/);
-              Serial.println(F("Advertising started : Tap Connect on the nRF UART app"));
+              Serial.println(F("Advertising started"));
             }
             break;
         }
@@ -281,7 +338,7 @@ void BLEPeripheral::poll() {
       case ACI_EVT_DISCONNECTED:
         Serial.println(F("Evt Disconnected/Advertising timed out"));
         lib_aci_connect(0/* in seconds  : 0 means forever */, 0x0050 /* advertising interval 50ms*/);
-        Serial.println(F("Advertising started. Tap Connect on the nRF UART app"));
+        Serial.println(F("Advertising started."));
         break;
 
       case ACI_EVT_DATA_RECEIVED:
@@ -317,7 +374,7 @@ void BLEPeripheral::poll() {
         }
         Serial.println();
         lib_aci_connect(0/* in seconds, 0 means forever */, 0x0050 /* advertising interval 50ms*/);
-        Serial.println(F("Advertising started. Tap Connect on the nRF UART app"));
+        Serial.println(F("Advertising started."));
         break;
     }
   } else {
