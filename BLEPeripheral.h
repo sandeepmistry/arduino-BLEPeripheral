@@ -14,6 +14,8 @@
 
 class BLEPeripheral
 {
+  friend class BLECharacteristic;
+
   public:
     BLEPeripheral(int8_t req, int8_t rdy, int8_t rst);
   
@@ -29,7 +31,16 @@ class BLEPeripheral
 
     void addAttribute(BLEAttribute& attribute);
 
+    bool isConnected();
+
+  protected:
+    static BLEPeripheral* instance();
+
+    void setLocalData(char pipe, char value[], char length);
+
   private:
+    static BLEPeripheral* _instance;
+
     const char*    _localName;
     const char*    _advertisedServiceUuid;
     const char*    _manufacturerData;
@@ -38,10 +49,13 @@ class BLEPeripheral
     const char*    _deviceName;
     unsigned short _appearance;
 
+    bool           _isSetup;
+    bool           _isConnected;
+
     int            _numCustomSetupMessages;
     unsigned short _nextHandle;
     int            _numAttributes;
-    BLEAttribute*  _attributes[15];
+    BLEAttribute*  _attributes[10];
 };
 
 #endif
