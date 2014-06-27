@@ -297,12 +297,12 @@ bool lib_aci_set_local_data(aci_state_t *aci_stat, uint8_t pipe, uint8_t *p_valu
 {
   aci_cmd_params_set_local_data_t aci_cmd_params_set_local_data;
   
-  if ((p_services_pipe_type_map[pipe-1].location != ACI_STORE_LOCAL)
-      ||
-      (size > ACI_PIPE_TX_DATA_MAX_LEN))
-  {
-    return false;
-  }
+  // if ((p_services_pipe_type_map[pipe-1].location != ACI_STORE_LOCAL)
+  //     ||
+  //     (size > ACI_PIPE_TX_DATA_MAX_LEN))
+  // {
+  //   return false;
+  // }
 
   aci_cmd_params_set_local_data.tx_data.pipe_number = pipe;
   memcpy(&(aci_cmd_params_set_local_data.tx_data.aci_data[0]), p_value, size);
