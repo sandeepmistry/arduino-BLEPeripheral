@@ -398,11 +398,11 @@ bool lib_aci_send_data(uint8_t pipe, uint8_t *p_value, uint8_t size)
   aci_cmd_params_send_data_t aci_cmd_params_send_data;
 
   
-  if(!((p_services_pipe_type_map[pipe-1].pipe_type == ACI_TX) ||
-      (p_services_pipe_type_map[pipe-1].pipe_type == ACI_TX_ACK)))
-  {
-    return false;
-  }
+  // if(!((p_services_pipe_type_map[pipe-1].pipe_type == ACI_TX) ||
+  //     (p_services_pipe_type_map[pipe-1].pipe_type == ACI_TX_ACK)))
+  // {
+  //   return false;
+  // }
 
   if (size > ACI_PIPE_TX_DATA_MAX_LEN)
   {
