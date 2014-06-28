@@ -36,7 +36,11 @@ class BLEPeripheral
   protected:
     static BLEPeripheral* instance();
 
+    bool isPipeOpen(char pipe);
     void setLocalData(char pipe, char value[], char length);
+    bool sendData(char pipe, char value[], char length);
+    bool sendAck(char pipe);
+    bool sendNack(char pipe, char errorCode);
 
   private:
     static BLEPeripheral* _instance;
@@ -51,6 +55,7 @@ class BLEPeripheral
 
     bool           _isSetup;
     bool           _isConnected;
+    uint64_t       _openPipes;
 
     int            _numCustomSetupMessages;
     unsigned short _nextHandle;

@@ -21,21 +21,37 @@ class BLECharacteristic : public BLEAttribute
     void setValue(char value[], unsigned int length);
 
     bool valueUpdated();
+    bool isNotifySubscribed();
+    bool isIndicateSubscribed();
 
 protected:
     unsigned short valueHandle();
     void setValueHandle(unsigned short valueHandle);
 
+    unsigned short configHandle();
+    void setConfigHandle(unsigned short configHandle);
+
     char pipeStart();
     void setPipeStart(char pipesStart);
 
-    char setPipe();
-    void setSetPipe(char setPipe);
+    char txPipe();
+    void setTxPipe(char txPipe);
+
+    char txAckPipe();
+    void setTxAckPipe(char txAckPipe);
 
     char rxPipe();
     void setRxPipe(char rxPipe);
 
-    void setValueUpdated(bool _valueUpdated);
+    char rxAckPipe();
+    void setRxAckPipe(char rxAckPipe);
+
+    char setPipe();
+    void setSetPipe(char setPipe);
+
+    void setValueUpdated(bool valueUpdated);
+    void setIsNotifySubscribed(bool isNotifySubscribed);
+    void setIsIndicateSubscribed(bool isNotifySubscribed);
 
   private:
     char _properties;
@@ -44,12 +60,19 @@ protected:
     unsigned int _valueLength;
 
     unsigned short _valueHandle;
+    unsigned short _configHandle;
+
 
     char _pipeStart;
-    char _setPipe;
+    char _txPipe;
+    char _txAckPipe;
     char _rxPipe;
+    char _rxAckPipe;
+    char _setPipe;
 
     bool _valueUpdated;
+    bool _isNotifySubscribed;
+    bool _isIndicateSubscribed;
 };
 
 #endif

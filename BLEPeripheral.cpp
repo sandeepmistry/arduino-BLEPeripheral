@@ -133,6 +133,7 @@ BLEPeripheral::BLEPeripheral(int8_t req, int8_t rdy, int8_t rst) {
 
   this->_isSetup = false;
   this->_isConnected = false;
+  this->_openPipes = 0;
 
   aci_state.aci_pins.reqn_pin               = req;
   aci_state.aci_pins.rdyn_pin               = rdy;
@@ -266,14 +267,32 @@ bool BLEPeripheral::begin() {
       if (characteristic->properties()) {
         characteristic->setPipeStart(next_pipe);
 
-        if (characteristic->properties() & BLE_PROPERTY_READ) {
-          characteristic->setSetPipe(next_pipe);
+        if (characteristic->properties() & BLE_PROPERTY_NOTIFY) {
+          characteristic->setTxPipe(next_pipe);
+
+          next_pipe++;
+        }
+
+        if (characteristic->properties() & BLE_PROPERTY_INDICATE) {
+          characteristic->setTxAckPipe(next_pipe);
+
+          next_pipe++;
+        }
+
+        if (characteristic->properties() & BLE_PROPERTY_WRITE_WITHOUT_RESPONSE) {
+          characteristic->setRxPipe(next_pipe);
 
           next_pipe++;
         }
 
         if (characteristic->properties() & BLE_PROPERTY_WRITE) {
-          characteristic->setRxPipe(next_pipe);
+          characteristic->setRxAckPipe(next_pipe);
+
+          next_pipe++;
+        }
+
+        if (characteristic->properties() & BLE_PROPERTY_READ) {
+          characteristic->setSetPipe(next_pipe);
 
           next_pipe++;
         }
@@ -326,9 +345,19 @@ bool BLEPeripheral::begin() {
         characteristic_value_setup_message->buffer[5] |= 0x04;
       }
 
-      if (characteristic->properties() & BLE_PROPERTY_WRITE) {
+      if (characteristic->properties() & (BLE_PROPERTY_WRITE | BLE_PROPERTY_WRITE_WITHOUT_RESPONSE)) {
         characteristic_value_setup_message->buffer[4] |= 0x40;
         characteristic_value_setup_message->buffer[5] |= 0x10;
+      }
+
+      if (characteristic->properties() & BLE_PROPERTY_INDICATE) {
+        characteristic_value_setup_message->buffer[4] |= 0x20;
+        characteristic_value_setup_message->buffer[5] |= 0x00; // needed ???
+      }
+
+      if (characteristic->properties() & BLE_PROPERTY_NOTIFY) {
+        characteristic_value_setup_message->buffer[4] |= 0x10;
+        characteristic_value_setup_message->buffer[5] |= 0x00; // needed ???
       }
 
       characteristic_value_setup_message->buffer[6] = characteristic->valueSize() + 1; // +1 -> fixed size
@@ -345,6 +374,37 @@ bool BLEPeripheral::begin() {
       memcpy(&characteristic_value_setup_message->buffer[13], characteristic->value(), characteristic->valueLength());
 
       gatt_setup_msg_offset += 9 + characteristic->valueSize();
+
+      if (characteristic->properties() & (BLE_PROPERTY_NOTIFY | BLE_PROPERTY_INDICATE)) {
+        next_setup_msg_index++;
+
+        hal_aci_data_t* characteristic_config_setup_message = (hal_aci_data_t*)&setup_msgs[next_setup_msg_index];
+
+        characteristic_config_setup_message->status_byte = 0;
+        characteristic_config_setup_message->buffer[0] = 14;
+        characteristic_config_setup_message->buffer[1] = 0x06;
+        characteristic_config_setup_message->buffer[2] = 0x20;
+        characteristic_config_setup_message->buffer[3] = gatt_setup_msg_offset;
+
+
+        characteristic_config_setup_message->buffer[4] = 0x46;
+        characteristic_config_setup_message->buffer[5] = 0x14;
+        characteristic_config_setup_message->buffer[6] = 0x03;
+        characteristic_config_setup_message->buffer[7] = 0x02;
+
+        characteristic_config_setup_message->buffer[8] = (characteristic->configHandle() >> 8) & 0xff;
+        characteristic_config_setup_message->buffer[9] = characteristic->configHandle() & 0xff;
+
+        characteristic_config_setup_message->buffer[10] = 0x29;
+        characteristic_config_setup_message->buffer[11] = 0x02;
+
+        characteristic_config_setup_message->buffer[12] = 0x01;
+
+        characteristic_config_setup_message->buffer[13] = 0x00;
+        characteristic_config_setup_message->buffer[14] = 0x00;
+
+        gatt_setup_msg_offset += 11;
+      }
     } else if (attribute->type() == BLE_TYPE_DESCRIPTOR) {
       BLEDescriptor* descriptor = (BLEDescriptor *)attribute;
 
@@ -419,8 +479,8 @@ bool BLEPeripheral::begin() {
       pipe_setup_message->buffer[10] = (characteristic->valueHandle() >> 8) & 0xff;
       pipe_setup_message->buffer[11] = characteristic->valueHandle() & 0xff;
 
-      pipe_setup_message->buffer[12] = 0x00;
-      pipe_setup_message->buffer[13] = 0x00;
+      pipe_setup_message->buffer[12] = (characteristic->configHandle() >> 8) & 0xff;
+      pipe_setup_message->buffer[13] = characteristic->configHandle() & 0xff;
 
       pipe_setup_msg_offset += 10;
 
@@ -429,7 +489,19 @@ bool BLEPeripheral::begin() {
       }
 
       if (characteristic->properties() & BLE_PROPERTY_WRITE) {
-        pipe_setup_message->buffer[7] |= 0x04; // RX Ack
+        pipe_setup_message->buffer[8] |= 0x10; // RX Ack
+      }
+
+      if (characteristic->properties() & BLE_PROPERTY_WRITE_WITHOUT_RESPONSE) {
+        pipe_setup_message->buffer[8] |= 0x08; // RX Ack
+      }
+
+      if (characteristic->properties() & BLE_PROPERTY_INDICATE) {
+        pipe_setup_message->buffer[8] |= 0x04; // TX Ack
+      }
+
+      if (characteristic->properties() & BLE_PROPERTY_NOTIFY) {
+        pipe_setup_message->buffer[8] |= 0x02; // TX
       }
 
       next_setup_msg_index++;
@@ -553,23 +625,35 @@ void BLEPeripheral::poll() {
 
       case ACI_EVT_PIPE_STATUS:
         // Serial.println(F("Evt Pipe Status "));
-        // Serial.println(aci_evt->params.pipe_status.pipes_open_bitmap[0], HEX);
-        // Serial.println(aci_evt->params.pipe_status.pipes_open_bitmap[1], HEX);
-        // Serial.println(aci_evt->params.pipe_status.pipes_open_bitmap[2], HEX);
-        // Serial.println(aci_evt->params.pipe_status.pipes_open_bitmap[3], HEX);
-        // Serial.println(aci_evt->params.pipe_status.pipes_open_bitmap[4], HEX);
-        // Serial.println(aci_evt->params.pipe_status.pipes_open_bitmap[5], HEX);
-        // Serial.println(aci_evt->params.pipe_status.pipes_open_bitmap[6], HEX);
-        // Serial.println(aci_evt->params.pipe_status.pipes_open_bitmap[7], HEX);
-        // Serial.println();
-        // Serial.println(aci_evt->params.pipe_status.pipes_closed_bitmap[0], HEX);
-        // Serial.println(aci_evt->params.pipe_status.pipes_closed_bitmap[1], HEX);
-        // Serial.println(aci_evt->params.pipe_status.pipes_closed_bitmap[2], HEX);
-        // Serial.println(aci_evt->params.pipe_status.pipes_closed_bitmap[3], HEX);
-        // Serial.println(aci_evt->params.pipe_status.pipes_closed_bitmap[4], HEX);
-        // Serial.println(aci_evt->params.pipe_status.pipes_closed_bitmap[5], HEX);
-        // Serial.println(aci_evt->params.pipe_status.pipes_closed_bitmap[6], HEX);
-        // Serial.println(aci_evt->params.pipe_status.pipes_closed_bitmap[7], HEX);
+
+        memcpy(&this->_openPipes, aci_evt->params.pipe_status.pipes_open_bitmap, sizeof(this->_openPipes));
+
+        // Serial.println((unsigned long)this->_openPipes, HEX);
+
+        for (int i = 0; i < this->_numAttributes; i++) {
+          BLEAttribute* attribute = this->_attributes[i];
+          if (attribute->type() == BLE_TYPE_CHARACTERISTIC) {
+            BLECharacteristic* characteristic = (BLECharacteristic *)attribute;
+
+            char txPipe = characteristic->txPipe();
+            if (txPipe) {
+              bool isNotifySubscribed = this->isPipeOpen(txPipe);
+
+              if (isNotifySubscribed != characteristic->isNotifySubscribed()) {
+                characteristic->setIsNotifySubscribed(isNotifySubscribed);
+              }
+            }
+
+            char txAckPipe = characteristic->txAckPipe();
+            if (txAckPipe) {
+              bool isIndicateSubscribed = this->isPipeOpen(txAckPipe);
+
+              if (isIndicateSubscribed != characteristic->isIndicateSubscribed()) {
+                characteristic->setIsIndicateSubscribed(isIndicateSubscribed);
+              }
+            }
+          }
+        }
         break;
 
       case ACI_EVT_TIMING:
@@ -590,7 +674,7 @@ void BLEPeripheral::poll() {
         // Serial.print(F("Data Received, pipe = "));
         // Serial.println(aci_evt->params.data_received.rx_data.pipe_number, DEC);
 
-        // for (int i = 0; i < dataLen; i++) {
+        // for (int i = 0; i < data_len; i++) {
         //   if ((aci_evt->params.data_received.rx_data.aci_data[i] & 0xf0) == 00) {
         //     Serial.print("0");
         //   }
@@ -599,12 +683,20 @@ void BLEPeripheral::poll() {
         //   Serial.print(F(" "));
         // }
         // Serial.println();
+
         for (int i = 0; i < this->_numAttributes; i++) {
           BLEAttribute* attribute = this->_attributes[i];
           if (attribute->type() == BLE_TYPE_CHARACTERISTIC) {
               BLECharacteristic* characteristic = (BLECharacteristic *)attribute;
 
-              if (characteristic->rxPipe() == pipe){
+              if (characteristic->rxAckPipe() == pipe){
+                characteristic->setValue((char *)aci_evt->params.data_received.rx_data.aci_data, data_len);
+
+                this->sendAck(characteristic->rxAckPipe());
+
+                characteristic->setValueUpdated(true);
+                break;
+              } else if (characteristic->rxPipe() == pipe){
                 characteristic->setValue((char *)aci_evt->params.data_received.rx_data.aci_data, data_len);
 
                 characteristic->setValueUpdated(true);
@@ -701,6 +793,13 @@ void BLEPeripheral::addAttribute(BLEAttribute& attribute) {
     this->_nextHandle++;
 
     this->_numCustomSetupMessages += 2;
+
+    if (characteristic.properties() & (BLE_PROPERTY_NOTIFY | BLE_PROPERTY_INDICATE)) {
+      characteristic.setConfigHandle(this->_nextHandle);
+      this->_nextHandle++;
+
+      this->_numCustomSetupMessages++;
+    }
   }
 }
 
@@ -712,6 +811,22 @@ BLEPeripheral* BLEPeripheral::instance() {
   return _instance;
 }
 
+bool BLEPeripheral::isPipeOpen(char pipe) {
+  return (this->_openPipes & (((uint64_t)1) << pipe)) != 0;
+}
+
 void BLEPeripheral::setLocalData(char pipe, char value[], char length) {
   lib_aci_set_local_data(&aci_state, pipe, (uint8_t*)value, length);
+}
+
+bool BLEPeripheral::sendData(char pipe, char value[], char length) {
+  return lib_aci_send_data(pipe, (uint8_t*)value, length);
+}
+
+bool BLEPeripheral::sendAck(char pipe) {
+  return lib_aci_send_ack(&aci_state, pipe);
+}
+
+bool BLEPeripheral::sendNack(char pipe, char errorCode) {
+  return lib_aci_send_nack(&aci_state, pipe, errorCode);
 }

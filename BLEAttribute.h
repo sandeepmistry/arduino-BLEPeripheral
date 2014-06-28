@@ -6,7 +6,11 @@
 #define BLE_TYPE_DESCRIPTOR                       0x2900
 
 #define BLE_PROPERTY_READ                         0x02
+#define BLE_PROPERTY_WRITE_WITHOUT_RESPONSE       0x04
 #define BLE_PROPERTY_WRITE                        0x08
+#define BLE_PROPERTY_NOTIFY                       0x10
+#define BLE_PROPERTY_INDICATE                     0x20
+
 
 class BLEAttribute
 {
