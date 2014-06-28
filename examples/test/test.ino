@@ -12,22 +12,18 @@
 #define BLE_RDY 2
 #define BLE_RST 9
 
-BLEPeripheral blePeripheral = BLEPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
+BLEPeripheral     blePeripheral        = BLEPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
 
-BLEService test1Service = BLEService("fff0");
-BLECharacteristic test1Characteristic1 = BLECharacteristic("fff1", BLE_PROPERTY_READ | BLE_PROPERTY_WRITE, 2);
-BLECharacteristic test1Characteristic2 = BLECharacteristic("fff2", BLE_PROPERTY_READ | BLE_PROPERTY_WRITE, 2);
-BLEDescriptor test1Descriptor = BLEDescriptor("2901", 4);
-
-BLEService test2Service = BLEService("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFF0");
-BLECharacteristic test2Characteristic = BLECharacteristic("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFF1", BLE_PROPERTY_READ | BLE_PROPERTY_WRITE, 5);
+BLEService        test1Service         = BLEService("fff0");
+BLECharacteristic test1Characteristic1 = BLECharacteristic("fff1", BLE_PROPERTY_READ | BLE_PROPERTY_WRITE | BLE_PROPERTY_WRITE_WITHOUT_RESPONSE | BLE_PROPERTY_NOTIFY | BLE_PROPERTY_INDICATE, 2);
+BLEDescriptor     test1Descriptor      = BLEDescriptor("2901", 7);
 
 void setup() {                
   Serial.begin(115200);
   
   blePeripheral.setLocalName("test");
 #if 1
-  blePeripheral.setAdvertisedServiceUuid("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFF0");
+  blePeripheral.setAdvertisedServiceUuid("fff0");
 #else
   const char manufacturerData[4] = {0x12, 0x34, 0x56, 0x78};
   blePeripheral.setManufacturerData(manufacturerData, sizeof(manufacturerData));
@@ -39,15 +35,9 @@ void setup() {
   blePeripheral.addAttribute(test1Service);
   blePeripheral.addAttribute(test1Characteristic1);
   blePeripheral.addAttribute(test1Descriptor);
-  blePeripheral.addAttribute(test1Characteristic2);
-
-  blePeripheral.addAttribute(test2Service);
-  blePeripheral.addAttribute(test2Characteristic);
 
   test1Characteristic1.setValue("yo", 2);
-  test1Characteristic2.setValue("hi", 2);
-  test1Descriptor.setValue("desc", 4);
-  test2Characteristic.setValue("there", 5);
+  test1Descriptor.setValue("counter", 7);
 
   blePeripheral.begin();
   
@@ -62,14 +52,26 @@ void setup() {
 void loop() {
   blePeripheral.poll();
 
+  static unsigned short s = 0;
+  static unsigned long last_sent = 0;
+
   if (blePeripheral.isConnected()) {
     if (test1Characteristic1.valueUpdated()) {
-       Serial.print(F("value updated = "));
-       Serial.print(test1Characteristic1.value()[0]);
-       Serial.print(test1Characteristic1.value()[1]);
-       Serial.println();
+      Serial.println(F("counter written, reset"));
 
-      test1Characteristic1.setValue("oy", 2);
+      last_sent = 0;
+      s = 0;
+    }
+
+    if ((millis() - 1000) > last_sent) {
+      last_sent = millis();
+
+      s++;
+
+      Serial.print(F("counter = "));
+      Serial.println(s, DEC);
+
+      test1Characteristic1.setValue((char *)&s, 2);
     }
   }
 }
