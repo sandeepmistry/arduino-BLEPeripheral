@@ -1,5 +1,5 @@
 
-//#define SHOW_FREE_MEMORY
+#define SHOW_FREE_MEMORY
 
 #ifdef SHOW_FREE_MEMORY
 #include <MemoryFree.h>

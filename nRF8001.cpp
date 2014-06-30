@@ -164,12 +164,12 @@ void nRF8001::begin(const unsigned char* advertisementData,
     }
   }
 
-  this->_aciState.aci_setup_info.setup_msgs = (hal_aci_data_t*)malloc(sizeof(hal_aci_data_t) * this->_aciState.aci_setup_info.num_setup_msgs);
+  this->_aciState.aci_setup_info.setup_msgs = (hal_aci_data_t**)malloc(sizeof(hal_aci_data_t*) * this->_aciState.aci_setup_info.num_setup_msgs);
   this->_pipeInfo = (struct nRF8001PipeInfo*)malloc(sizeof(struct nRF8001PipeInfo) * numPipedCharacteristics);
 
 
   for (int i = 0; i < NB_BASE_SETUP_MESSAGES; i++) {
-    setupMsg = &this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex];
+    this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(pgm_read_byte_near(&baseSetupMsgs[i].buffer[0]) + 2);
     setupMsgIndex++;
     int setupMsgSize = 2 + setupMsg->buffer[0];
 
@@ -177,24 +177,24 @@ void nRF8001::begin(const unsigned char* advertisementData,
   }
 
   if (advertisementData && advertisementDataLength) {
-    setupMsg = &this->_aciState.aci_setup_info.setup_msgs[2];
+    setupMsg = this->_aciState.aci_setup_info.setup_msgs[2];
     setupMsgData = (struct nRFSetupMsgData*)setupMsg->buffer;
 
     setupMsgData->data[22] = 0x40;
 
-    setupMsg = &this->_aciState.aci_setup_info.setup_msgs[5];
+    setupMsg = this->_aciState.aci_setup_info.setup_msgs[5];
     setupMsgData = (struct nRFSetupMsgData*)setupMsg->buffer;
 
     memcpy(setupMsgData->data, advertisementData, advertisementDataLength);
   }
 
   if (scanData && scanDataLength) {
-    setupMsg = &this->_aciState.aci_setup_info.setup_msgs[3];
+    setupMsg = this->_aciState.aci_setup_info.setup_msgs[3];
     setupMsgData = (struct nRFSetupMsgData*)setupMsg->buffer;
 
     setupMsgData->data[12] = 0x40;
 
-    setupMsg = &this->_aciState.aci_setup_info.setup_msgs[6];
+    setupMsg = this->_aciState.aci_setup_info.setup_msgs[6];
     setupMsgData = (struct nRFSetupMsgData*)setupMsg->buffer;
 
     memcpy(setupMsgData->data, scanData, scanDataLength);
@@ -213,7 +213,7 @@ void nRF8001::begin(const unsigned char* advertisementData,
     if (attribute->type() == BLETypeService) {
       BLEService* service = (BLEService *)attribute;
 
-      setupMsg = &this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex];
+      this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(14 + uuid.length());
       setupMsgIndex++;
       setupMsgData = (struct nRFSetupMsgData*)setupMsg->buffer;
 
@@ -285,7 +285,7 @@ void nRF8001::begin(const unsigned char* advertisementData,
         }
       }
       
-      setupMsg = &this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex];
+      this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(17 + uuid.length());
       setupMsgIndex++;
       setupMsgData = (struct nRFSetupMsgData*)setupMsg->buffer;
 
@@ -319,7 +319,7 @@ void nRF8001::begin(const unsigned char* advertisementData,
       
       gattSetupMsgOffset += 12 + uuid.length();
 
-      setupMsg = &this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex];
+      this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(14 + characteristic->valueSize());
       setupMsgIndex++;
       setupMsgData = (struct nRFSetupMsgData*)setupMsg->buffer;
 
@@ -367,7 +367,7 @@ void nRF8001::begin(const unsigned char* advertisementData,
       gattSetupMsgOffset += 9 + characteristic->valueSize();
 
       if (characteristic->properties() & (BLEPropertyNotify | BLEPropertyIndicate)) {
-        setupMsg = &this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex];
+        this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(16);
         setupMsgIndex++;
         setupMsgData = (struct nRFSetupMsgData*)setupMsg->buffer;
 
@@ -401,15 +401,9 @@ void nRF8001::begin(const unsigned char* advertisementData,
     } else if (attribute->type() == BLETypeDescriptor) {
       BLEDescriptor* descriptor = (BLEDescriptor *)attribute;
 
-      setupMsg = &this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex];
+      this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(14 + descriptor->valueSize());
       setupMsgIndex++;
       setupMsgData = (struct nRFSetupMsgData*)setupMsg->buffer;
-
-      setupMsg->status_byte  = 0;
-      setupMsgData->length   = 14;
-      setupMsgData->cmd      = ACI_CMD_SETUP;
-      setupMsgData->type     = 0x20;
-      setupMsgData->offset   = gattSetupMsgOffset;
 
       setupMsg->status_byte  = 0;
       setupMsgData->length   = 12 + descriptor->valueSize();
@@ -439,7 +433,7 @@ void nRF8001::begin(const unsigned char* advertisementData,
   }
 
   // terminator
-  setupMsg = &this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex];
+  this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(6);
   setupMsgIndex++;
   setupMsgData = (struct nRFSetupMsgData*)setupMsg->buffer;
 
@@ -455,7 +449,7 @@ void nRF8001::begin(const unsigned char* advertisementData,
 
 
   // update number of piped handles
-  setupMsg = &this->_aciState.aci_setup_info.setup_msgs[1];
+  setupMsg = this->_aciState.aci_setup_info.setup_msgs[1];
   setupMsgData = (struct nRFSetupMsgData*)setupMsg->buffer;
 
   setupMsgData->data[6] = numPiped;
@@ -467,7 +461,7 @@ void nRF8001::begin(const unsigned char* advertisementData,
   for (int i = 0; i < numPiped; i++) {
     struct nRF8001PipeInfo pipeInfo = this->_pipeInfo[i];
 
-    setupMsg = &this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex];
+    this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(15);
     setupMsgIndex++;
     setupMsgData = (struct nRFSetupMsgData*)setupMsg->buffer;
 
@@ -522,7 +516,7 @@ void nRF8001::begin(const unsigned char* advertisementData,
 
   //Run the CRC algorithm on the modified Setup to find the new CRC
   for (int i = 0; i < this->_aciState.aci_setup_info.num_setup_msgs; i++) {
-    setupMsg = &this->_aciState.aci_setup_info.setup_msgs[i];
+    setupMsg = this->_aciState.aci_setup_info.setup_msgs[i];
 
     if (this->_aciState.aci_setup_info.num_setup_msgs - 1 == i) {
       msgLen = setupMsg->buffer[0] - 1; //since the 2 bytes of CRC itself should not be used
@@ -533,7 +527,7 @@ void nRF8001::begin(const unsigned char* advertisementData,
     crcSeed = crc_16_ccitt(crcSeed, setupMsg->buffer, msgLen);
   }
 
-  setupMsg = &this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex];
+  this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(8);
   setupMsgIndex++;
   setupMsgData = (struct nRFSetupMsgData*)setupMsg->buffer;
 
@@ -550,7 +544,7 @@ void nRF8001::begin(const unsigned char* advertisementData,
 
   // Serial.println();
   // for (int i = 0; i < this->_aciState.aci_setup_info.num_setup_msgs; i++) {
-  //   setupMsg = &this->_aciState.aci_setup_info.setup_msgs[i];
+  //   setupMsg = this->_aciState.aci_setup_info.setup_msgs[i];
 
   //   for (int j = 0; j < (setupMsg->buffer[0] + 1); j++) {
   //     if ((setupMsg->buffer[j] & 0xf0) == 00) {
