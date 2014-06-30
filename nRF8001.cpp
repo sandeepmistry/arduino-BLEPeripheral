@@ -748,7 +748,7 @@ void nRF8001::poll() {
   }
 }
 
-void nRF8001::characteristicValueUpdated(BLECharacteristic& characteristic) {
+void nRF8001::characteristicValueChanged(BLECharacteristic& characteristic) {
   for (int i = 0; i < this->_numPipeInfo; i++) {
     struct nRF8001PipeInfo* pipeInfo = &this->_pipeInfo[i];
 

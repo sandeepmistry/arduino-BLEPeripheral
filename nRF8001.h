@@ -30,7 +30,7 @@ struct nRF8001PipeInfo {
   bool               txAckPipeOpen;
 };
 
-class nRF8001 : public BLECharacteristicValueListener
+class nRF8001 : public BLECharacteristicValueChangeListener
 {
   public:
     nRF8001(unsigned char req, unsigned char rdy, unsigned char rst);
@@ -45,7 +45,7 @@ class nRF8001 : public BLECharacteristicValueListener
                 unsigned char numAttributes);
     void poll();
 
-    void characteristicValueUpdated(BLECharacteristic& characteristic);
+    void characteristicValueChanged(BLECharacteristic& characteristic);
 
   private:
     struct aci_state_t          _aciState;

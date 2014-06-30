@@ -12,6 +12,7 @@
 #include "BLEAttribute.h"
 #include "BLEService.h"
 #include "BLECharacteristic.h"
+#include "BLECharacteristicT.h"
 #include "BLEDescriptor.h"
 
 class BLEPeripheral

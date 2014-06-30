@@ -61,7 +61,7 @@ void BLECharacteristic::setValue(const unsigned char value[], unsigned char leng
   memcpy(this->_value, value, this->_valueLength);
 
   if (this->_listener) {
-    _listener->characteristicValueUpdated(*this);
+    _listener->characteristicValueChanged(*this);
   }
 }
 
@@ -99,6 +99,6 @@ void BLECharacteristic::setHasNewValue(bool hasNewValue) {
   this->_hasNewValue = hasNewValue;
 }
 
-void BLECharacteristic::setCharacteristicValueListener(BLECharacteristicValueListener& listener) {
+void BLECharacteristic::setCharacteristicValueListener(BLECharacteristicValueChangeListener& listener) {
   this->_listener = &listener;
 }

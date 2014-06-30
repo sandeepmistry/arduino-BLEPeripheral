@@ -11,10 +11,10 @@
 
 class BLECharacteristic;
 
-class BLECharacteristicValueListener
+class BLECharacteristicValueChangeListener
 {
   public:
-    virtual void characteristicValueUpdated(BLECharacteristic& characteristic) = 0;
+    virtual void characteristicValueChanged(BLECharacteristic& characteristic) = 0;
 };
 
 class BLECharacteristic : public BLEAttribute
@@ -43,18 +43,26 @@ class BLECharacteristic : public BLEAttribute
     bool hasNewValue();
     void setHasNewValue(bool hasNewValue);
 
-    void setCharacteristicValueListener(BLECharacteristicValueListener& listener);
+    void setCharacteristicValueListener(BLECharacteristicValueChangeListener& listener);
 
   private:
-    unsigned char                   _properties;
-    unsigned char                   _valueSize;
-    unsigned char*                  _value;
-    unsigned char                   _valueLength;
+    unsigned char                         _properties;
+    unsigned char                         _valueSize;
+    unsigned char*                        _value;
+    unsigned char                         _valueLength;
 
-    bool                            _hasNotifySubscriber;
-    bool                            _hasIndicateSubscriber;
-    bool                            _hasNewValue;
-    BLECharacteristicValueListener* _listener;
+    bool                                  _hasNotifySubscriber;
+    bool                                  _hasIndicateSubscriber;
+    bool                                  _hasNewValue;
+    BLECharacteristicValueChangeListener* _listener;
+};
+
+template<class T> class BLECharacteristicTyped : public BLECharacteristic
+{
+    BLECharacteristicTyped(const char* uuid, unsigned char properties, T value);
+
+    void setValue(T value);
+    T value();
 };
 
 #endif

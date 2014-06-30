@@ -5,14 +5,11 @@
 #define BLE_RDY 2
 #define BLE_RST 9
 
-BLEPeripheral     blePeripheral        = BLEPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
+BLEPeripheral           blePeripheral        = BLEPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
 
-BLEService        ledService           = BLEService("19b10010e8f2537e4f6cd104768a1214");
-BLECharacteristic switchCharacteristic = BLECharacteristic("19b10011e8f2537e4f6cd104768a1214", BLEPropertyRead | BLEPropertyWrite, 1);
-BLECharacteristic buttonCharacteristic = BLECharacteristic("19b10012e8f2537e4f6cd104768a1214", BLEPropertyRead | BLEPropertyNotify, 1);
-
-unsigned char switchValue[1];
-unsigned char buttonValue[1];
+BLEService              ledService           = BLEService("19b10010e8f2537e4f6cd104768a1214");
+BLECharacteristicT<char> switchCharacteristic = BLECharacteristicT<char>("19b10011e8f2537e4f6cd104768a1214", BLEPropertyRead | BLEPropertyWrite);
+BLECharacteristicT<char> buttonCharacteristic = BLECharacteristicT<char>("19b10012e8f2537e4f6cd104768a1214", BLEPropertyRead | BLEPropertyNotify);
 
 void setup() {                
   Serial.begin(115200);
@@ -27,11 +24,8 @@ void setup() {
   blePeripheral.addAttribute(switchCharacteristic);
   blePeripheral.addAttribute(buttonCharacteristic);
 
-  switchValue[0] = 0;
-  buttonValue[0] = 0;
-
-  switchCharacteristic.setValue(switchValue, 1);
-  buttonCharacteristic.setValue(buttonValue, 1);
+  switchCharacteristic.setValue(0);
+  buttonCharacteristic.setValue(0);
 
   blePeripheral.begin();
 
@@ -41,19 +35,17 @@ void setup() {
 void loop() {
   blePeripheral.poll();
 
-  buttonValue[0] = digitalRead(4);
+  char buttonValue = digitalRead(4);
 
-  bool buttonChanged = (buttonCharacteristic.value()[0] != buttonValue[0]);
+  bool buttonChanged = (buttonCharacteristic.value() != buttonValue);
 
   if (buttonChanged) {
-    switchValue[0] = buttonValue[0];
-
-    switchCharacteristic.setValue(switchValue, 1);
-    buttonCharacteristic.setValue(buttonValue, 1);
+    switchCharacteristic.setValue(buttonValue);
+    buttonCharacteristic.setValue(buttonValue);
   }
 
   if (switchCharacteristic.hasNewValue() || buttonChanged) {
-    if (switchCharacteristic.value()[0]) {
+    if (switchCharacteristic.value()) {
       Serial.println(F("LED on"));
       digitalWrite(3, HIGH);
     } else {
