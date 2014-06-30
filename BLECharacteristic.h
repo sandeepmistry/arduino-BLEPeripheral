@@ -3,76 +3,58 @@
 
 #include "BLEAttribute.h"
 
-#define BLE_CHARACTERISTIC_MAX_VALUE_LENGTH 19
+#define BLEPropertyRead                         0x02
+#define BLEPropertyWriteWithoutResponse         0x04
+#define BLEPropertyWrite                        0x08
+#define BLEPropertyNotify                       0x10
+#define BLEPropertyIndicate                     0x20
 
+class BLECharacteristic;
+
+class BLECharacteristicValueListener
+{
+  public:
+    virtual void characteristicValueUpdated(BLECharacteristic& characteristic) = 0;
+};
 
 class BLECharacteristic : public BLEAttribute
 {
-  friend class BLEPeripheral;
-
   public:
-    BLECharacteristic(const char* uuid, char properties, unsigned int valueSize);
+    BLECharacteristic(const char* uuid, unsigned char properties, unsigned char valueSize);
+    BLECharacteristic(const char* uuid, unsigned char properties, char* value);
 
-    char properties();
-    unsigned int valueSize();
+    virtual ~BLECharacteristic();
 
-    char* value();
-    unsigned int valueLength();
-    void setValue(char value[], unsigned int length);
+    unsigned char properties();
+    unsigned char valueSize();
 
-    bool valueUpdated();
-    bool isNotifySubscribed();
-    bool isIndicateSubscribed();
+    const unsigned char* value();
+    unsigned char valueLength();
+    void setValue(const unsigned char value[], unsigned char length);
 
-protected:
-    unsigned short valueHandle();
-    void setValueHandle(unsigned short valueHandle);
+    void setValue(const char* value);
 
-    unsigned short configHandle();
-    void setConfigHandle(unsigned short configHandle);
+    bool hasNotifySubscriber();
+    void setHasNotifySubscriber(bool hasNotifySubscriber);
 
-    char pipeStart();
-    void setPipeStart(char pipesStart);
+    bool hasIndicateSubscriber();
+    void setHasIndicateSubscriber(bool hasIndicateSubscriber);
 
-    char txPipe();
-    void setTxPipe(char txPipe);
+    bool hasNewValue();
+    void setHasNewValue(bool hasNewValue);
 
-    char txAckPipe();
-    void setTxAckPipe(char txAckPipe);
-
-    char rxPipe();
-    void setRxPipe(char rxPipe);
-
-    char rxAckPipe();
-    void setRxAckPipe(char rxAckPipe);
-
-    char setPipe();
-    void setSetPipe(char setPipe);
-
-    void setValueUpdated(bool valueUpdated);
-    void setIsNotifySubscribed(bool isNotifySubscribed);
-    void setIsIndicateSubscribed(bool isNotifySubscribed);
+    void setCharacteristicValueListener(BLECharacteristicValueListener& listener);
 
   private:
-    char _properties;
-    unsigned int _valueSize;
-    char _value[BLE_CHARACTERISTIC_MAX_VALUE_LENGTH];
-    unsigned int _valueLength;
+    unsigned char                   _properties;
+    unsigned char                   _valueSize;
+    unsigned char*                  _value;
+    unsigned char                   _valueLength;
 
-    unsigned short _valueHandle;
-    unsigned short _configHandle;
-
-
-    char _pipeStart;
-    char _txPipe;
-    char _txAckPipe;
-    char _rxPipe;
-    char _rxAckPipe;
-    char _setPipe;
-
-    bool _valueUpdated;
-    bool _isNotifySubscribed;
-    bool _isIndicateSubscribed;
+    bool                            _hasNotifySubscriber;
+    bool                            _hasIndicateSubscriber;
+    bool                            _hasNewValue;
+    BLECharacteristicValueListener* _listener;
 };
 
 #endif

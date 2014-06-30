@@ -1,11 +1,12 @@
 #include "BLEAttribute.h"
 
-BLEAttribute::BLEAttribute(const char* uuid, unsigned short type)
-{
-  this->_uuid = uuid;
-  this->_type = type;
+unsigned char BLEAttribute::_numAttributes = 0;
 
-  this->_handle = 0x0000;
+BLEAttribute::BLEAttribute(const char* uuid, unsigned short type) :
+  _uuid(uuid),
+  _type(type)
+{
+  _numAttributes++;
 }
 
 const char* BLEAttribute::uuid() {
@@ -16,10 +17,6 @@ unsigned short BLEAttribute::type() {
   return this->_type;
 }
 
-unsigned short BLEAttribute::handle() {
-  return this->_handle;
-}
-
-void BLEAttribute::setHandle(unsigned short handle) {
-  this->_handle = handle;
+unsigned char BLEAttribute::numAttributes() {
+  return _numAttributes;
 }

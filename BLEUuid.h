@@ -16,13 +16,13 @@ class BLEUuid
     BLEUuid(const char * str);
   
     const char* str();
-    char* data();
-    unsigned int length();
+    const unsigned char* data();
+    unsigned char length();
 
   private:
-    const char* _str;
-    char _data[MAX_UUID_LENGTH];
-    unsigned int _length;
+    const char*    _str;
+    unsigned char _data[MAX_UUID_LENGTH];
+    unsigned char _length;
 };
 
 #endif

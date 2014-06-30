@@ -1,6 +1,6 @@
 #include "BLEService.h"
 
-BLEService::BLEService(const char* uuid)
-  : BLEAttribute(uuid, BLE_TYPE_SERVICE)
+BLEService::BLEService(const char* uuid) :
+  BLEAttribute(uuid, BLETypeService)
 {
 }

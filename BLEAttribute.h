@@ -1,16 +1,11 @@
 #ifndef _BLE_ATTRIBUTE_H_
 #define _BLE_ATTRIBUTE_H_
 
-#define BLE_TYPE_SERVICE                          0x2800
-#define BLE_TYPE_CHARACTERISTIC                   0x2803
-#define BLE_TYPE_DESCRIPTOR                       0x2900
+#define BLETypeService                          0x2800
+#define BLETypeCharacteristic                   0x2803
+#define BLETypeDescriptor                       0x2900
 
-#define BLE_PROPERTY_READ                         0x02
-#define BLE_PROPERTY_WRITE_WITHOUT_RESPONSE       0x04
-#define BLE_PROPERTY_WRITE                        0x08
-#define BLE_PROPERTY_NOTIFY                       0x10
-#define BLE_PROPERTY_INDICATE                     0x20
-
+#define BLE_ATTRIBUTE_MAX_VALUE_LENGTH            19
 
 class BLEAttribute
 {
@@ -21,13 +16,13 @@ class BLEAttribute
 
     unsigned short type();
 
-    unsigned short handle();
-    void setHandle(unsigned short handle);
+    static unsigned char numAttributes();
 
   private:
-    const char*    _uuid;
-    unsigned short _type;
-    unsigned short _handle;
+    static unsigned char _numAttributes;
+
+    const char*          _uuid;
+    unsigned short       _type;
 };
 
 #endif

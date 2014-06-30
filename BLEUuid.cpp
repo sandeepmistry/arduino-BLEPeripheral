@@ -24,10 +24,10 @@ const char* BLEUuid::str() {
   return this->_str;
 }
 
-char* BLEUuid::data() {
+const unsigned char* BLEUuid::data() {
   return this->_data;
 }
 
-unsigned int BLEUuid::length() {
+unsigned char BLEUuid::length() {
   return this->_length;
 }

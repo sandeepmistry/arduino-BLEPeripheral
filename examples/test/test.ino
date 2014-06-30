@@ -1,4 +1,3 @@
-#include <SPI.h>
 
 //#define SHOW_FREE_MEMORY
 
@@ -6,6 +5,7 @@
 #include <MemoryFree.h>
 #endif
 
+#include <SPI.h>
 #include <BLEPeripheral.h>
 
 #define BLE_REQ 10
@@ -15,8 +15,8 @@
 BLEPeripheral     blePeripheral        = BLEPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
 
 BLEService        test1Service         = BLEService("fff0");
-BLECharacteristic test1Characteristic1 = BLECharacteristic("fff1", BLE_PROPERTY_READ | BLE_PROPERTY_WRITE | BLE_PROPERTY_WRITE_WITHOUT_RESPONSE | BLE_PROPERTY_NOTIFY | BLE_PROPERTY_INDICATE, 2);
-BLEDescriptor     test1Descriptor      = BLEDescriptor("2901", 7);
+BLECharacteristic test1Characteristic  = BLECharacteristic("fff1", BLEPropertyRead | BLEPropertyWrite | BLEPropertyNotify /*BLEPropertyRead | BLEPropertyWrite | BLEPropertyWriteWithoutResponse | BLEPropertyNotify | BLEPropertyIndicate*/, 2);
+BLEDescriptor     test1Descriptor      = BLEDescriptor("2901", "counter");
 
 void setup() {                
   Serial.begin(115200);
@@ -33,11 +33,10 @@ void setup() {
   blePeripheral.setAppearance(0x0080);
 
   blePeripheral.addAttribute(test1Service);
-  blePeripheral.addAttribute(test1Characteristic1);
+  blePeripheral.addAttribute(test1Characteristic);
   blePeripheral.addAttribute(test1Descriptor);
 
-  test1Characteristic1.setValue("yo", 2);
-  test1Descriptor.setValue("counter", 7);
+  test1Characteristic.setValue("yo");
 
   blePeripheral.begin();
   
@@ -53,25 +52,23 @@ void loop() {
   blePeripheral.poll();
 
   static unsigned short s = 0;
-  static unsigned long last_sent = 0;
+  static unsigned long long last_sent = 0;
 
-  if (blePeripheral.isConnected()) {
-    if (test1Characteristic1.valueUpdated()) {
-      Serial.println(F("counter written, reset"));
+  if (test1Characteristic.hasNewValue()) {
+    Serial.println(F("counter written, reset"));
 
-      last_sent = 0;
-      s = 0;
-    }
+    last_sent = 0;
+    s = 0;
+  }
 
-    if ((millis() - 1000) > last_sent) {
-      last_sent = millis();
+  if (millis() > 1000 && (millis() - 1000) > last_sent) {
+    last_sent = millis();
 
-      s++;
+    s++;
 
-      Serial.print(F("counter = "));
-      Serial.println(s, DEC);
+    Serial.print(F("counter = "));
+    Serial.println(s, DEC);
 
-      test1Characteristic1.setValue((char *)&s, 2);
-    }
+    test1Characteristic.setValue((unsigned char *)&s, 2);
   }
 }

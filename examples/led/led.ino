@@ -8,9 +8,9 @@
 BLEPeripheral      blePeripheral       = BLEPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
 
 BLEService        ledService           = BLEService("19b10000e8f2537e4f6cd104768a1214");
-BLECharacteristic switchCharacteristic = BLECharacteristic("19b10001e8f2537e4f6cd104768a1214", BLE_PROPERTY_READ | BLE_PROPERTY_WRITE, 1);
+BLECharacteristic switchCharacteristic = BLECharacteristic("19b10001e8f2537e4f6cd104768a1214", BLEPropertyRead | BLEPropertyWrite, 1);
 
-char switchValue[1];
+unsigned char switchValue[1];
 
 void setup() {                
   Serial.begin(115200);
@@ -34,15 +34,13 @@ void setup() {
 void loop() {
   blePeripheral.poll();
 
-  if (blePeripheral.isConnected()) {
-    if (switchCharacteristic.valueUpdated()) {
-      if (switchCharacteristic.value()[0]) {
-        Serial.println(F("LED on"));
-        digitalWrite(3, HIGH);
-      } else {
-        Serial.println(F("LED off"));
-        digitalWrite(3, LOW);
-      }
+  if (switchCharacteristic.hasNewValue()) {
+    if (switchCharacteristic.value()[0]) {
+      Serial.println(F("LED on"));
+      digitalWrite(3, HIGH);
+    } else {
+      Serial.println(F("LED off"));
+      digitalWrite(3, LOW);
     }
   }
 }

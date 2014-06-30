@@ -1,155 +1,104 @@
-#include "BLEPeripheral.h"
+#if ARDUINO >= 100
+  #include "Arduino.h"
+#else
+  #include "WProgram.h"
+#endif
 
 #include "BLECharacteristic.h"
 
-extern struct aci_state_t aci_state;
-
-BLECharacteristic::BLECharacteristic(const char* uuid, char properties, unsigned int valueSize)
-  : BLEAttribute(uuid, BLE_TYPE_CHARACTERISTIC)
+BLECharacteristic::BLECharacteristic(const char* uuid, unsigned char properties, unsigned char valueSize) :
+  BLEAttribute(uuid, BLETypeCharacteristic),
+  _properties(properties),
+  _valueSize(min(valueSize, BLE_ATTRIBUTE_MAX_VALUE_LENGTH)),
+  _valueLength(0),
+  _hasNotifySubscriber(false),
+  _hasIndicateSubscriber(false),
+  _hasNewValue(false),
+  _listener(NULL)
 {
-  this->_properties = properties;
-  this->_valueSize = min(valueSize, BLE_CHARACTERISTIC_MAX_VALUE_LENGTH);
-  this->_valueLength = 0;
-
-  this->_valueHandle = 0;
-  this->_configHandle = 0;
-
-  this->_pipeStart = 0;
-  this->_txPipe = 0;
-  this->_txAckPipe = 0;
-  this->_rxPipe = 0;
-  this->_rxAckPipe = 0;
-  this->_setPipe = 0;
-
-  this->_valueUpdated = false;
-  this->_isNotifySubscribed = false;
-  this->_isIndicateSubscribed = false;
+  _value = (unsigned char*)malloc(this->_valueSize);
 }
 
-char BLECharacteristic::properties() {
+BLECharacteristic::BLECharacteristic(const char* uuid, unsigned char properties, char* value) :
+  BLEAttribute(uuid, BLETypeCharacteristic),
+  _properties(properties),
+  _valueSize(min(strlen(value), BLE_ATTRIBUTE_MAX_VALUE_LENGTH)),
+  _valueLength(0),
+  _hasNotifySubscriber(false),
+  _hasIndicateSubscriber(false),
+  _hasNewValue(false),
+  _listener(NULL)
+{
+  _value = (unsigned char*)malloc(this->_valueSize);
+  this->setValue(value);
+}
+
+BLECharacteristic::~BLECharacteristic() {
+  if (this->_value) {
+    free(this->_value);
+  }
+}
+
+unsigned char BLECharacteristic::properties() {
   return this->_properties;
 }
 
-unsigned int BLECharacteristic::valueSize() {
+unsigned char BLECharacteristic::valueSize() {
   return this->_valueSize;
 }
 
-char* BLECharacteristic::value() {
+unsigned const char* BLECharacteristic::value() {
   return this->_value;
 }
 
-unsigned int BLECharacteristic::valueLength() {
+unsigned char BLECharacteristic::valueLength() {
   return this->_valueLength;
 }
 
-void BLECharacteristic::setValue(char value[], unsigned int length) {
+void BLECharacteristic::setValue(const unsigned char value[], unsigned char length) {
   this->_valueLength = min(length, this->_valueSize);
 
   memcpy(this->_value, value, this->_valueLength);
 
-  if (this->_setPipe) {
-    BLEPeripheral::instance()->setLocalData(this->_setPipe, value, length);
-  }
-
-  if (this->_txPipe && this->isNotifySubscribed()) {
-    BLEPeripheral::instance()->sendData(this->_txPipe, value, length);
-  }
-
-  if (this->_txAckPipe && this->isIndicateSubscribed()) {
-    BLEPeripheral::instance()->sendData(this->_txAckPipe, value, length);
+  if (this->_listener) {
+    _listener->characteristicValueUpdated(*this);
   }
 }
 
-unsigned short BLECharacteristic::valueHandle() {
-  return this->_valueHandle;
+void BLECharacteristic::setValue(const char* value) {
+  this->setValue((const unsigned char *)value, strlen(value));
 }
 
-void BLECharacteristic::setValueHandle(unsigned short valueHandle) {
-  this->_valueHandle = valueHandle;
+bool BLECharacteristic::hasNotifySubscriber() {
+  this->_hasNotifySubscriber;
 }
 
-unsigned short BLECharacteristic::configHandle() {
-  return this->_configHandle;
+void BLECharacteristic::setHasNotifySubscriber(bool hasNotifySubscriber) {
+  this->_hasNotifySubscriber = hasNotifySubscriber;
 }
 
-void BLECharacteristic::setConfigHandle(unsigned short configHandle) {
-  this->_configHandle = configHandle;
+bool BLECharacteristic::hasIndicateSubscriber() {
+  return this->_hasIndicateSubscriber;
 }
 
-char BLECharacteristic::pipeStart() {
-  return this->_pipeStart;
+void BLECharacteristic::setHasIndicateSubscriber(bool hasIndicateSubscriber) {
+  this->_hasIndicateSubscriber = hasIndicateSubscriber;
 }
 
-void BLECharacteristic::setPipeStart(char pipeStart) {
-  this->_pipeStart = pipeStart;
-}
+bool BLECharacteristic::hasNewValue() {
+  bool hasNewValue = this->_hasNewValue;
 
-char BLECharacteristic::txPipe() {
-  return this->_txPipe;
-}
-
-void BLECharacteristic::setTxPipe(char txPipe) {
-  this->_txPipe = txPipe;
-}
-
-char BLECharacteristic::txAckPipe() {
-  return this->_txAckPipe;
-}
-
-void BLECharacteristic::setTxAckPipe(char txAckPipe) {
-  this->_txAckPipe = txAckPipe;
-}
-
-char BLECharacteristic::setPipe() {
-  return this->_setPipe;
-}
-
-void BLECharacteristic::setSetPipe(char setPipe) {
-  this->_setPipe = setPipe;
-}
-
-char BLECharacteristic::rxPipe() {
-  return this->_rxPipe;
-}
-
-void BLECharacteristic::setRxPipe(char rxPipe) {
-  this->_rxPipe = rxPipe;
-}
-
-char BLECharacteristic::rxAckPipe() {
-  return this->_rxAckPipe;
-}
-
-void BLECharacteristic::setRxAckPipe(char rxAckPipe) {
-  this->_rxAckPipe = rxAckPipe;
-}
-
-bool BLECharacteristic::valueUpdated() {
-  bool valueUpdated = this->_valueUpdated;
-
-  if (valueUpdated) {
-    this->_valueUpdated = false;
+  if (hasNewValue) {
+    this->_hasNewValue = false;
   }
 
-  return valueUpdated;
+  return hasNewValue;
 }
 
-void BLECharacteristic::setValueUpdated(bool valueUpdated) {
-  this->_valueUpdated = valueUpdated;
+void BLECharacteristic::setHasNewValue(bool hasNewValue) {
+  this->_hasNewValue = hasNewValue;
 }
 
-bool BLECharacteristic::isNotifySubscribed() {
-  return this->_isNotifySubscribed;
-}
-
-void BLECharacteristic::setIsNotifySubscribed(bool isNotifySubscribed) {
-  this->_isNotifySubscribed = isNotifySubscribed;
-}
-
-bool BLECharacteristic::isIndicateSubscribed() {
-  return this->_isIndicateSubscribed;
-}
-
-void BLECharacteristic::setIsIndicateSubscribed(bool isIndicateSubscribed) {
-  this->_isIndicateSubscribed = isIndicateSubscribed;
+void BLECharacteristic::setCharacteristicValueListener(BLECharacteristicValueListener& listener) {
+  this->_listener = &listener;
 }
