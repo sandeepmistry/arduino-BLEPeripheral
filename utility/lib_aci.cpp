@@ -44,7 +44,7 @@ hal_aci_data_t  msg_to_send;
 
 
 static services_pipe_type_mapping_t * p_services_pipe_type_map;
-static hal_aci_data_t *               p_setup_msgs;
+// static hal_aci_data_t *               p_setup_msgs;
 
 
 
@@ -205,7 +205,7 @@ void lib_aci_init(aci_state_t *aci_stat, bool debug)
   
   p_services_pipe_type_map = aci_stat->aci_setup_info.services_pipe_type_mapping;
   
-  p_setup_msgs             = aci_stat->aci_setup_info.setup_msgs;
+  // p_setup_msgs             = aci_stat->aci_setup_info.setup_msgs;
   
   
   hal_aci_tl_init(&aci_stat->aci_pins, debug);

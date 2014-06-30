@@ -61,7 +61,7 @@ typedef struct aci_setup_info_t
 {
   services_pipe_type_mapping_t *services_pipe_type_mapping;
   uint8_t                       number_of_pipes;
-  hal_aci_data_t               *setup_msgs;
+  hal_aci_data_t               **setup_msgs;
   uint8_t                       num_setup_msgs;
 } aci_setup_info_t;
 

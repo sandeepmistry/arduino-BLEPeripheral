@@ -54,8 +54,8 @@ static bool aci_setup_fill(aci_state_t *aci_stat, uint8_t *num_cmd_offset)
   while (*num_cmd_offset < aci_stat->aci_setup_info.num_setup_msgs)
   {
     //Add 2 bytes to the length byte for status byte, length for the total number of bytes
-    memcpy(&msg_to_send, &(aci_stat->aci_setup_info.setup_msgs[*num_cmd_offset]), 
-      (aci_stat->aci_setup_info.setup_msgs[*num_cmd_offset].buffer[0]+2)); 
+    memcpy(&msg_to_send, aci_stat->aci_setup_info.setup_msgs[*num_cmd_offset], 
+      aci_stat->aci_setup_info.setup_msgs[*num_cmd_offset]->buffer[0] + 2); 
 
     //Put the Setup ACI message in the command queue
     if (!hal_aci_tl_send(&msg_to_send))
