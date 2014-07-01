@@ -45,6 +45,8 @@ class nRF8001 : public BLECharacteristicValueChangeListener
                 unsigned char numAttributes);
     void poll();
 
+    void disconnect();
+
     void characteristicValueChanged(BLECharacteristic& characteristic);
 
   private:

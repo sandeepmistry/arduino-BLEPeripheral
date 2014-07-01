@@ -8,6 +8,8 @@
 
 #include "nRF8001.h"
 
+//#define NRF_8001_DEBUG
+
 struct nRFSetupMsgData {
   unsigned char length;
   unsigned char cmd;
@@ -120,6 +122,12 @@ nRF8001::~nRF8001() {
   }
 
   if (this->_aciState.aci_setup_info.setup_msgs) {
+    for (int i = 0; i < this->_aciState.aci_setup_info.num_setup_msgs; i++) {
+      if (this->_aciState.aci_setup_info.setup_msgs[i]) {
+        free(this->_aciState.aci_setup_info.setup_msgs[i]);
+      }
+    }
+
     free(this->_aciState.aci_setup_info.setup_msgs);
   }
 }
@@ -131,7 +139,6 @@ void nRF8001::begin(const unsigned char* advertisementData,
                       BLEAttribute** attributes,
                       unsigned char numAttributes)
 {
-
   hal_aci_data_t* setupMsg;
   struct nRFSetupMsgData* setupMsgData;
   int setupMsgIndex = 0;
@@ -542,20 +549,22 @@ void nRF8001::begin(const unsigned char* advertisementData,
   setupMsgData->data[1] = (crcSeed >> 8) & 0xff;
   setupMsgData->data[2] = crcSeed & 0xff;
 
-  // Serial.println();
-  // for (int i = 0; i < this->_aciState.aci_setup_info.num_setup_msgs; i++) {
-  //   setupMsg = this->_aciState.aci_setup_info.setup_msgs[i];
+#ifdef NRF_8001_DEBUG
+  Serial.println();
+  for (int i = 0; i < this->_aciState.aci_setup_info.num_setup_msgs; i++) {
+    setupMsg = this->_aciState.aci_setup_info.setup_msgs[i];
 
-  //   for (int j = 0; j < (setupMsg->buffer[0] + 1); j++) {
-  //     if ((setupMsg->buffer[j] & 0xf0) == 00) {
-  //       Serial.print("0");
-  //     }
+    for (int j = 0; j < (setupMsg->buffer[0] + 1); j++) {
+      if ((setupMsg->buffer[j] & 0xf0) == 00) {
+        Serial.print("0");
+      }
 
-  //     Serial.print(setupMsg->buffer[j], HEX);
-  //     Serial.print(" ");
-  //   }
-  //   Serial.println();
-  // }
+      Serial.print(setupMsg->buffer[j], HEX);
+      Serial.print(" ");
+    }
+    Serial.println();
+  }
+#endif
 
   lib_aci_init(&this->_aciState, false);
 
@@ -581,19 +590,25 @@ void nRF8001::poll() {
             /**
             When the device is in the setup mode
             */
+#ifdef NRF_8001_DEBUG
             Serial.println(F("Evt Device Started: Setup"));
+#endif
             this->_setupRequired = true;
             break;
 
           case ACI_DEVICE_STANDBY:
+#ifdef NRF_8001_DEBUG
             Serial.println(F("Evt Device Started: Standby"));
+#endif
             //Looking for an iPhone by sending radio advertisements
             //When an iPhone connects to us we will get an ACI_EVT_CONNECTED event from the nRF8001
             if (aciEvt->params.device_started.hw_error) {
               delay(20); //Handle the HW error event correctly.
             } else {
               lib_aci_connect(0/* in seconds : 0 means forever */, 0x0050 /* advertising interval 50ms*/);
+#ifdef NRF_8001_DEBUG
               Serial.println(F("Advertising started"));
+#endif
             }
             break;
         }
@@ -606,29 +621,75 @@ void nRF8001::poll() {
           //ACI ReadDynamicData and ACI WriteDynamicData will have status codes of
           //TRANSACTION_CONTINUE and TRANSACTION_COMPLETE
           //all other ACI commands will have status code of ACI_STATUS_SCUCCESS for a successful command
+#ifdef NRF_8001_DEBUG
           Serial.print(F("ACI Command "));
           Serial.println(aciEvt->params.cmd_rsp.cmd_opcode, HEX);
           Serial.print(F("Evt Cmd respone: Status "));
           Serial.println(aciEvt->params.cmd_rsp.cmd_status, HEX);
+#endif
+        } else {
+          switch (aciEvt->params.cmd_rsp.cmd_opcode) {
+            case ACI_CMD_GET_DEVICE_VERSION:
+              break;
+
+            case ACI_CMD_GET_DEVICE_ADDRESS:
+#ifdef NRF_8001_DEBUG
+              Serial.print(F("Device address = "));
+              Serial.print(aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_own[5], HEX);
+              Serial.print(F(":"));
+              Serial.print(aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_own[4], HEX);
+              Serial.print(F(":"));
+              Serial.print(aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_own[3], HEX);
+              Serial.print(F(":"));
+              Serial.print(aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_own[2], HEX);
+              Serial.print(F(":"));
+              Serial.print(aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_own[1], HEX);
+              Serial.print(F(":"));
+              Serial.print(aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_own[0], HEX);
+              Serial.println();
+
+              Serial.print(F("Device address type = "));
+              Serial.println(aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_type, DEC);
+#endif
+              break;
+
+            case ACI_CMD_GET_BATTERY_LEVEL:
+#ifdef NRF_8001_DEBUG
+              Serial.print(F("Battery level = "));
+              Serial.println(aciEvt->params.cmd_rsp.params.get_battery_level.battery_level * 0.00352);
+#endif
+              break;
+
+            case ACI_CMD_GET_TEMPERATURE:
+#ifdef NRF_8001_DEBUG
+              Serial.print(F("Temperature = "));
+              Serial.println(aciEvt->params.cmd_rsp.params.get_temperature.temperature_value / 4.0);
+#endif
+              break;
+          }
         }
         break;
 
       case ACI_EVT_CONNECTED:
+#ifdef NRF_8001_DEBUG
         Serial.println(F("Evt Connected"));
+#endif
         this->_aciState.data_credit_available = this->_aciState.data_credit_total;
         break;
 
       case ACI_EVT_PIPE_STATUS:
-        // Serial.println(F("Evt Pipe Status "));
+#ifdef NRF_8001_DEBUG
+        Serial.println(F("Evt Pipe Status "));
 
-        // uint64_t openPipes;
-        // uint64_t closedPipes;
+        uint64_t openPipes;
+        uint64_t closedPipes;
 
-        // memcpy(&openPipes, aciEvt->params.pipe_status.pipes_open_bitmap, sizeof(openPipes));
-        // memcpy(&closedPipes, aciEvt->params.pipe_status.pipes_closed_bitmap, sizeof(closedPipes));
+        memcpy(&openPipes, aciEvt->params.pipe_status.pipes_open_bitmap, sizeof(openPipes));
+        memcpy(&closedPipes, aciEvt->params.pipe_status.pipes_closed_bitmap, sizeof(closedPipes));
 
-        // Serial.println((unsigned long)openPipes, HEX);
-        // Serial.println((unsigned long)closedPipes, HEX);
+        Serial.println((unsigned long)openPipes, HEX);
+        Serial.println((unsigned long)closedPipes, HEX);
+#endif
 
         for (int i = 0; i < this->_numPipeInfo; i++) {
           struct nRF8001PipeInfo* pipeInfo = &this->_pipeInfo[i];
@@ -658,27 +719,32 @@ void nRF8001::poll() {
         break;
 
       case ACI_EVT_DISCONNECTED:
+#ifdef NRF_8001_DEBUG
         Serial.println(F("Evt Disconnected/Advertising timed out"));
+#endif
         lib_aci_connect(0/* in seconds  : 0 means forever */, 0x0050 /* advertising interval 50ms*/);
+#ifdef NRF_8001_DEBUG
         Serial.println(F("Advertising started."));
+#endif
         break;
 
       case ACI_EVT_DATA_RECEIVED: {
         uint8_t dataLen = aciEvt->len - 2;
         uint8_t pipe = aciEvt->params.data_received.rx_data.pipe_number;
+#ifdef NRF_8001_DEBUG
+        Serial.print(F("Data Received, pipe = "));
+        Serial.println(aciEvt->params.data_received.rx_data.pipe_number, DEC);
 
-        // Serial.print(F("Data Received, pipe = "));
-        // Serial.println(aciEvt->params.data_received.rx_data.pipe_number, DEC);
+        for (int i = 0; i < dataLen; i++) {
+          if ((aciEvt->params.data_received.rx_data.aci_data[i] & 0xf0) == 00) {
+            Serial.print("0");
+          }
 
-        // for (int i = 0; i < dataLen; i++) {
-        //   if ((aciEvt->params.data_received.rx_data.aci_data[i] & 0xf0) == 00) {
-        //     Serial.print("0");
-        //   }
-
-        //   Serial.print(aciEvt->params.data_received.rx_data.aci_data[i], HEX);
-        //   Serial.print(F(" "));
-        // }
-        // Serial.println();
+          Serial.print(aciEvt->params.data_received.rx_data.aci_data[i], HEX);
+          Serial.print(F(" "));
+        }
+        Serial.println();
+#endif
 
         for (int i = 0; i < this->_numPipeInfo; i++) {
           struct nRF8001PipeInfo* pipeInfo = &this->_pipeInfo[i];
@@ -704,10 +770,12 @@ void nRF8001::poll() {
 
       case ACI_EVT_PIPE_ERROR:
         //See the appendix in the nRF8001 Product Specication for details on the error codes
+#ifdef NRF_8001_DEBUG
         Serial.print(F("ACI Evt Pipe Error: Pipe #:"));
         Serial.print(aciEvt->params.pipe_error.pipe_number, DEC);
         Serial.print(F("  Pipe Error Code: 0x"));
         Serial.println(aciEvt->params.pipe_error.error_code, HEX);
+#endif
 
         //Increment the credit available as the data packet was not sent.
         //The pipe error also represents the Attribute protocol Error Response sent from the peer and that should not be counted
@@ -718,6 +786,7 @@ void nRF8001::poll() {
         break;
 
       case ACI_EVT_HW_ERROR:
+#ifdef NRF_8001_DEBUG
         Serial.print(F("HW error: "));
         Serial.println(aciEvt->params.hw_error.line_num, DEC);
 
@@ -725,8 +794,11 @@ void nRF8001::poll() {
           Serial.write(aciEvt->params.hw_error.file_name[counter]); //uint8_t file_name[20];
         }
         Serial.println();
+#endif
         lib_aci_connect(0/* in seconds, 0 means forever */, 0x0050 /* advertising interval 50ms*/);
+#ifdef NRF_8001_DEBUG
         Serial.println(F("Advertising started."));
+#endif
         break;
     }
   } else {
@@ -745,6 +817,12 @@ void nRF8001::poll() {
     this->_setupRequired = false;
 
     this->_isSetup = true;
+
+    // lib_aci_get_address();
+
+    // lib_aci_get_temperature();
+
+    // lib_aci_get_battery_level();
   }
 }
 
@@ -757,15 +835,19 @@ void nRF8001::characteristicValueChanged(BLECharacteristic& characteristic) {
         lib_aci_set_local_data(&this->_aciState, pipeInfo->setPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
       }
 
-      if (pipeInfo->txPipe && pipeInfo->txPipeOpen) {
+      if (pipeInfo->txPipe && pipeInfo->txPipeOpen && lib_aci_get_nb_available_credits(&this->_aciState)) {
         lib_aci_send_data(pipeInfo->txPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
       }
 
-      if (pipeInfo->txAckPipe && pipeInfo->txAckPipeOpen) {
+      if (pipeInfo->txAckPipe && pipeInfo->txAckPipeOpen && lib_aci_get_nb_available_credits(&this->_aciState)) {
         lib_aci_send_data(pipeInfo->txAckPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
       }
 
       break;
     }
   }
+}
+
+void nRF8001::disconnect() {
+  lib_aci_disconnect(&this->_aciState, ACI_REASON_TERMINATE);
 }

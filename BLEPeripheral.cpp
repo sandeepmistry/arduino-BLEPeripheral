@@ -108,3 +108,7 @@ void BLEPeripheral::addAttribute(BLEAttribute& attribute) {
   this->_attributes[this->_numAttributes] = &attribute;
   this->_numAttributes++;
 }
+
+void BLEPeripheral::disconnect() {
+  this->_nRF8001.disconnect();
+}

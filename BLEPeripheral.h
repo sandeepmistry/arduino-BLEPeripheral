@@ -32,6 +32,8 @@ class BLEPeripheral
 
     void addAttribute(BLEAttribute& attribute);
 
+    void disconnect();
+
   private:
     nRF8001                   _nRF8001;
 
