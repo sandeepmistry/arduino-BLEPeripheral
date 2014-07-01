@@ -1,5 +1,5 @@
 
-#define SHOW_FREE_MEMORY
+//#define SHOW_FREE_MEMORY
 
 #ifdef SHOW_FREE_MEMORY
 #include <MemoryFree.h>
@@ -12,10 +12,10 @@
 #define BLE_RDY 2
 #define BLE_RST 9
 
-BLEPeripheral     blePeripheral                         = BLEPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
+BLEPeripheral                      blePeripheral        = BLEPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
 
 BLEService                         test1Service         = BLEService("fff0");
-BLECharacteristicT<unsigned short> test1Characteristic  = BLECharacteristicT<unsigned short>("fff1", BLEPropertyRead | BLEPropertyWrite | BLEPropertyWriteWithoutResponse | BLEPropertyNotify | BLEPropertyIndicate);
+BLECharacteristicT<unsigned short> test1Characteristic  = BLECharacteristicT<unsigned short>("fff1", BLEPropertyRead | BLEPropertyWrite | BLEPropertyWriteWithoutResponse | BLEPropertyNotify /*| BLEPropertyIndicate*/);
 BLEDescriptor                      test1Descriptor      = BLEDescriptor("2901", "counter");
 
 void setup() {                
