@@ -2,6 +2,8 @@
 
 #include "BLEPeripheral.h"
 
+//#define BLE_PERIPHERAL_DEBUG
+
 #define DEFAULT_DEVICE_NAME "Arduino"
 #define DEFAULT_APPEARANCE  0x0000
 
@@ -17,8 +19,22 @@ BLEPeripheral::BLEPeripheral(unsigned char req, unsigned char rdy, unsigned char
 
   _genericAccessService("1800"),
   _deviceNameCharacteristic("2a00", BLEPropertyRead, 19),
-  _appearanceCharacteristic("2a01", BLEPropertyRead, 2)
+  _appearanceCharacteristic("2a01", BLEPropertyRead, 2),
+
+  _isConnected(false),
+  _connectHandler(NULL),
+  _disconnectHandler(NULL)
 {
+  this->setDeviceName(DEFAULT_DEVICE_NAME);
+  this->setAppearance(DEFAULT_APPEARANCE);
+
+  this->_nRF8001.setEventListener(this);
+}
+
+BLEPeripheral::~BLEPeripheral() {
+  if (this->_attributes) {
+    free(this->_attributes);
+  }
 }
 
 void BLEPeripheral::begin() {
@@ -67,6 +83,8 @@ void BLEPeripheral::begin() {
   }
 
   this->_nRF8001.begin(advertisementData, advertisementDataLength, scanData, scanDataLength, this->_attributes, this->_numAttributes);
+
+  this->_nRF8001.requestAddress();
 }
 
 void BLEPeripheral::poll() {
@@ -82,7 +100,7 @@ void BLEPeripheral::setManufacturerData(const unsigned char* manufacturerData, u
   this->_manufacturerDataLength = manufacturerDataLength;
 }
 
-void BLEPeripheral::setLocalName(const char *localName) {
+void BLEPeripheral::setLocalName(const char* localName) {
   this->_localName = localName;
 }
 
@@ -111,4 +129,52 @@ void BLEPeripheral::addAttribute(BLEAttribute& attribute) {
 
 void BLEPeripheral::disconnect() {
   this->_nRF8001.disconnect();
+}
+
+bool BLEPeripheral::isConnected() {
+  return this->_isConnected;
+}
+
+void BLEPeripheral::setConnectHandler(BLEPeripheralConnectHandler connectHandler) {
+  this->_connectHandler = connectHandler;
+}
+
+void BLEPeripheral::setDisconnectHandler(BLEPeripheralDisconnectHandler disconnectHandler) {
+  this->_disconnectHandler = disconnectHandler;
+}
+
+void BLEPeripheral::nRF8001Connected(nRF8001& nRF8001, const char* address) {
+#ifdef BLE_PERIPHERAL_DEBUG
+  Serial.print(F("Peripheral connected to central: "));
+  Serial.println(address);
+#endif
+  this->_isConnected = true;
+
+  if (this->_connectHandler) {
+    this->_connectHandler(address);
+  }
+}
+
+void BLEPeripheral::nRF8001Disconnected(nRF8001& nRF8001) {
+#ifdef BLE_PERIPHERAL_DEBUG
+  Serial.println(F("Peripheral disconnected from central"));
+#endif
+  this->_isConnected = false;
+
+  if (this->_disconnectHandler) {
+    this->_disconnectHandler();
+  }
+}
+
+void BLEPeripheral::nRF8001AddressReceived(nRF8001& nRF8001, const char* address) {
+#ifdef BLE_PERIPHERAL_DEBUG
+  Serial.print(F("Peripheral address: "));
+  Serial.println(address);
+#endif
+}
+
+void BLEPeripheral::nRF8001TemperatureReceived(nRF8001& nRF8001, float temperature) {
+}
+
+void BLEPeripheral::nRF8001BatteryLevelReceived(nRF8001& nRF8001, float batteryLevel) {
 }

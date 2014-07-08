@@ -3,11 +3,15 @@
 
 #include "BLEAttribute.h"
 
-#define BLEPropertyRead                         0x02
-#define BLEPropertyWriteWithoutResponse         0x04
-#define BLEPropertyWrite                        0x08
-#define BLEPropertyNotify                       0x10
-#define BLEPropertyIndicate                     0x20
+enum BLEProperty {
+  BLEPropertyRead                 = 0x02,
+  BLEPropertyWriteWithoutResponse = 0x04,
+  BLEPropertyWrite                = 0x08,
+  BLEPropertyNotify               = 0x10,
+  BLEPropertyIndicate             = 0x20
+};
+
+typedef void (*BLECharacteristicNewValueHandler)();
 
 class BLECharacteristic;
 
@@ -21,7 +25,7 @@ class BLECharacteristic : public BLEAttribute
 {
   public:
     BLECharacteristic(const char* uuid, unsigned char properties, unsigned char valueSize);
-    BLECharacteristic(const char* uuid, unsigned char properties, char* value);
+    BLECharacteristic(const char* uuid, unsigned char properties, const char* value);
 
     virtual ~BLECharacteristic();
 
@@ -42,6 +46,7 @@ class BLECharacteristic : public BLEAttribute
 
     bool hasNewValue();
     void setHasNewValue(bool hasNewValue);
+    void setNewValueHandler(BLECharacteristicNewValueHandler newValueHandler);
 
     void setCharacteristicValueListener(BLECharacteristicValueChangeListener& listener);
 
@@ -54,6 +59,7 @@ class BLECharacteristic : public BLEAttribute
     bool                                  _hasNotifySubscriber;
     bool                                  _hasIndicateSubscriber;
     bool                                  _hasNewValue;
+    BLECharacteristicNewValueHandler      _newValueHandler;
     BLECharacteristicValueChangeListener* _listener;
 };
 

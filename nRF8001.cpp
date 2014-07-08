@@ -10,7 +10,7 @@
 
 //#define NRF_8001_DEBUG
 
-struct nRFSetupMsgData {
+struct setupMsgData {
   unsigned char length;
   unsigned char cmd;
   unsigned char type;
@@ -98,7 +98,9 @@ nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
   _isSetup(false),
 
   _pipeInfo(NULL),
-  _numPipeInfo(0)
+  _numPipeInfo(0),
+
+  _eventListener(NULL)
 {
   this->_aciState.aci_pins.reqn_pin               = req;
   this->_aciState.aci_pins.rdyn_pin               = rdy;
@@ -132,6 +134,12 @@ nRF8001::~nRF8001() {
   }
 }
 
+
+
+void nRF8001::setEventListener(nRF8001EventListener* eventListener) {
+  this->_eventListener = eventListener;
+}
+
 void nRF8001::begin(const unsigned char* advertisementData,
                       unsigned char advertisementDataLength,
                       const unsigned char* scanData,
@@ -140,7 +148,7 @@ void nRF8001::begin(const unsigned char* advertisementData,
                       unsigned char numAttributes)
 {
   hal_aci_data_t* setupMsg;
-  struct nRFSetupMsgData* setupMsgData;
+  struct setupMsgData* setupMsgData;
   int setupMsgIndex = 0;
   unsigned char numPipedCharacteristics = 0;
 
@@ -172,7 +180,7 @@ void nRF8001::begin(const unsigned char* advertisementData,
   }
 
   this->_aciState.aci_setup_info.setup_msgs = (hal_aci_data_t**)malloc(sizeof(hal_aci_data_t*) * this->_aciState.aci_setup_info.num_setup_msgs);
-  this->_pipeInfo = (struct nRF8001PipeInfo*)malloc(sizeof(struct nRF8001PipeInfo) * numPipedCharacteristics);
+  this->_pipeInfo = (struct pipeInfo*)malloc(sizeof(struct pipeInfo) * numPipedCharacteristics);
 
 
   for (int i = 0; i < NB_BASE_SETUP_MESSAGES; i++) {
@@ -185,24 +193,24 @@ void nRF8001::begin(const unsigned char* advertisementData,
 
   if (advertisementData && advertisementDataLength) {
     setupMsg = this->_aciState.aci_setup_info.setup_msgs[2];
-    setupMsgData = (struct nRFSetupMsgData*)setupMsg->buffer;
+    setupMsgData = (struct setupMsgData*)setupMsg->buffer;
 
     setupMsgData->data[22] = 0x40;
 
     setupMsg = this->_aciState.aci_setup_info.setup_msgs[5];
-    setupMsgData = (struct nRFSetupMsgData*)setupMsg->buffer;
+    setupMsgData = (struct setupMsgData*)setupMsg->buffer;
 
     memcpy(setupMsgData->data, advertisementData, advertisementDataLength);
   }
 
   if (scanData && scanDataLength) {
     setupMsg = this->_aciState.aci_setup_info.setup_msgs[3];
-    setupMsgData = (struct nRFSetupMsgData*)setupMsg->buffer;
+    setupMsgData = (struct setupMsgData*)setupMsg->buffer;
 
     setupMsgData->data[12] = 0x40;
 
     setupMsg = this->_aciState.aci_setup_info.setup_msgs[6];
-    setupMsgData = (struct nRFSetupMsgData*)setupMsg->buffer;
+    setupMsgData = (struct setupMsgData*)setupMsg->buffer;
 
     memcpy(setupMsgData->data, scanData, scanDataLength);
   }
@@ -222,7 +230,7 @@ void nRF8001::begin(const unsigned char* advertisementData,
 
       this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(14 + uuid.length());
       setupMsgIndex++;
-      setupMsgData = (struct nRFSetupMsgData*)setupMsg->buffer;
+      setupMsgData = (struct setupMsgData*)setupMsg->buffer;
 
       setupMsg->status_byte = 0;
       setupMsgData->length  = 12 + uuid.length();
@@ -250,9 +258,9 @@ void nRF8001::begin(const unsigned char* advertisementData,
     } else if (attribute->type() == BLETypeCharacteristic) {
       BLECharacteristic* characteristic = (BLECharacteristic *)attribute;
 
-      struct nRF8001PipeInfo* pipeInfo = &this->_pipeInfo[numPiped];
+      struct pipeInfo* pipeInfo = &this->_pipeInfo[numPiped];
 
-      memset(pipeInfo, 0, sizeof(struct nRF8001PipeInfo));
+      memset(pipeInfo, 0, sizeof(struct pipeInfo));
 
       pipeInfo->characteristic = characteristic;
 
@@ -294,7 +302,7 @@ void nRF8001::begin(const unsigned char* advertisementData,
       
       this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(17 + uuid.length());
       setupMsgIndex++;
-      setupMsgData = (struct nRFSetupMsgData*)setupMsg->buffer;
+      setupMsgData = (struct setupMsgData*)setupMsg->buffer;
 
       setupMsg->status_byte  = 0;
       setupMsgData->length   = 15 + uuid.length();
@@ -328,7 +336,7 @@ void nRF8001::begin(const unsigned char* advertisementData,
 
       this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(14 + characteristic->valueSize());
       setupMsgIndex++;
-      setupMsgData = (struct nRFSetupMsgData*)setupMsg->buffer;
+      setupMsgData = (struct setupMsgData*)setupMsg->buffer;
 
       setupMsg->status_byte  = 0;
       setupMsgData->length   = 12 + characteristic->valueSize();
@@ -357,7 +365,7 @@ void nRF8001::begin(const unsigned char* advertisementData,
         setupMsgData->data[0] |= 0x20;
       }
 
-      setupMsgData->data[2]  = characteristic->valueSize() + 1; // +1 -> fixed size
+      setupMsgData->data[2]  = characteristic->valueSize() + 1;
       setupMsgData->data[3]  = characteristic->valueLength();
 
       setupMsgData->data[4]  = (pipeInfo->valueHandle >> 8) & 0xff;
@@ -376,7 +384,7 @@ void nRF8001::begin(const unsigned char* advertisementData,
       if (characteristic->properties() & (BLEPropertyNotify | BLEPropertyIndicate)) {
         this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(16);
         setupMsgIndex++;
-        setupMsgData = (struct nRFSetupMsgData*)setupMsg->buffer;
+        setupMsgData = (struct setupMsgData*)setupMsg->buffer;
 
         setupMsg->status_byte  = 0;
         setupMsgData->length   = 14;
@@ -410,7 +418,7 @@ void nRF8001::begin(const unsigned char* advertisementData,
 
       this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(14 + descriptor->valueSize());
       setupMsgIndex++;
-      setupMsgData = (struct nRFSetupMsgData*)setupMsg->buffer;
+      setupMsgData = (struct setupMsgData*)setupMsg->buffer;
 
       setupMsg->status_byte  = 0;
       setupMsgData->length   = 12 + descriptor->valueSize();
@@ -442,7 +450,7 @@ void nRF8001::begin(const unsigned char* advertisementData,
   // terminator
   this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(6);
   setupMsgIndex++;
-  setupMsgData = (struct nRFSetupMsgData*)setupMsg->buffer;
+  setupMsgData = (struct setupMsgData*)setupMsg->buffer;
 
   setupMsg->status_byte  = 0;
   setupMsgData->length   = 4;
@@ -457,7 +465,7 @@ void nRF8001::begin(const unsigned char* advertisementData,
 
   // update number of piped handles
   setupMsg = this->_aciState.aci_setup_info.setup_msgs[1];
-  setupMsgData = (struct nRFSetupMsgData*)setupMsg->buffer;
+  setupMsgData = (struct setupMsgData*)setupMsg->buffer;
 
   setupMsgData->data[6] = numPiped;
   this->_numPipeInfo = numPiped;
@@ -466,11 +474,11 @@ void nRF8001::begin(const unsigned char* advertisementData,
   unsigned char pipeSetupMsgOffet  = 0;
   
   for (int i = 0; i < numPiped; i++) {
-    struct nRF8001PipeInfo pipeInfo = this->_pipeInfo[i];
+    struct pipeInfo pipeInfo = this->_pipeInfo[i];
 
     this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(15);
     setupMsgIndex++;
-    setupMsgData = (struct nRFSetupMsgData*)setupMsg->buffer;
+    setupMsgData = (struct setupMsgData*)setupMsg->buffer;
 
     setupMsg->status_byte  = 0;
     setupMsgData->length   = 13;
@@ -536,7 +544,7 @@ void nRF8001::begin(const unsigned char* advertisementData,
 
   this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(8);
   setupMsgIndex++;
-  setupMsgData = (struct nRFSetupMsgData*)setupMsg->buffer;
+  setupMsgData = (struct setupMsgData*)setupMsg->buffer;
 
   setupMsg->status_byte = 0;
 
@@ -632,48 +640,74 @@ void nRF8001::poll() {
             case ACI_CMD_GET_DEVICE_VERSION:
               break;
 
-            case ACI_CMD_GET_DEVICE_ADDRESS:
+            case ACI_CMD_GET_DEVICE_ADDRESS: {
+              char address[18];
+
+              sprintf(address, "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x",
+                aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_own[5],
+                aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_own[4],
+                aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_own[3],
+                aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_own[2],
+                aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_own[1],
+                aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_own[0]);
 #ifdef NRF_8001_DEBUG
               Serial.print(F("Device address = "));
-              Serial.print(aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_own[5], HEX);
-              Serial.print(F(":"));
-              Serial.print(aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_own[4], HEX);
-              Serial.print(F(":"));
-              Serial.print(aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_own[3], HEX);
-              Serial.print(F(":"));
-              Serial.print(aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_own[2], HEX);
-              Serial.print(F(":"));
-              Serial.print(aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_own[1], HEX);
-              Serial.print(F(":"));
-              Serial.print(aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_own[0], HEX);
-              Serial.println();
+              Serial.println(address);
 
               Serial.print(F("Device address type = "));
               Serial.println(aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_type, DEC);
 #endif
+              if (this->_eventListener) {
+                this->_eventListener->nRF8001AddressReceived(*this, address);
+              }
               break;
+            }
 
-            case ACI_CMD_GET_BATTERY_LEVEL:
+            case ACI_CMD_GET_BATTERY_LEVEL: {
+              float batteryLevel = aciEvt->params.cmd_rsp.params.get_battery_level.battery_level * 0.00352;
 #ifdef NRF_8001_DEBUG
               Serial.print(F("Battery level = "));
-              Serial.println(aciEvt->params.cmd_rsp.params.get_battery_level.battery_level * 0.00352);
+              Serial.println(batteryLevel);
 #endif
+              if (this->_eventListener) {
+                this->_eventListener->nRF8001BatteryLevelReceived(*this, batteryLevel);
+              }
               break;
+            }
 
-            case ACI_CMD_GET_TEMPERATURE:
+            case ACI_CMD_GET_TEMPERATURE: {
+              float temperature = aciEvt->params.cmd_rsp.params.get_temperature.temperature_value / 4.0;
 #ifdef NRF_8001_DEBUG
               Serial.print(F("Temperature = "));
-              Serial.println(aciEvt->params.cmd_rsp.params.get_temperature.temperature_value / 4.0);
+              Serial.println(temperature);
 #endif
+              if (this->_eventListener) {
+                this->_eventListener->nRF8001TemperatureReceived(*this, temperature);
+              }
               break;
+            }
           }
         }
         break;
 
       case ACI_EVT_CONNECTED:
+        char address[18];
+
+        sprintf(address, "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x",
+          aciEvt->params.connected.dev_addr[5],
+          aciEvt->params.connected.dev_addr[4],
+          aciEvt->params.connected.dev_addr[3],
+          aciEvt->params.connected.dev_addr[2],
+          aciEvt->params.connected.dev_addr[1],
+          aciEvt->params.connected.dev_addr[0]);
 #ifdef NRF_8001_DEBUG
-        Serial.println(F("Evt Connected"));
+        Serial.print(F("Evt Connected "));
+        Serial.println(address);
 #endif
+        if (this->_eventListener) {
+          this->_eventListener->nRF8001Connected(*this, address);
+        }
+
         this->_aciState.data_credit_available = this->_aciState.data_credit_total;
         break;
 
@@ -692,7 +726,7 @@ void nRF8001::poll() {
 #endif
 
         for (int i = 0; i < this->_numPipeInfo; i++) {
-          struct nRF8001PipeInfo* pipeInfo = &this->_pipeInfo[i];
+          struct pipeInfo* pipeInfo = &this->_pipeInfo[i];
           
           if (pipeInfo->txPipe) {
             bool txPipeOpen = lib_aci_is_pipe_available(&this->_aciState, pipeInfo->txPipe);
@@ -722,6 +756,10 @@ void nRF8001::poll() {
 #ifdef NRF_8001_DEBUG
         Serial.println(F("Evt Disconnected/Advertising timed out"));
 #endif
+        if (this->_eventListener) {
+          this->_eventListener->nRF8001Disconnected(*this);
+        }
+
         lib_aci_connect(0/* in seconds  : 0 means forever */, 0x0050 /* advertising interval 50ms*/);
 #ifdef NRF_8001_DEBUG
         Serial.println(F("Advertising started."));
@@ -747,17 +785,15 @@ void nRF8001::poll() {
 #endif
 
         for (int i = 0; i < this->_numPipeInfo; i++) {
-          struct nRF8001PipeInfo* pipeInfo = &this->_pipeInfo[i];
+          struct pipeInfo* pipeInfo = &this->_pipeInfo[i];
 
           if (pipeInfo->rxAckPipe == pipe || pipeInfo->rxPipe == pipe) {
-            pipeInfo->characteristic->setValue(aciEvt->params.data_received.rx_data.aci_data, dataLen);
-            pipeInfo->characteristic->setHasNewValue(true);
-
             if (pipeInfo->rxAckPipe == pipe) {
               lib_aci_send_ack(&this->_aciState, pipeInfo->rxAckPipe);
-
-              // lib_aci_send_nack(this->_aciState, pipeInfo->rxAckPipe, errorCode);
             }
+
+            pipeInfo->characteristic->setValue(aciEvt->params.data_received.rx_data.aci_data, dataLen);
+            pipeInfo->characteristic->setHasNewValue(true);
             break;
           }
         }
@@ -817,18 +853,12 @@ void nRF8001::poll() {
     this->_setupRequired = false;
 
     this->_isSetup = true;
-
-    // lib_aci_get_address();
-
-    // lib_aci_get_temperature();
-
-    // lib_aci_get_battery_level();
   }
 }
 
 void nRF8001::characteristicValueChanged(BLECharacteristic& characteristic) {
   for (int i = 0; i < this->_numPipeInfo; i++) {
-    struct nRF8001PipeInfo* pipeInfo = &this->_pipeInfo[i];
+    struct pipeInfo* pipeInfo = &this->_pipeInfo[i];
 
     if (pipeInfo->characteristic == &characteristic) {
       if (pipeInfo->setPipe) {
@@ -850,4 +880,15 @@ void nRF8001::characteristicValueChanged(BLECharacteristic& characteristic) {
 
 void nRF8001::disconnect() {
   lib_aci_disconnect(&this->_aciState, ACI_REASON_TERMINATE);
+}
+void nRF8001::requestAddress() {
+  lib_aci_get_address();
+}
+
+void nRF8001::requestTemperature() {
+  lib_aci_get_temperature();
+}
+
+void nRF8001::requestBatteryLevel() {
+  lib_aci_get_battery_level();
 }

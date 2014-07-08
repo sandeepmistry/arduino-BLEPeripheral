@@ -1,3 +1,5 @@
+#include "Arduino.h"
+
 #include "BLEUuid.h"
 
 BLEUuid::BLEUuid(const char * str)

@@ -1,28 +1,30 @@
 #ifndef _BLE_ATTRIBUTE_H_
 #define _BLE_ATTRIBUTE_H_
 
-#define BLETypeService                          0x2800
-#define BLETypeCharacteristic                   0x2803
-#define BLETypeDescriptor                       0x2900
+enum BLEAttributeType {
+  BLETypeService        = 0x2800,
+  BLETypeCharacteristic = 0x2803,
+  BLETypeDescriptor     = 0x2900
+};
 
 #define BLE_ATTRIBUTE_MAX_VALUE_LENGTH            19
 
 class BLEAttribute
 {
   public:
-    BLEAttribute(const char* uuid, unsigned short type);
+    BLEAttribute(const char* uuid, enum BLEAttributeType type);
 
     const char* uuid();
 
-    unsigned short type();
+    enum BLEAttributeType type();
 
     static unsigned char numAttributes();
 
   private:
     static unsigned char _numAttributes;
 
-    const char*          _uuid;
-    unsigned short       _type;
+    const char*                 _uuid;
+    enum BLEAttributeType       _type;
 };
 
 #endif

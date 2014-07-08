@@ -1,8 +1,4 @@
-#if ARDUINO >= 100
-  #include "Arduino.h"
-#else
-  #include "WProgram.h"
-#endif
+#include "Arduino.h"
 
 #include "BLECharacteristic.h"
 
@@ -14,12 +10,13 @@ BLECharacteristic::BLECharacteristic(const char* uuid, unsigned char properties,
   _hasNotifySubscriber(false),
   _hasIndicateSubscriber(false),
   _hasNewValue(false),
+  _newValueHandler(NULL),
   _listener(NULL)
 {
   _value = (unsigned char*)malloc(this->_valueSize);
 }
 
-BLECharacteristic::BLECharacteristic(const char* uuid, unsigned char properties, char* value) :
+BLECharacteristic::BLECharacteristic(const char* uuid, unsigned char properties, const char* value) :
   BLEAttribute(uuid, BLETypeCharacteristic),
   _properties(properties),
   _valueSize(min(strlen(value), BLE_ATTRIBUTE_MAX_VALUE_LENGTH)),
@@ -27,6 +24,7 @@ BLECharacteristic::BLECharacteristic(const char* uuid, unsigned char properties,
   _hasNotifySubscriber(false),
   _hasIndicateSubscriber(false),
   _hasNewValue(false),
+  _newValueHandler(NULL),
   _listener(NULL)
 {
   _value = (unsigned char*)malloc(this->_valueSize);
@@ -95,8 +93,16 @@ bool BLECharacteristic::hasNewValue() {
   return hasNewValue;
 }
 
+void BLECharacteristic::setNewValueHandler(BLECharacteristicNewValueHandler newValueHandler) {
+  this->_newValueHandler = newValueHandler;
+}
+
 void BLECharacteristic::setHasNewValue(bool hasNewValue) {
   this->_hasNewValue = hasNewValue;
+
+  if (hasNewValue && this->_newValueHandler) {
+    this->_newValueHandler();
+  }
 }
 
 void BLECharacteristic::setCharacteristicValueListener(BLECharacteristicValueChangeListener& listener) {

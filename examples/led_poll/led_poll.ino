@@ -5,6 +5,8 @@
 #define BLE_RDY 2
 #define BLE_RST 9
 
+#define LED_PIN 3
+
 BLEPeripheral            blePeripheral        = BLEPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
 
 BLEService               ledService           = BLEService("19b10000e8f2537e4f6cd104768a1214");
@@ -13,15 +15,13 @@ BLECharacteristicT<char> switchCharacteristic = BLECharacteristicT<char>("19b100
 void setup() {                
   Serial.begin(115200);
 
-  pinMode(3, OUTPUT);
+  pinMode(LED_PIN, OUTPUT);
 
   blePeripheral.setLocalName("LED");
-  blePeripheral.setAdvertisedServiceUuid("19b10000e8f2537e4f6cd104768a1214");
+  blePeripheral.setAdvertisedServiceUuid(ledService.uuid());
 
   blePeripheral.addAttribute(ledService);
   blePeripheral.addAttribute(switchCharacteristic);
-
-  switchCharacteristic.setValue(0);
 
   blePeripheral.begin();
 
@@ -31,13 +31,15 @@ void setup() {
 void loop() {
   blePeripheral.poll();
 
-  if (switchCharacteristic.hasNewValue()) {
-    if (switchCharacteristic.value()) {
-      Serial.println(F("LED on"));
-      digitalWrite(3, HIGH);
-    } else {
-      Serial.println(F("LED off"));
-      digitalWrite(3, LOW);
+  if (blePeripheral.isConnected()) {
+    if (switchCharacteristic.hasNewValue()) {
+      if (switchCharacteristic.value()) {
+        Serial.println(F("LED on"));
+        digitalWrite(LED_PIN, HIGH);
+      } else {
+        Serial.println(F("LED off"));
+        digitalWrite(LED_PIN, LOW);
+      }
     }
   }
 }

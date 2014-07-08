@@ -15,6 +15,10 @@ template<typename T> class BLECharacteristicT : public BLECharacteristic
 template<typename T> BLECharacteristicT<T>::BLECharacteristicT(const char* uuid, unsigned char properties) :
   BLECharacteristic(uuid, properties, sizeof(T))
 {
+  T value;
+  memset(&value, 0x00, sizeof(value));
+
+  this->setValue(value);
 }
 
 template<typename T> void BLECharacteristicT<T>::setValue(T value) {

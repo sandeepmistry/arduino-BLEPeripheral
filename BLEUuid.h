@@ -1,9 +1,3 @@
-#if ARDUINO >= 100
- #include "Arduino.h"
-#else
- #include "WProgram.h"
-#endif
-
 #ifndef _BLE_UUID_H_
 #define _BLE_UUID_H_
 
@@ -11,7 +5,6 @@
 
 class BLEUuid
 {
-
   public:
     BLEUuid(const char * str);
   
