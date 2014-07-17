@@ -63,12 +63,4 @@ class BLECharacteristic : public BLEAttribute
     BLECharacteristicValueChangeListener* _listener;
 };
 
-template<class T> class BLECharacteristicTyped : public BLECharacteristic
-{
-    BLECharacteristicTyped(const char* uuid, unsigned char properties, T value);
-
-    void setValue(T value);
-    T value();
-};
-
 #endif
