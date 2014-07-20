@@ -8,9 +8,21 @@
 #include <SPI.h>
 #include <BLEPeripheral.h>
 
-#define BLE_REQ 10
-#define BLE_RDY 2
-#define BLE_RST 9
+//#define REDBEARLAB_SHIELD
+
+#if defined(BLEND_MICRO)
+  #define BLE_REQ   6
+  #define BLE_RDY   7
+  #define BLE_RST   UNUSED
+#elif defined(BLEND) || defined(REDBEARLAB_SHIELD)
+  #define BLE_REQ   9
+  #define BLE_RDY   8
+  #define BLE_RST   UNUSED
+#else // Adafruit
+  #define BLE_REQ   10
+  #define BLE_RDY   2
+  #define BLE_RST   9
+#endif
 
 BLEPeripheral                      blePeripheral       = BLEPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
 
@@ -22,6 +34,12 @@ unsigned long long                 lastSent            = 0;
 
 void setup() {                
   Serial.begin(115200);
+#if defined (__AVR_ATmega32U4__)
+  //Wait until the serial port is available (useful only for the Leonardo)
+  //As the Leonardo board is not reseted every time you open the Serial Monitor
+  while(!Serial) {}
+  delay(5000);  //5 seconds delay for enabling to see the start up comments on the serial board
+#endif
 
   blePeripheral.setLocalName("test");
 #if 1
