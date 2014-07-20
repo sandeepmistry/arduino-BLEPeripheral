@@ -18,8 +18,9 @@ An [Arduino](http://arduino.cc) library for creating custom BLE peripherals.
 #### Pinouts
 
 | Shield/Board | REQ Pin | RDY Pin | RST Pin |
+| ------------ | ------- | ------- | ------- |
 | Bluefruit LE | 10 | 2 | 9 |
-| BLE Shield | 9 | 8 | UNUSED |
+| BLE Shield, Blend | 9 | 8 | UNUSED |
 | Blend Micro | 6 | 7 | UNUSED |
 
 ## Usage
