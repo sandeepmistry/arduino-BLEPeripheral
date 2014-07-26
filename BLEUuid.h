@@ -7,7 +7,7 @@ class BLEUuid
 {
   public:
     BLEUuid(const char * str);
-  
+
     const char* str();
     const unsigned char* data();
     unsigned char length();

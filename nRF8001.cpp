@@ -168,8 +168,6 @@ void nRF8001::begin(const unsigned char* advertisementData,
     } else if (attribute->type() == BLETypeCharacteristic) {
       BLECharacteristic* characteristic = (BLECharacteristic *)attribute;
 
-      characteristic->setCharacteristicValueListener(*this);
-
       this->_aciState.aci_setup_info.num_setup_msgs += 2;
 
       if (characteristic->properties()) {
@@ -177,7 +175,7 @@ void nRF8001::begin(const unsigned char* advertisementData,
         numPipedCharacteristics++;
       }
 
-      if (characteristic->properties() & (BLEPropertyNotify | BLEPropertyIndicate)){
+      if (characteristic->properties() & (BLENotify | BLEIndicate)){
         this->_aciState.aci_setup_info.num_setup_msgs++;
       }
     } else if (attribute->type() == BLETypeDescriptor) {
@@ -275,37 +273,37 @@ void nRF8001::begin(const unsigned char* advertisementData,
 
         pipeInfo->startPipe = pipe;
 
-        if (characteristic->properties() & BLEPropertyNotify) {
+        if (characteristic->properties() & BLENotify) {
           pipeInfo->txPipe = pipe;
 
           pipe++;
         }
 
-        if (characteristic->properties() & BLEPropertyIndicate) {
+        if (characteristic->properties() & BLEIndicate) {
           pipeInfo->txAckPipe = pipe;
 
           pipe++;
         }
 
-        if (characteristic->properties() & BLEPropertyWriteWithoutResponse) {
+        if (characteristic->properties() & BLEWriteWithoutResponse) {
           pipeInfo->rxPipe = pipe;
 
           pipe++;
         }
 
-        if (characteristic->properties() & BLEPropertyWrite) {
+        if (characteristic->properties() & BLEWrite) {
           pipeInfo->rxAckPipe = pipe;
 
           pipe++;
         }
 
-        if (characteristic->properties() & BLEPropertyRead) {
+        if (characteristic->properties() & BLERead) {
           pipeInfo->setPipe = pipe;
 
           pipe++;
         }
       }
-      
+
       this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(17 + uuid.length());
       setupMsgIndex++;
       setupMsgData = (struct setupMsgData*)setupMsg->buffer;
@@ -337,7 +335,7 @@ void nRF8001::begin(const unsigned char* advertisementData,
       handle++;
 
       memcpy(&setupMsgData->data[12], uuid.data(), uuid.length());
-      
+
       gattSetupMsgOffset += 12 + uuid.length();
 
       this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(14 + characteristic->valueSize());
@@ -353,21 +351,21 @@ void nRF8001::begin(const unsigned char* advertisementData,
       setupMsgData->data[0]  = 0x00;
       setupMsgData->data[1]  = 0x00;
 
-      if (characteristic->properties() & BLEPropertyRead) {
+      if (characteristic->properties() & BLERead) {
         setupMsgData->data[0] |= 0x06;
         setupMsgData->data[1] |= 0x04;
       }
 
-      if (characteristic->properties() & (BLEPropertyWrite | BLEPropertyWriteWithoutResponse)) {
+      if (characteristic->properties() & (BLEWrite | BLEWriteWithoutResponse)) {
         setupMsgData->data[0] |= 0x40;
         setupMsgData->data[1] |= 0x10;
       }
 
-      if (characteristic->properties() & BLEPropertyNotify) {
+      if (characteristic->properties() & BLENotify) {
         setupMsgData->data[0] |= 0x10;
       }
 
-      if (characteristic->properties() & BLEPropertyIndicate) {
+      if (characteristic->properties() & BLEIndicate) {
         setupMsgData->data[0] |= 0x20;
       }
 
@@ -384,10 +382,10 @@ void nRF8001::begin(const unsigned char* advertisementData,
 
       memset(&setupMsgData->data[9], 0x00, characteristic->valueSize());
       memcpy(&setupMsgData->data[9], characteristic->value(), characteristic->valueLength());
-      
+
       gattSetupMsgOffset += 9 + characteristic->valueSize();
 
-      if (characteristic->properties() & (BLEPropertyNotify | BLEPropertyIndicate)) {
+      if (characteristic->properties() & (BLENotify | BLEIndicate)) {
         this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(16);
         setupMsgIndex++;
         setupMsgData = (struct setupMsgData*)setupMsg->buffer;
@@ -478,7 +476,7 @@ void nRF8001::begin(const unsigned char* advertisementData,
 
   // pipes
   unsigned char pipeSetupMsgOffet  = 0;
-  
+
   for (int i = 0; i < numPiped; i++) {
     struct pipeInfo pipeInfo = this->_pipeInfo[i];
 
@@ -506,25 +504,25 @@ void nRF8001::begin(const unsigned char* advertisementData,
     setupMsgData->data[7]  = pipeInfo.valueHandle & 0xff;
 
     setupMsgData->data[8]  = (pipeInfo.configHandle >> 8) & 0xff;
-    setupMsgData->data[9]  = pipeInfo.configHandle & 0xff;     
+    setupMsgData->data[9]  = pipeInfo.configHandle & 0xff;
 
-    if (pipeInfo.characteristic->properties() & BLEPropertyIndicate) {
+    if (pipeInfo.characteristic->properties() & BLEIndicate) {
       setupMsgData->data[4] |= 0x04; // TX Ack
     }
 
-    if (pipeInfo.characteristic->properties() & BLEPropertyNotify) {
+    if (pipeInfo.characteristic->properties() & BLENotify) {
       setupMsgData->data[4] |= 0x02; // TX
     }
 
-    if (pipeInfo.characteristic->properties() & BLEPropertyWriteWithoutResponse) {
+    if (pipeInfo.characteristic->properties() & BLEWriteWithoutResponse) {
       setupMsgData->data[4] |= 0x08; // RX Ack
     }
 
-    if (pipeInfo.characteristic->properties() & BLEPropertyWrite) {
+    if (pipeInfo.characteristic->properties() & BLEWrite) {
       setupMsgData->data[4] |= 0x10; // RX Ack
     }
 
-    if (pipeInfo.characteristic->properties() & BLEPropertyRead) {
+    if (pipeInfo.characteristic->properties() & BLERead) {
       setupMsgData->data[4] |= 0x80; // Set
     }
 
@@ -647,6 +645,7 @@ void nRF8001::poll() {
               break;
 
             case ACI_CMD_GET_DEVICE_ADDRESS: {
+#ifdef NRF_8001_DEBUG
               char address[18];
 
               sprintf(address, "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x",
@@ -656,7 +655,6 @@ void nRF8001::poll() {
                 aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_own[2],
                 aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_own[1],
                 aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_own[0]);
-#ifdef NRF_8001_DEBUG
               Serial.print(F("Device address = "));
               Serial.println(address);
 
@@ -664,7 +662,7 @@ void nRF8001::poll() {
               Serial.println(aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_type, DEC);
 #endif
               if (this->_eventListener) {
-                this->_eventListener->nRF8001AddressReceived(*this, address);
+                this->_eventListener->nRF8001AddressReceived(*this, aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_own);
               }
               break;
             }
@@ -697,8 +695,9 @@ void nRF8001::poll() {
         break;
 
       case ACI_EVT_CONNECTED:
-        char address[18];
 
+#ifdef NRF_8001_DEBUG
+        char address[18];
         sprintf(address, "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x",
           aciEvt->params.connected.dev_addr[5],
           aciEvt->params.connected.dev_addr[4],
@@ -706,12 +705,11 @@ void nRF8001::poll() {
           aciEvt->params.connected.dev_addr[2],
           aciEvt->params.connected.dev_addr[1],
           aciEvt->params.connected.dev_addr[0]);
-#ifdef NRF_8001_DEBUG
         Serial.print(F("Evt Connected "));
         Serial.println(address);
 #endif
         if (this->_eventListener) {
-          this->_eventListener->nRF8001Connected(*this, address);
+          this->_eventListener->nRF8001Connected(*this, aciEvt->params.connected.dev_addr);
         }
 
         this->_aciState.data_credit_available = this->_aciState.data_credit_total;
@@ -733,23 +731,20 @@ void nRF8001::poll() {
 
         for (int i = 0; i < this->_numPipeInfo; i++) {
           struct pipeInfo* pipeInfo = &this->_pipeInfo[i];
-          
+
           if (pipeInfo->txPipe) {
-            bool txPipeOpen = lib_aci_is_pipe_available(&this->_aciState, pipeInfo->txPipe);
-
-            if(txPipeOpen != pipeInfo->txPipeOpen) {
-              pipeInfo->txPipeOpen = txPipeOpen;
-
-              pipeInfo->characteristic->setHasNotifySubscriber(txPipeOpen);
-            }
+            pipeInfo->txPipeOpen = lib_aci_is_pipe_available(&this->_aciState, pipeInfo->txPipe);
           }
 
           if (pipeInfo->txAckPipe) {
-            bool txAckPipeOpen = lib_aci_is_pipe_available(&this->_aciState, pipeInfo->txAckPipe);
-            if(txAckPipeOpen != pipeInfo->txAckPipeOpen) {
-              pipeInfo->txAckPipeOpen = txAckPipeOpen;
+            pipeInfo->txAckPipeOpen = lib_aci_is_pipe_available(&this->_aciState, pipeInfo->txAckPipe);
+          }
 
-              pipeInfo->characteristic->setHasIndicateSubscriber(txAckPipeOpen);
+          bool subscribed = (pipeInfo->txPipeOpen || pipeInfo->txAckPipeOpen);
+
+          if (pipeInfo->characteristic->subscribed() != subscribed) {
+            if (this->_eventListener) {
+              this->_eventListener->nRF8001CharacteristicSubscribedChanged(*this, *pipeInfo->characteristic, subscribed);
             }
           }
         }
@@ -762,6 +757,17 @@ void nRF8001::poll() {
 #ifdef NRF_8001_DEBUG
         Serial.println(F("Evt Disconnected/Advertising timed out"));
 #endif
+        // all characteristics unsubscribed on disconnect
+        for (int i = 0; i < this->_numPipeInfo; i++) {
+          struct pipeInfo* pipeInfo = &this->_pipeInfo[i];
+
+          if (pipeInfo->characteristic->subscribed()) {
+            if (this->_eventListener) {
+              this->_eventListener->nRF8001CharacteristicSubscribedChanged(*this, *pipeInfo->characteristic, false);
+            }
+          }
+        }
+
         if (this->_eventListener) {
           this->_eventListener->nRF8001Disconnected(*this);
         }
@@ -798,8 +804,9 @@ void nRF8001::poll() {
               lib_aci_send_ack(&this->_aciState, pipeInfo->rxAckPipe);
             }
 
-            pipeInfo->characteristic->setValue(aciEvt->params.data_received.rx_data.aci_data, dataLen);
-            pipeInfo->characteristic->setHasNewValue(true);
+            if (this->_eventListener) {
+              this->_eventListener->nRF8001CharacteristicValueChanged(*this, *pipeInfo->characteristic, aciEvt->params.data_received.rx_data.aci_data, dataLen);
+            }
             break;
           }
         }
@@ -862,7 +869,7 @@ void nRF8001::poll() {
   }
 }
 
-void nRF8001::characteristicValueChanged(BLECharacteristic& characteristic) {
+void nRF8001::updateCharacteristicValue(BLECharacteristic& characteristic) {
   for (int i = 0; i < this->_numPipeInfo; i++) {
     struct pipeInfo* pipeInfo = &this->_pipeInfo[i];
 

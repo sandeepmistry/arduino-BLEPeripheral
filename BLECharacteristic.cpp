@@ -7,12 +7,12 @@ BLECharacteristic::BLECharacteristic(const char* uuid, unsigned char properties,
   _properties(properties),
   _valueSize(min(valueSize, BLE_ATTRIBUTE_MAX_VALUE_LENGTH)),
   _valueLength(0),
-  _hasNotifySubscriber(false),
-  _hasIndicateSubscriber(false),
-  _hasNewValue(false),
-  _newValueHandler(NULL),
+  _written(false),
+  _subscribed(false),
   _listener(NULL)
 {
+  memset(this->_eventHandlers, 0x00, sizeof(this->_eventHandlers));
+
   _value = (unsigned char*)malloc(this->_valueSize);
 }
 
@@ -21,12 +21,12 @@ BLECharacteristic::BLECharacteristic(const char* uuid, unsigned char properties,
   _properties(properties),
   _valueSize(min(strlen(value), BLE_ATTRIBUTE_MAX_VALUE_LENGTH)),
   _valueLength(0),
-  _hasNotifySubscriber(false),
-  _hasIndicateSubscriber(false),
-  _hasNewValue(false),
-  _newValueHandler(NULL),
+  _written(false),
+  _subscribed(false),
   _listener(NULL)
 {
+  memset(this->_eventHandlers, 0x00, sizeof(this->_eventHandlers));
+
   _value = (unsigned char*)malloc(this->_valueSize);
   this->setValue(value);
 }
@@ -37,19 +37,19 @@ BLECharacteristic::~BLECharacteristic() {
   }
 }
 
-unsigned char BLECharacteristic::properties() {
+unsigned char BLECharacteristic::properties() const {
   return this->_properties;
 }
 
-unsigned char BLECharacteristic::valueSize() {
+unsigned char BLECharacteristic::valueSize() const {
   return this->_valueSize;
 }
 
-unsigned const char* BLECharacteristic::value() {
+unsigned const char* BLECharacteristic::value() const {
   return this->_value;
 }
 
-unsigned char BLECharacteristic::valueLength() {
+unsigned char BLECharacteristic::valueLength() const {
   return this->_valueLength;
 }
 
@@ -67,44 +67,47 @@ void BLECharacteristic::setValue(const char* value) {
   this->setValue((const unsigned char *)value, strlen(value));
 }
 
-bool BLECharacteristic::hasNotifySubscriber() {
-  this->_hasNotifySubscriber;
-}
+bool BLECharacteristic::written() {
+  bool written = this->_written;
 
-void BLECharacteristic::setHasNotifySubscriber(bool hasNotifySubscriber) {
-  this->_hasNotifySubscriber = hasNotifySubscriber;
-}
-
-bool BLECharacteristic::hasIndicateSubscriber() {
-  return this->_hasIndicateSubscriber;
-}
-
-void BLECharacteristic::setHasIndicateSubscriber(bool hasIndicateSubscriber) {
-  this->_hasIndicateSubscriber = hasIndicateSubscriber;
-}
-
-bool BLECharacteristic::hasNewValue() {
-  bool hasNewValue = this->_hasNewValue;
-
-  if (hasNewValue) {
-    this->_hasNewValue = false;
+  if (written) {
+    this->_written = false;
   }
 
-  return hasNewValue;
+  return written;
 }
 
-void BLECharacteristic::setNewValueHandler(BLECharacteristicNewValueHandler newValueHandler) {
-  this->_newValueHandler = newValueHandler;
-}
+void BLECharacteristic::setValue(BLECentral& central, const unsigned char value[], unsigned char length) {
+  this->setValue(value, length);
 
-void BLECharacteristic::setHasNewValue(bool hasNewValue) {
-  this->_hasNewValue = hasNewValue;
+  this->_written = true;
 
-  if (hasNewValue && this->_newValueHandler) {
-    this->_newValueHandler();
+  BLECharacteristicEventHandler eventHandler = this->_eventHandlers[BLEWritten];
+  if (eventHandler) {
+    eventHandler(central, *this);
   }
 }
 
-void BLECharacteristic::setCharacteristicValueListener(BLECharacteristicValueChangeListener& listener) {
+bool BLECharacteristic::subscribed() {
+  return this->_subscribed;
+}
+
+void BLECharacteristic::setSubscribed(BLECentral& central, bool subscribed) {
+  this->_subscribed = subscribed;
+
+  BLECharacteristicEventHandler eventHandler = this->_eventHandlers[subscribed ? BLESubscribed : BLEUnsubscribed];
+
+  if (eventHandler) {
+    eventHandler(central, *this);
+  }
+}
+
+void BLECharacteristic::setEventHandler(BLECharacteristicEvent event, BLECharacteristicEventHandler eventHandler) {
+  if (event < sizeof(this->_eventHandlers)) {
+    this->_eventHandlers[event] = eventHandler;
+  }
+}
+
+void BLECharacteristic::setValueChangeListener(BLECharacteristicValueChangeListener& listener) {
   this->_listener = &listener;
 }

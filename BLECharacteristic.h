@@ -4,16 +4,23 @@
 #include "BLEAttribute.h"
 
 enum BLEProperty {
-  BLEPropertyRead                 = 0x02,
-  BLEPropertyWriteWithoutResponse = 0x04,
-  BLEPropertyWrite                = 0x08,
-  BLEPropertyNotify               = 0x10,
-  BLEPropertyIndicate             = 0x20
+  BLERead                 = 0x02,
+  BLEWriteWithoutResponse = 0x04,
+  BLEWrite                = 0x08,
+  BLENotify               = 0x10,
+  BLEIndicate             = 0x20
 };
 
-typedef void (*BLECharacteristicNewValueHandler)();
+enum BLECharacteristicEvent {
+  BLEWritten = 0,
+  BLESubscribed = 1,
+  BLEUnsubscribed = 2
+};
 
+class BLECentral;
 class BLECharacteristic;
+
+typedef void (*BLECharacteristicEventHandler)(BLECentral& central, BLECharacteristic& characteristic);
 
 class BLECharacteristicValueChangeListener
 {
@@ -23,32 +30,33 @@ class BLECharacteristicValueChangeListener
 
 class BLECharacteristic : public BLEAttribute
 {
+  friend class BLEPeripheral;
+
   public:
     BLECharacteristic(const char* uuid, unsigned char properties, unsigned char valueSize);
     BLECharacteristic(const char* uuid, unsigned char properties, const char* value);
 
     virtual ~BLECharacteristic();
 
-    unsigned char properties();
-    unsigned char valueSize();
+    unsigned char properties() const;
 
-    const unsigned char* value();
-    unsigned char valueLength();
+    unsigned char valueSize() const;
+    const unsigned char* value() const;
+    unsigned char valueLength() const;
+
     void setValue(const unsigned char value[], unsigned char length);
-
     void setValue(const char* value);
 
-    bool hasNotifySubscriber();
-    void setHasNotifySubscriber(bool hasNotifySubscriber);
+    bool written();
+    bool subscribed();
 
-    bool hasIndicateSubscriber();
-    void setHasIndicateSubscriber(bool hasIndicateSubscriber);
+    void setEventHandler(BLECharacteristicEvent event, BLECharacteristicEventHandler eventHandler);
 
-    bool hasNewValue();
-    void setHasNewValue(bool hasNewValue);
-    void setNewValueHandler(BLECharacteristicNewValueHandler newValueHandler);
+  protected:
+    void setValue(BLECentral& central, const unsigned char value[], unsigned char length);
+    void setSubscribed(BLECentral& central, bool written);
 
-    void setCharacteristicValueListener(BLECharacteristicValueChangeListener& listener);
+    void setValueChangeListener(BLECharacteristicValueChangeListener& listener);
 
   private:
     unsigned char                         _properties;
@@ -56,11 +64,11 @@ class BLECharacteristic : public BLEAttribute
     unsigned char*                        _value;
     unsigned char                         _valueLength;
 
-    bool                                  _hasNotifySubscriber;
-    bool                                  _hasIndicateSubscriber;
-    bool                                  _hasNewValue;
-    BLECharacteristicNewValueHandler      _newValueHandler;
+    bool                                  _written;
+    bool                                  _subscribed;
+
     BLECharacteristicValueChangeListener* _listener;
+    BLECharacteristicEventHandler         _eventHandlers[3];
 };
 
 #endif

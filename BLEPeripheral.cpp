@@ -18,13 +18,13 @@ BLEPeripheral::BLEPeripheral(unsigned char req, unsigned char rdy, unsigned char
   _numAttributes(0),
 
   _genericAccessService("1800"),
-  _deviceNameCharacteristic("2a00", BLEPropertyRead, 19),
-  _appearanceCharacteristic("2a01", BLEPropertyRead, 2),
+  _deviceNameCharacteristic("2a00", BLERead, 19),
+  _appearanceCharacteristic("2a01", BLERead, 2),
 
-  _isConnected(false),
-  _connectHandler(NULL),
-  _disconnectHandler(NULL)
+  _central(this)
 {
+  memset(this->_eventHandlers, 0x00, sizeof(this->_eventHandlers));
+
   this->setDeviceName(DEFAULT_DEVICE_NAME);
   this->setAppearance(DEFAULT_APPEARANCE);
 
@@ -82,6 +82,15 @@ void BLEPeripheral::begin() {
     memcpy(&scanData[2], this->_localName, localNameLength);
   }
 
+  for (int i = 0; i < this->_numAttributes; i++) {
+    BLEAttribute* attribute = this->_attributes[i];
+    if (attribute->type() == BLETypeCharacteristic) {
+      BLECharacteristic* characteristic = (BLECharacteristic*)attribute;
+
+      characteristic->setValueChangeListener(*this);
+    }
+  }
+
   this->_nRF8001.begin(advertisementData, advertisementDataLength, scanData, scanDataLength, this->_attributes, this->_numAttributes);
 
   this->_nRF8001.requestAddress();
@@ -95,7 +104,7 @@ void BLEPeripheral::setAdvertisedServiceUuid(const char* advertisedServiceUuid) 
   this->_advertisedServiceUuid = advertisedServiceUuid;
 }
 
-void BLEPeripheral::setManufacturerData(const unsigned char* manufacturerData, unsigned char manufacturerDataLength) {
+void BLEPeripheral::setManufacturerData(const unsigned char manufacturerData[], unsigned char manufacturerDataLength) {
   this->_manufacturerData = manufacturerData;
   this->_manufacturerDataLength = manufacturerDataLength;
 }
@@ -131,45 +140,79 @@ void BLEPeripheral::disconnect() {
   this->_nRF8001.disconnect();
 }
 
-bool BLEPeripheral::isConnected() {
-  return this->_isConnected;
+BLECentral BLEPeripheral::central() {
+  this->poll();
+
+  return this->_central;
 }
 
-void BLEPeripheral::setConnectHandler(BLEPeripheralConnectHandler connectHandler) {
-  this->_connectHandler = connectHandler;
+bool BLEPeripheral::connected() {
+  this->poll();
+
+  return this->_central;
 }
 
-void BLEPeripheral::setDisconnectHandler(BLEPeripheralDisconnectHandler disconnectHandler) {
-  this->_disconnectHandler = disconnectHandler;
+void BLEPeripheral::setEventHandler(BLEPeripheralEvent event, BLEPeripheralEventHandler eventHandler) {
+  if (event < sizeof(this->_eventHandlers)) {
+    this->_eventHandlers[event] = eventHandler;
+  }
 }
 
-void BLEPeripheral::nRF8001Connected(nRF8001& nRF8001, const char* address) {
+void BLEPeripheral::characteristicValueChanged(BLECharacteristic& characteristic) {
+  this->_nRF8001.updateCharacteristicValue(characteristic);
+}
+
+void BLEPeripheral::nRF8001Connected(nRF8001& nRF8001, const unsigned char* address) {
+  this->_central.setAddress(address);
+
 #ifdef BLE_PERIPHERAL_DEBUG
   Serial.print(F("Peripheral connected to central: "));
-  Serial.println(address);
+  Serial.println(this->_central.address());
 #endif
-  this->_isConnected = true;
 
-  if (this->_connectHandler) {
-    this->_connectHandler(address);
+  BLEPeripheralEventHandler eventHandler = this->_eventHandlers[BLEConnected];
+  if (eventHandler) {
+    eventHandler(this->_central);
   }
 }
 
 void BLEPeripheral::nRF8001Disconnected(nRF8001& nRF8001) {
 #ifdef BLE_PERIPHERAL_DEBUG
-  Serial.println(F("Peripheral disconnected from central"));
+  Serial.print(F("Peripheral disconnected from central: "));
+  Serial.println(this->_central.address());
 #endif
-  this->_isConnected = false;
 
-  if (this->_disconnectHandler) {
-    this->_disconnectHandler();
+  BLEPeripheralEventHandler eventHandler = this->_eventHandlers[BLEDisconnected];
+  if (eventHandler) {
+    eventHandler(this->_central);
   }
+
+  this->_central.clearAddress();
 }
 
-void BLEPeripheral::nRF8001AddressReceived(nRF8001& nRF8001, const char* address) {
+void BLEPeripheral::nRF8001CharacteristicValueChanged(nRF8001& nRF8001, BLECharacteristic& characteristic, const unsigned char* value, unsigned char valueLength) {
+  characteristic.setValue(this->_central, value, valueLength);
+}
+
+void BLEPeripheral::nRF8001CharacteristicSubscribedChanged(nRF8001& nRF8001, BLECharacteristic& characteristic, bool subscribed) {
+  characteristic.setSubscribed(this->_central, subscribed);
+}
+
+
+void BLEPeripheral::nRF8001AddressReceived(nRF8001& nRF8001, const unsigned char* address) {
 #ifdef BLE_PERIPHERAL_DEBUG
+  char addressStr[18];
+
+  sprintf(addressStr, "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x",
+    address[5],
+    address[4],
+    address[3],
+    address[2],
+    address[1],
+    address[0]);
+
   Serial.print(F("Peripheral address: "));
-  Serial.println(address);
+  Serial.println(addressStr);
 #endif
 }
 

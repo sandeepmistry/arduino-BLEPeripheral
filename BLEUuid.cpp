@@ -12,7 +12,7 @@ BLEUuid::BLEUuid(const char * str)
       i++;
       continue;
     }
-    
+
     temp[0] = str[i - 1];
     temp[1] = str[i];
 

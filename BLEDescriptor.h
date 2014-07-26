@@ -11,12 +11,11 @@ class BLEDescriptor : public BLEAttribute
 
     virtual ~BLEDescriptor();
 
-    unsigned char valueSize();
+    unsigned char valueSize() const;
+    const unsigned char* value() const;
+    unsigned char valueLength() const;
 
-    const unsigned char* value();
-    unsigned char valueLength();
     void setValue(const unsigned char value[], unsigned char length);
-
     void setValue(const char* value);
 
   private:

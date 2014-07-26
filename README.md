@@ -6,7 +6,7 @@ An [Arduino](http://arduino.cc) library for creating custom BLE peripherals.
 
 ### [Nordic Semiconductor nRF8001](http://www.nordicsemi.com/eng/Products/Bluetooth-R-low-energy/nRF8001)
 
- * [Adafruit](http://www.adafruit.com) 
+ * [Adafruit](http://www.adafruit.com)
    * [Bluefruit LE - nRF8001 Breakout](http://www.adafruit.com/products/1697)
  * [RedBearLab](http://redbearlab.com)
    * [BLE Shield](http://redbearlab.com/bleshield/)
@@ -53,7 +53,7 @@ BLEPeripheral blePeripheral = BLEPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
 BLEService service = BLEService("fff0");
 
 // create one or more characteristics
-BLECharacteristicT<short> characteristic = BLECharacteristicT<short>("fff1", BLEPropertyRead | BLEPropertyWrite);
+BLECharCharacteristic characteristic = BLECharCharacteristic("fff1", BLERead | BLEWrite);
 
 // create one or more descriptors (optional)
 BLEDescriptor descriptor = BLEDescriptor("2901", "value");
@@ -83,22 +83,28 @@ void setup() {
 }
 
 void loop() {
-  // poll for events
-  blePeripheral.poll();
+  BLECentral central = blePeripheral.central();
 
-  if (blePeripheral.isConnected()) {
+  if (central) {
     // central connected to peripheral
-    if (characteristic.hasNewValue()) {
-      // central wrote new value to characteristic
+    Serial.print(F("Connected to central: "));
+    Serial.println(central.address());
 
-      Serial.println(characteristic.value());
+    while (central.connected()) {
+      // central connected to peripheral
+      if (characteristic.written()) {
+        // central wrote new value to characteristic
+        Serial.println(characteristic.value(), DEC);
+
+        // set value on characteristic
+        characteristic.setValue(5);
+      }
     }
 
-    // set value on characteristic
-    characteristic.setValue(5);
+    Serial.print(F("Disconnected from central: "));
+    Serial.println(central.address());
   }
 }
-
 
 ```
 
@@ -124,6 +130,7 @@ Creating dynamic setup messages for the nRF8001 uses a quite a lot of memory.
    * Original Arduino SDK for nRF8001
  * [@guanix](https://github.com/guanix)'s [arduino-nrf8001](https://github.com/guanix/arduino-nrf8001)
    * nRF8001 support for Arduino
+
 
 
 

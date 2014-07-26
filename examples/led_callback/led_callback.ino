@@ -1,30 +1,18 @@
 #include <SPI.h>
 #include <BLEPeripheral.h>
 
-//#define REDBEARLAB_SHIELD
+#define BLE_REQ   10
+#define BLE_RDY   2
+#define BLE_RST   9
 
-#if defined(BLEND_MICRO)
-  #define BLE_REQ   6
-  #define BLE_RDY   7
-  #define BLE_RST   UNUSED
-#elif defined(BLEND) || defined(REDBEARLAB_SHIELD)
-  #define BLE_REQ   9
-  #define BLE_RDY   8
-  #define BLE_RST   UNUSED
-#else // Adafruit
-  #define BLE_REQ   10
-  #define BLE_RDY   2
-  #define BLE_RST   9
-#endif
+#define LED_PIN   3
 
-#define LED_PIN 3
+BLEPeripheral           blePeripheral        = BLEPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
 
-BLEPeripheral            blePeripheral        = BLEPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
+BLEService              ledService           = BLEService("19b10000e8f2537e4f6cd104768a1214");
+BLECharCharacteristic   switchCharacteristic = BLECharCharacteristic("19b10001e8f2537e4f6cd104768a1214", BLERead | BLEWrite);
 
-BLEService               ledService           = BLEService("19b10000e8f2537e4f6cd104768a1214");
-BLECharacteristicT<char> switchCharacteristic = BLECharacteristicT<char>("19b10001e8f2537e4f6cd104768a1214", BLEPropertyRead | BLEPropertyWrite);
-
-void setup() {                
+void setup() {
   Serial.begin(115200);
 #if defined (__AVR_ATmega32U4__)
   //Wait until the serial port is available (useful only for the Leonardo)
@@ -41,9 +29,10 @@ void setup() {
   blePeripheral.addAttribute(ledService);
   blePeripheral.addAttribute(switchCharacteristic);
 
-  blePeripheral.setConnectHandler(blePeripheralConnectHandler);
-  blePeripheral.setDisconnectHandler(blePeripheralDisconnectHandler);
-  switchCharacteristic.setNewValueHandler(switchCharacteristicHasNewValue);
+  blePeripheral.setEventHandler(BLEConnected, blePeripheralConnectHandler);
+  blePeripheral.setEventHandler(BLEDisconnected, blePeripheralDisconnectHandler);
+
+  switchCharacteristic.setEventHandler(BLEWritten, switchCharacteristicWritten);
 
   blePeripheral.begin();
 
@@ -54,16 +43,19 @@ void loop() {
   blePeripheral.poll();
 }
 
-void blePeripheralConnectHandler(const char* address) {
-  Serial.print(F("Connected to central "));
-  Serial.println(address);
+void blePeripheralConnectHandler(BLECentral& central) {
+  Serial.print(F("Connected event, central: "));
+  Serial.println(central.address());
 }
 
-void blePeripheralDisconnectHandler() {
-  Serial.println(F("Disconnected from central "));
+void blePeripheralDisconnectHandler(BLECentral& central) {
+  Serial.print(F("Disconnected event, central: "));
+  Serial.println(central.address());
 }
 
-void switchCharacteristicHasNewValue() {
+void switchCharacteristicWritten(BLECentral& central, BLECharacteristic& characteristic) {
+  Serial.print(F("Characteristic event, writen: "));
+
   if (switchCharacteristic.value()) {
     Serial.println(F("LED on"));
     digitalWrite(LED_PIN, HIGH);

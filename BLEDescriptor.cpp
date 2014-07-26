@@ -25,15 +25,15 @@ BLEDescriptor::~BLEDescriptor() {
   }
 }
 
-unsigned char BLEDescriptor::valueSize() {
+unsigned char BLEDescriptor::valueSize() const {
   return this->_valueSize;
 }
 
-const unsigned char* BLEDescriptor::value() {
+const unsigned char* BLEDescriptor::value() const {
   return this->_value;
 }
 
-unsigned char BLEDescriptor::valueLength() {
+unsigned char BLEDescriptor::valueLength() const {
   return this->_valueLength;
 }
 

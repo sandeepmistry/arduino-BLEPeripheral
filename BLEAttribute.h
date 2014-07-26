@@ -7,17 +7,17 @@ enum BLEAttributeType {
   BLETypeDescriptor     = 0x2900
 };
 
-#define BLE_ATTRIBUTE_MAX_VALUE_LENGTH            19
+#define BLE_ATTRIBUTE_MAX_VALUE_LENGTH    19
 
 class BLEAttribute
 {
   public:
     BLEAttribute(const char* uuid, enum BLEAttributeType type);
+    const char* uuid() const;
 
-    const char* uuid();
+    enum BLEAttributeType type() const;
 
-    enum BLEAttributeType type();
-
+  protected:
     static unsigned char numAttributes();
 
   private:

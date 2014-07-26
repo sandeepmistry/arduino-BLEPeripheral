@@ -24,7 +24,7 @@ void setAdvertisedServiceUuid(const char* advertisedServiceUuid);
 
 ### Manufacturer Data
 ```
-void setManufacturerData(const unsigned char* manufacturerData, unsigned char manufacturerDataLength);
+void setManufacturerData(const unsigned char manufacturerData[], unsigned char manufacturerDataLength);
 ```
  * manufacturerData - array of bytes
  * manufacturerDataLength - length of array, up to 20 bytes
@@ -66,32 +66,28 @@ void poll();
 Is the peripheral connected to a central?
 
 ```
-bool isConnected();
+bool connected();
+```
+
+### Central
+Central the peripheral is connected to. Bool value evaluates to ```false``` if not connected.
+
+```
+BLECentral central()
 ```
 
 
-### Set connect event callback
+### Set event handler callbacks
 ```
-void setConnectHandler(BLEPeripheralConnectHandler connectHandler);
+void setEventHandler(BLEPeripheralEvent event, BLEPeripheralEventHandler eventHandler);
 
 // callback signature
-void connectHandler(const char* address) {
-  // address of central
-
+void blePeripheralEventHandler(BLECentral& central) {
   // ....
 }
-
 ```
-
-### Set connect event callback
-```
-void setDisconnectHandler(BLEPeripheralDisconnectHandler disconnectHandler);
-
-// callback signature
-void disconnectHandler() {
-  // ...
-}
-```
+ * event - ```BLEConnected``` or ```BLEDisconnected```
+ * eventHandler - function callback for event
 
 ## Actions
 
@@ -100,6 +96,54 @@ void disconnectHandler() {
 void disconnect();
 ```
 Disconnect connected central.
+
+# BLECentral
+
+## Status
+
+### Valid
+Is this a valid central?
+
+```
+BLECentral central;
+
+// ...
+
+if (central) {
+  // central is valid
+} else {
+  // central is invalid
+}
+```
+
+### Connection state
+Is the central connected?
+
+```
+bool connected();
+```
+
+### Address
+Bluetooth address of central as string.
+
+```
+const char* address();
+```
+
+## Actions
+
+### Disconnect
+```
+void disconnect();
+```
+Disconnect central if connected.
+
+## Sketch life cycle
+Call from ```loop```, while connected.
+```
+void poll();
+```
+
 
 # BLEService
 
@@ -119,11 +163,11 @@ BLECharacteristic(const char* uuid, unsigned char properties, const char* value)
 ```
   * uuid - UUID of characteristic
   * properties - combination of (|'ed):
-    * ```BLEPropertyRead```
-    * ```BLEPropertyWriteWithoutResponse ```
-    * ```BLEPropertyWrite ```
-    * ```BLEPropertyNotify ```
-    * ```BLEPropertyIndicate ```
+    * ```BLERead```
+    * ```BLEWriteWithoutResponse ```
+    * ```BLEWrite```
+    * ```BLENotify```
+    * ```BLEIndicate```
 
 Choice of:
   * valueSize - size of characteristic in bytes (max 19 bytes)
@@ -153,49 +197,62 @@ void setValue(const unsigned char value[], unsigned char length);
 ```
  * value - new value as string
 
-## Value updates
+## Writes
 Has the central written a new value since the last call to this method? (only for write or write without response characteristics)
 ```
-bool hasNewValue();
-```
-
-Set callback for when central writes value (only for write or write without response characteristics)
-```
-void setNewValueHandler(BLECharacteristicNewValueHandler newValueHandler);
-
-// callback signature
-void newValueHandler() {
-  // ...
-}
+bool written();
 ```
 
 ## Subscription status
 Is the central subscribed (via notify or indicate) to the characteristic? (only for notify/indicate characteristics)
 ```
-bool hasNotifySubscriber();
-bool hasIndicateSubscriber();
+bool subscribed();
 ```
 
-# BLECharacteristicT
-Templated subclass of ```BLECharacteristic```
+## Set event handler callbacks
+```
+void setEventHandler(BLECharacteristicEvent event, BLECharacteristicEventHandler eventHandler);
 
-```T``` is type of characteristic: ```char```, ```short```, ```float```, etc.
+// callback signature
+void bleCharacteristicEventHandler(BLECentral& central, BLECharacteristic& characteristic) {
+  // ....
+}
+```
+ * event - ```BLEWritten```, ```BLESubscribed```, or ```BLEUnsubscribed```
+ * eventHandler - function callback for event
+
+# Typed BLECharacteristic's
+
+| Data Type | Class |
+| --------- | ------|
+| ```bool``` | ```BLEBoolCharacteristic``` |
+| ```char``` | ```BLECharCharacteristic``` |
+| ```unsigned char``` | ```BLEUnsignedCharCharacteristic``` |
+| ```short``` | ```BLEShortCharacteristic``` |
+| ```unsigned short``` | ```BLEUnsignedShortCharacteristic``` |
+| ```int``` | ```BLEIntCharacteristic``` |
+| ```unsigned int``` | ```BLEUnsignedIntCharacteristic``` |
+| ```long``` | ```BLELongCharacteristic``` |
+| ```unsigned long``` | ```BLEUnsignedLongCharacteristic``` |
+| ```float``` | ```BLEFloatCharacteristic``` |
+| ```double``` | ```BLEDoubleCharacteristic``` |
+
 
 ## Contructor
 ```
-BLECharacteristicT<T>(const char* uuid, unsigned char properties);
+BLE<Data Type>Characteristic(const char* uuid, unsigned char properties);
 ```
 See ```BLECharacteritic```
 
 ## Get value
 ```
-T value();
+<Data Type> value();
 ```
 
 ## Set value
 
 ```
-void setValue(T value);
+void setValue(<Data Type> value);
 ```
 
 # BLEDescriptor
@@ -222,8 +279,6 @@ unsigned char valueLength();
 ```
 
 ## Set value
-
-Will automatically notify/indicate central, if characteristic has notify/indicate property and central is subscribed.
 
 ```
 void setValue(const unsigned char value[], unsigned char length);

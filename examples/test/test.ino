@@ -8,31 +8,19 @@
 #include <SPI.h>
 #include <BLEPeripheral.h>
 
-//#define REDBEARLAB_SHIELD
+#define BLE_REQ   10
+#define BLE_RDY   2
+#define BLE_RST   9
 
-#if defined(BLEND_MICRO)
-  #define BLE_REQ   6
-  #define BLE_RDY   7
-  #define BLE_RST   UNUSED
-#elif defined(BLEND) || defined(REDBEARLAB_SHIELD)
-  #define BLE_REQ   9
-  #define BLE_RDY   8
-  #define BLE_RST   UNUSED
-#else // Adafruit
-  #define BLE_REQ   10
-  #define BLE_RDY   2
-  #define BLE_RST   9
-#endif
+BLEPeripheral                    blePeripheral       = BLEPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
 
-BLEPeripheral                      blePeripheral       = BLEPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
+BLEService                       testService         = BLEService("fff0");
+BLEUnsignedShortCharacteristic   testCharacteristic  = BLEUnsignedShortCharacteristic("fff1", BLERead | BLEWrite | BLEWriteWithoutResponse | BLENotify /*| BLEIndicate*/);
+BLEDescriptor                    testDescriptor      = BLEDescriptor("2901", "counter");
 
-BLEService                         testService         = BLEService("fff0");
-BLECharacteristicT<unsigned short> testCharacteristic  = BLECharacteristicT<unsigned short>("fff1", BLEPropertyRead | BLEPropertyWrite | BLEPropertyWriteWithoutResponse | BLEPropertyNotify /*| BLEPropertyIndicate*/);
-BLEDescriptor                      testDescriptor      = BLEDescriptor("2901", "counter");
+unsigned long long               lastSent            = 0;
 
-unsigned long long                 lastSent            = 0;
-
-void setup() {                
+void setup() {
   Serial.begin(115200);
 #if defined (__AVR_ATmega32U4__)
   //Wait until the serial port is available (useful only for the Leonardo)
@@ -56,9 +44,12 @@ void setup() {
   blePeripheral.addAttribute(testCharacteristic);
   blePeripheral.addAttribute(testDescriptor);
 
-  blePeripheral.setConnectHandler(blePeripheralConnectHandler);
-  blePeripheral.setDisconnectHandler(blePeripheralDisconnectHandler);
-  testCharacteristic.setNewValueHandler(characteristicHasNewValue);
+  blePeripheral.setEventHandler(BLEConnected, blePeripheralConnectHandler);
+  blePeripheral.setEventHandler(BLEDisconnected, blePeripheralDisconnectHandler);
+
+  testCharacteristic.setEventHandler(BLEWritten, characteristicWritten);
+  testCharacteristic.setEventHandler(BLESubscribed, characteristicSubscribed);
+  testCharacteristic.setEventHandler(BLEUnsubscribed, characteristicUnsubscribed);
 
   testCharacteristic.setValue(0);
 
@@ -73,39 +64,56 @@ void setup() {
 }
 
 void loop() {
-  blePeripheral.poll();
+  BLECentral central = blePeripheral.central();
 
-  if (blePeripheral.isConnected()) {
-    if (testCharacteristic.hasNewValue()) {
-      Serial.println(F("counter written, reset"));
+  if (central) {
+    Serial.print(F("Connected to central: "));
+    Serial.println(central.address());
 
-      lastSent = 0;
-      testCharacteristic.setValue(0);
+    testCharacteristic.setValue(0);
+
+    while (central.connected()) {
+      if (testCharacteristic.written()) {
+        Serial.println(F("counter written, reset"));
+
+        lastSent = 0;
+        testCharacteristic.setValue(0);
+      }
+
+      if (millis() > 1000 && (millis() - 1000) > lastSent) {
+        lastSent = millis();
+
+        testCharacteristic.setValue(testCharacteristic.value() + 1);
+
+        Serial.print(F("counter = "));
+        Serial.println(testCharacteristic.value(), DEC);
+      }
     }
 
-    if (millis() > 1000 && (millis() - 1000) > lastSent) {
-      lastSent = millis();
-
-      testCharacteristic.setValue(testCharacteristic.value() + 1);
-
-      Serial.print(F("counter = "));
-      Serial.println(testCharacteristic.value(), DEC);
-    }
+    Serial.print(F("Disconnected from central: "));
+    Serial.println(central.address());
   }
 }
 
-void blePeripheralConnectHandler(const char* address) {
-  Serial.print(F("Connected to central "));
-  Serial.println(address);
-
-  testCharacteristic.setValue(0);
+void blePeripheralConnectHandler(BLECentral& central) {
+  Serial.print(F("Connected event, central: "));
+  Serial.println(central.address());
 }
 
-void blePeripheralDisconnectHandler() {
-  Serial.println(F("Disconnected from central "));
+void blePeripheralDisconnectHandler(BLECentral& central) {
+  Serial.print(F("Disconnected event, central: "));
+  Serial.println(central.address());
 }
 
-void characteristicHasNewValue() {
-  Serial.print(F("Characteristic has new value"));
+void characteristicWritten(BLECentral& central, BLECharacteristic& characteristic) {
+  Serial.print(F("Characteristic event, writen: "));
   Serial.println(testCharacteristic.value(), DEC);
+}
+
+void characteristicSubscribed(BLECentral& central, BLECharacteristic& characteristic) {
+  Serial.println(F("Characteristic event, subscribed"));
+}
+
+void characteristicUnsubscribed(BLECentral& central, BLECharacteristic& characteristic) {
+  Serial.println(F("Characteristic event, unsubscribed"));
 }

@@ -1,11 +1,7 @@
 #ifndef _NRF_8001_H_
 #define _NRF_8001_H_
 
-#if ARDUINO >= 100
-  #include "Arduino.h"
-#else
-  #include "WProgram.h"
-#endif
+#include "Arduino.h"
 
 #include <utility/lib_aci.h>
 #include <utility/aci_setup.h>
@@ -18,41 +14,46 @@ class nRF8001;
 class nRF8001EventListener
 {
   public:
-    virtual void nRF8001Connected(nRF8001& nRF8001, const char* address) = 0;
+    virtual void nRF8001Connected(nRF8001& nRF8001, const unsigned char* address) = 0;
     virtual void nRF8001Disconnected(nRF8001& nRF8001) = 0;
 
-    virtual void nRF8001AddressReceived(nRF8001& nRF8001, const char* address) = 0;
+    virtual void nRF8001CharacteristicValueChanged(nRF8001& nRF8001, BLECharacteristic& characteristic, const unsigned char* value, unsigned char valueLength) = 0;
+    virtual void nRF8001CharacteristicSubscribedChanged(nRF8001& nRF8001, BLECharacteristic& characteristic, bool subscribed) = 0;
+
+    virtual void nRF8001AddressReceived(nRF8001& nRF8001, const unsigned char* address) = 0;
     virtual void nRF8001TemperatureReceived(nRF8001& nRF8001, float temperature) = 0;
     virtual void nRF8001BatteryLevelReceived(nRF8001& nRF8001, float batteryLevel) = 0;
 };
 
 
-class nRF8001 : public BLECharacteristicValueChangeListener
+class nRF8001
 {
-  struct pipeInfo {
-    BLECharacteristic* characteristic;
+  friend class BLEPeripheral;
 
-    unsigned short     valueHandle;
-    unsigned short     configHandle;
+  protected:
+    struct pipeInfo {
+      BLECharacteristic* characteristic;
 
-    unsigned char      startPipe;
-    unsigned char      txPipe;
-    unsigned char      txAckPipe;
-    unsigned char      rxPipe;
-    unsigned char      rxAckPipe;
-    unsigned char      setPipe;
+      unsigned short     valueHandle;
+      unsigned short     configHandle;
 
-    bool               txPipeOpen;
-    bool               txAckPipeOpen;
-  };
+      unsigned char      startPipe;
+      unsigned char      txPipe;
+      unsigned char      txAckPipe;
+      unsigned char      rxPipe;
+      unsigned char      rxAckPipe;
+      unsigned char      setPipe;
 
-  public:
+      bool               txPipeOpen;
+      bool               txAckPipeOpen;
+    };
+
     nRF8001(unsigned char req, unsigned char rdy, unsigned char rst);
 
     virtual ~nRF8001();
 
     void setEventListener(nRF8001EventListener* eventListener);
-  
+
     void begin(const unsigned char* advertisementData,
                 unsigned char advertisementDataLength,
                 const unsigned char* scanData,
@@ -62,9 +63,9 @@ class nRF8001 : public BLECharacteristicValueChangeListener
 
     void poll();
 
-    void characteristicValueChanged(BLECharacteristic& characteristic);
-
     void disconnect();
+
+    void updateCharacteristicValue(BLECharacteristic& characteristic);
 
     void requestAddress();
     void requestTemperature();
