@@ -1,0 +1,94 @@
+#######################################
+# Syntax Coloring Map For BLEPeripheral
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+BLEAttribute	KEYWORD1
+BLECentral	KEYWORD1
+BLECharacteristic	KEYWORD1
+BLEDescriptor	KEYWORD1
+BLEPeripheral	KEYWORD1
+BLEService	KEYWORD1
+BLETypedCharacteristic	KEYWORD1
+BLEUuid	KEYWORD1
+nRF8001	KEYWORD1
+
+BLECharCharacteristic	KEYWORD1
+BLEUnsignedCharCharacteristic	KEYWORD1
+BLEShortCharacteristic	KEYWORD1
+BLEUnsignedShortCharacteristic	KEYWORD1
+BLEIntCharacteristic	KEYWORD1
+BLEUnsignedIntCharacteristic	KEYWORD1
+BLELongCharacteristic	KEYWORD1
+BLEFloatCharacteristic	KEYWORD1
+BLEDoubleCharacteristic	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+uuid	KEYWORD2
+type	KEYWORD2
+numAttributes	KEYWORD2
+
+connected	KEYWORD2
+address	KEYWORD2
+poll	KEYWORD2
+disconnect	KEYWORD2
+
+properties	KEYWORD2
+valueSize	KEYWORD2
+value	KEYWORD2
+valueLength	KEYWORD2
+setValue	KEYWORD2
+written	KEYWORD2
+subscribed	KEYWORD2
+setEventHandler	KEYWORD2
+
+begin	KEYWORD2
+setAdvertisedServiceUuid	KEYWORD2
+setManufacturerData	KEYWORD2
+setLocalName	KEYWORD2
+setDeviceName	KEYWORD2
+setAppearance	KEYWORD2
+addAttribute	KEYWORD2
+central	KEYWORD2
+
+setValueLE	KEYWORD2
+valueLE	KEYWORD2
+setValueBE	KEYWORD2
+valueBE	KEYWORD2
+
+str	KEYWORD2
+data	KEYWORD2
+length	KEYWORD2
+
+setEventListener	KEYWORD2
+updateCharacteristicValue	KEYWORD2
+requestAddress	KEYWORD2
+requestTemperature	KEYWORD2
+requestBatteryLevel	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+BLETypeService	LITERAL1
+BLETypeCharacteristic	LITERAL1
+BLETypeDescriptor	LITERAL1
+
+BLERead	LITERAL1
+BLEWriteWithoutResponse	LITERAL1
+BLEWrite	LITERAL1
+BLENotify	LITERAL1
+BLEIndicate	LITERAL1
+
+BLEWritten	LITERAL1
+BLESubscribed	LITERAL1
+BLEUnsubscribed	LITERAL1
+
+BLEConnected	LITERAL1
+BLEDisconnected	LITERAL1
