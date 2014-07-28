@@ -247,12 +247,16 @@ See ```BLECharacteritic```
 ## Get value
 ```
 <Data Type> value();
+<Data Type> valueLE(); // little endian
+<Data Type> valueBE(); // big endian
 ```
 
 ## Set value
 
 ```
 void setValue(<Data Type> value);
+void setValueLE(<Data Type> value); // little endian
+void setValueBE(<Data Type> value); // big endian
 ```
 
 # BLEDescriptor
