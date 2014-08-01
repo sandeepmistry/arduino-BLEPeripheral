@@ -10,6 +10,8 @@
 
 //#define NRF_8001_DEBUG
 
+#define ADVERTISING_INTERVAL 0x050
+
 struct setupMsgData {
   unsigned char length;
   unsigned char cmd;
@@ -617,7 +619,7 @@ void nRF8001::poll() {
             if (aciEvt->params.device_started.hw_error) {
               delay(20); //Handle the HW error event correctly.
             } else {
-              lib_aci_connect(0/* in seconds : 0 means forever */, 0x0050 /* advertising interval 50ms*/);
+              lib_aci_connect(0/* in seconds : 0 means forever */, ADVERTISING_INTERVAL);
 #ifdef NRF_8001_DEBUG
               Serial.println(F("Advertising started"));
 #endif
@@ -772,7 +774,7 @@ void nRF8001::poll() {
           this->_eventListener->nRF8001Disconnected(*this);
         }
 
-        lib_aci_connect(0/* in seconds  : 0 means forever */, 0x0050 /* advertising interval 50ms*/);
+        lib_aci_connect(0/* in seconds  : 0 means forever */, ADVERTISING_INTERVAL);
 #ifdef NRF_8001_DEBUG
         Serial.println(F("Advertising started."));
 #endif
@@ -844,7 +846,7 @@ void nRF8001::poll() {
         }
         Serial.println();
 #endif
-        lib_aci_connect(0/* in seconds, 0 means forever */, 0x0050 /* advertising interval 50ms*/);
+        lib_aci_connect(0/* in seconds, 0 means forever */, ADVERTISING_INTERVAL);
 #ifdef NRF_8001_DEBUG
         Serial.println(F("Advertising started."));
 #endif
