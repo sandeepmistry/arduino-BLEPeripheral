@@ -359,16 +359,16 @@ void nRF8001::begin(const unsigned char* advertisementData,
       }
 
       if (characteristic->properties() & (BLEWrite | BLEWriteWithoutResponse)) {
-        setupMsgData->data[0] |= 0x40;
+        setupMsgData->data[0] |= 0x46;
         setupMsgData->data[1] |= 0x10;
       }
 
       if (characteristic->properties() & BLENotify) {
-        setupMsgData->data[0] |= 0x10;
+        setupMsgData->data[0] |= 0x16;
       }
 
       if (characteristic->properties() & BLEIndicate) {
-        setupMsgData->data[0] |= 0x20;
+        setupMsgData->data[0] |= 0x26;
       }
 
       setupMsgData->data[2]  = characteristic->valueSize() + 1;
@@ -474,6 +474,7 @@ void nRF8001::begin(const unsigned char* advertisementData,
   setupMsgData = (struct setupMsgData*)setupMsg->buffer;
 
   setupMsgData->data[6] = numPiped;
+  setupMsgData->data[8] = numPiped;
   this->_numPipeInfo = numPiped;
 
   // pipes
