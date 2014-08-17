@@ -8,7 +8,7 @@
 
 #include "nRF8001.h"
 
-#define NRF_8001_DEBUG
+//#define NRF_8001_DEBUG
 
 #define ADVERTISING_INTERVAL 0x050
 
