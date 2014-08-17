@@ -8,7 +8,7 @@
 
 #include "nRF8001.h"
 
-//#define NRF_8001_DEBUG
+#define NRF_8001_DEBUG
 
 #define ADVERTISING_INTERVAL 0x050
 
@@ -350,28 +350,35 @@ void nRF8001::begin(const unsigned char* advertisementData,
       setupMsgData->type     = 0x20;
       setupMsgData->offset   = gattSetupMsgOffset;
 
-      setupMsgData->data[0]  = 0x00;
+      setupMsgData->data[0]  = 0x04;
       setupMsgData->data[1]  = 0x00;
 
+      if (characteristic->fixedLength()) {
+        setupMsgData->data[0] |= 0x02;
+      }
+
       if (characteristic->properties() & BLERead) {
-        setupMsgData->data[0] |= 0x06;
         setupMsgData->data[1] |= 0x04;
       }
 
       if (characteristic->properties() & (BLEWrite | BLEWriteWithoutResponse)) {
-        setupMsgData->data[0] |= 0x46;
+        setupMsgData->data[0] |= 0x40;
         setupMsgData->data[1] |= 0x10;
       }
 
       if (characteristic->properties() & BLENotify) {
-        setupMsgData->data[0] |= 0x16;
+        setupMsgData->data[0] |= 0x10;
       }
 
       if (characteristic->properties() & BLEIndicate) {
-        setupMsgData->data[0] |= 0x26;
+        setupMsgData->data[0] |= 0x20;
       }
 
-      setupMsgData->data[2]  = characteristic->valueSize() + 1;
+      setupMsgData->data[2]  = characteristic->valueSize();
+      if (characteristic->fixedLength()) {
+        setupMsgData->data[2]++;
+      }
+
       setupMsgData->data[3]  = characteristic->valueLength();
 
       setupMsgData->data[4]  = (pipeInfo->valueHandle >> 8) & 0xff;
@@ -380,7 +387,7 @@ void nRF8001::begin(const unsigned char* advertisementData,
       setupMsgData->data[6]  = 0x00;
       setupMsgData->data[7]  = 0x00;
 
-      setupMsgData->data[8]  = pipeInfo->startPipe;
+      setupMsgData->data[8]  = 0x02;
 
       memset(&setupMsgData->data[9], 0x00, characteristic->valueSize());
       memcpy(&setupMsgData->data[9], characteristic->value(), characteristic->valueLength());

@@ -33,8 +33,8 @@ class BLECharacteristic : public BLEAttribute
   friend class BLEPeripheral;
 
   public:
-    BLECharacteristic(const char* uuid, unsigned char properties, unsigned char valueSize);
-    BLECharacteristic(const char* uuid, unsigned char properties, const char* value);
+    BLECharacteristic(const char* uuid, unsigned char properties, unsigned char valueSize, bool fixedLength = false);
+    BLECharacteristic(const char* uuid, unsigned char properties, const char* value, bool fixedLength = false);
 
     virtual ~BLECharacteristic();
 
@@ -43,6 +43,7 @@ class BLECharacteristic : public BLEAttribute
     unsigned char valueSize() const;
     const unsigned char* value() const;
     unsigned char valueLength() const;
+    bool fixedLength() const;
 
     void setValue(const unsigned char value[], unsigned char length);
     void setValue(const char* value);
@@ -63,6 +64,7 @@ class BLECharacteristic : public BLEAttribute
     unsigned char                         _valueSize;
     unsigned char*                        _value;
     unsigned char                         _valueLength;
+    bool                                  _fixedLength;
 
     bool                                  _written;
     bool                                  _subscribed;

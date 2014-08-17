@@ -24,7 +24,7 @@ template<typename T> class BLETypedCharacteristic : public BLECharacteristic
 };
 
 template<typename T> BLETypedCharacteristic<T>::BLETypedCharacteristic(const char* uuid, unsigned char properties) :
-  BLECharacteristic(uuid, properties, sizeof(T))
+  BLECharacteristic(uuid, properties, sizeof(T), true)
 {
   T value;
   memset(&value, 0x00, sizeof(value));

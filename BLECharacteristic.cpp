@@ -2,11 +2,12 @@
 
 #include "BLECharacteristic.h"
 
-BLECharacteristic::BLECharacteristic(const char* uuid, unsigned char properties, unsigned char valueSize) :
+BLECharacteristic::BLECharacteristic(const char* uuid, unsigned char properties, unsigned char valueSize, bool fixedLength) :
   BLEAttribute(uuid, BLETypeCharacteristic),
   _properties(properties),
   _valueSize(min(valueSize, BLE_ATTRIBUTE_MAX_VALUE_LENGTH)),
   _valueLength(0),
+  _fixedLength(fixedLength),
   _written(false),
   _subscribed(false),
   _listener(NULL)
@@ -16,11 +17,12 @@ BLECharacteristic::BLECharacteristic(const char* uuid, unsigned char properties,
   _value = (unsigned char*)malloc(this->_valueSize);
 }
 
-BLECharacteristic::BLECharacteristic(const char* uuid, unsigned char properties, const char* value) :
+BLECharacteristic::BLECharacteristic(const char* uuid, unsigned char properties, const char* value, bool fixedLength) :
   BLEAttribute(uuid, BLETypeCharacteristic),
   _properties(properties),
   _valueSize(min(strlen(value), BLE_ATTRIBUTE_MAX_VALUE_LENGTH)),
   _valueLength(0),
+  _fixedLength(fixedLength),
   _written(false),
   _subscribed(false),
   _listener(NULL)
@@ -51,6 +53,10 @@ unsigned const char* BLECharacteristic::value() const {
 
 unsigned char BLECharacteristic::valueLength() const {
   return this->_valueLength;
+}
+
+bool BLECharacteristic::fixedLength() const {
+  return this->_fixedLength;
 }
 
 void BLECharacteristic::setValue(const unsigned char value[], unsigned char length) {
