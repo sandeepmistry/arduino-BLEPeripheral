@@ -70,6 +70,10 @@ class BLEPeripheral : public nRF8001EventListener, public BLECharacteristicValue
     BLEService                     _genericAccessService;
     BLECharacteristic              _deviceNameCharacteristic;
     BLECharacteristic              _appearanceCharacteristic;
+#if !defined(__AVR_ATmega328P__)
+    BLEService                     _genericAttributeService;
+    BLECharacteristic              _servicesChangedCharacteristic;
+#endif
 
     BLECentral                     _central;
     BLEPeripheralEventHandler      _eventHandlers[2];

@@ -20,6 +20,10 @@ BLEPeripheral::BLEPeripheral(unsigned char req, unsigned char rdy, unsigned char
   _genericAccessService("1800"),
   _deviceNameCharacteristic("2a00", BLERead, 19),
   _appearanceCharacteristic("2a01", BLERead, 2),
+#if !defined(__AVR_ATmega328P__)
+  _genericAttributeService("1801"),
+  _servicesChangedCharacteristic("2a05", BLEIndicate, 4),
+#endif
 
   _central(this)
 {
@@ -129,7 +133,14 @@ void BLEPeripheral::addAttribute(BLEAttribute& attribute) {
     this->_attributes[1] = &this->_deviceNameCharacteristic;
     this->_attributes[2] = &this->_appearanceCharacteristic;
 
+#if !defined(__AVR_ATmega328P__)
+    this->_attributes[3] = &this->_genericAttributeService;
+    this->_attributes[4] = &this->_servicesChangedCharacteristic;
+
+    this->_numAttributes = 5;
+#else
     this->_numAttributes = 3;
+#endif
   }
 
   this->_attributes[this->_numAttributes] = &attribute;
