@@ -72,14 +72,18 @@ class nRF8001
     void requestBatteryLevel();
 
   private:
+    void waitForSetupMode();
+    void sendSetupMessage(hal_aci_data_t* data);
+    void sendCrc();
+
+  private:
     struct aci_state_t          _aciState;
     hal_aci_evt_t               _aciData;
 
     struct pipeInfo*            _pipeInfo;
     unsigned char               _numPipeInfo;
 
-    bool                        _setupRequired;
-    bool                        _isSetup;
+    unsigned short              _crcSeed;
 
     nRF8001EventListener*       _eventListener;
 };
