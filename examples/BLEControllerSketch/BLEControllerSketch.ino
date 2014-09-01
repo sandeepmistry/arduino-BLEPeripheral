@@ -10,6 +10,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 */
 
+/*
+ *    BLEControllerSketch
+ *
+ *    The sketch works with the BLEController iOS/Android App.
+ *    It reports every available Arduino's pin mode and pin state to the App in real-time,
+ *    Such as D3 is now acts as INPUT and its state is HIGH.
+ *    You can also use App to control the pin mode and pin state,
+ *    Such as D5 can be changed as PWM mode and its state is 128.
+ */
+
 // Import libraries (BLEPeripheral depends on SPI)
 #include <SPI.h>
 #include <BLEPeripheral.h>

@@ -10,6 +10,23 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 */
 
+/*
+ *    SimpleControls
+ *
+ *    SimpleControls works with the BLEController iOS/Android App.
+ *    The Arduino's pin can acts as DIGITAL_IN, DIGITAL_OUT, PWM, SERVO, ANALOG_IN.
+ *    The sketch is to show you how to control the pin as one of the abilities.
+ *    Note that not every pin can own all of the abilities.
+ *    You can change the following macro to specify which pin to be controlled.
+ *      #define DIGITAL_OUT_PIN    2
+ *      #define DIGITAL_IN_PIN     A4
+ *      #define PWM_PIN            3
+ *      #define SERVO_PIN          5
+ *      #define ANALOG_IN_PIN      A5
+ *    The sketch will report the state of DIGITAL_IN_PIN and ANALOG_IN_PIN to App.
+ *    The App can control the state of DIGITAL_OUT_PIN / PWM_PIN / SERVO_PIN
+ */
+
 // Import libraries (BLEPeripheral depends on SPI)
 #include <SPI.h>
 #include <BLEPeripheral.h>

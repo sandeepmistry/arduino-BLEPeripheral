@@ -13,10 +13,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 /*
  *    Chat
  *
- *    Simple chat sketch, work with the Chat iOS/Android App.
+ *    Simple chat sketch, work with the BLEController iOS/Android App.
  *    Type something from the Arduino serial monitor to send
- *    to the Chat App or vice verse.
- *
+ *    to the BLEController App or vice verse.
+ *    Characteristics received from App will print on Serial Monitor.
  */
  
 // Import libraries (BLEPeripheral depends on SPI)
