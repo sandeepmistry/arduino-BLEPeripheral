@@ -187,15 +187,19 @@ unsigned char valueLength();
 Will automatically notify/indicate central, if characteristic has notify/indicate property and central is subscribed.
 
 ```
-void setValue(const unsigned char value[], unsigned char length);
+bool setValue(const unsigned char value[], unsigned char length);
 ```
  * value - value bytes
  * length - value length (upto value size)
 
+Returns true on success (central notified/indicated, if applicable), false on failure (cannot be notified/indicated, if applicable)
+
 ```
-    void setValue(const char* value);
+bool setValue(const char* value);
 ```
  * value - new value as string
+
+Returns true on success (central notified/indicated, if applicable), false on failure (cannot be notified/indicated, if applicable)
 
 ## Writes
 Has the central written a new value since the last call to this method? (only for write or write without response characteristics)
@@ -207,6 +211,13 @@ bool written();
 Is the central subscribed (via notify or indicate) to the characteristic? (only for notify/indicate characteristics)
 ```
 bool subscribed();
+```
+
+## Notify/indicate status
+Can the central be notified/indicated of when the value is set. Only applies to characateristics with notify and/or indicate properties when a central is connected and subscribed
+```
+bool canNotify();
+bool canIndicate();
 ```
 
 ## Set event handler callbacks
@@ -254,10 +265,12 @@ See ```BLECharacteritic```
 ## Set value
 
 ```
-void setValue(<Data Type> value);
-void setValueLE(<Data Type> value); // little endian
-void setValueBE(<Data Type> value); // big endian
+bool setValue(<Data Type> value);
+bool setValueLE(<Data Type> value); // little endian
+bool setValueBE(<Data Type> value); // big endian
 ```
+
+Returns true on success (central notified/indicated, if applicable), false on failure (cannot be notified/indicated, if applicable)
 
 # BLEDescriptor
 

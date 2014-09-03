@@ -107,10 +107,11 @@ Every other function wants to send data will call this function at the end.
 */
 void ble_write_string(byte *bytes, uint8_t len)
 {
+  while(!txCharacteristic.canNotify())
+  {
+    blePeripheral.poll();
+  }
   txCharacteristic.setValue(bytes, len); 
-  Serial.print("Send bytes: ");
-  Serial.println(len);
-  delay(200);
 }
 
 byte reportDigitalInput()
@@ -407,8 +408,7 @@ void loop()
                     reportPinPWMData(pin);
                   else if (pin_mode[pin] == SERVO)
                     reportPinServoData(pin);  
-                }   
-                Serial.println("query done");             
+                }            
                 queryDone = true; 
                 uint8_t str[] = "ABC";
                 sendCustomData(str, 3);

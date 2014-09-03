@@ -59,18 +59,22 @@ bool BLECharacteristic::fixedLength() const {
   return this->_fixedLength;
 }
 
-void BLECharacteristic::setValue(const unsigned char value[], unsigned char length) {
+bool BLECharacteristic::setValue(const unsigned char value[], unsigned char length) {
+  bool success = true;
+
   this->_valueLength = min(length, this->_valueSize);
 
   memcpy(this->_value, value, this->_valueLength);
 
   if (this->_listener) {
-    _listener->characteristicValueChanged(*this);
+    success = this->_listener->characteristicValueChanged(*this);
   }
+
+  return success;
 }
 
-void BLECharacteristic::setValue(const char* value) {
-  this->setValue((const unsigned char *)value, strlen(value));
+bool BLECharacteristic::setValue(const char* value) {
+  return this->setValue((const unsigned char *)value, strlen(value));
 }
 
 bool BLECharacteristic::written() {
@@ -106,6 +110,14 @@ void BLECharacteristic::setSubscribed(BLECentral& central, bool subscribed) {
   if (eventHandler) {
     eventHandler(central, *this);
   }
+}
+
+bool BLECharacteristic::canNotify() {
+  return (this->_listener) ? this->_listener->canNotifyCharacteristic(*this) : false;
+}
+
+bool BLECharacteristic::canIndicate() {
+  return (this->_listener) ? this->_listener->canIndicateCharacteristic(*this) : false;
 }
 
 void BLECharacteristic::setEventHandler(BLECharacteristicEvent event, BLECharacteristicEventHandler eventHandler) {

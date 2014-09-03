@@ -42,15 +42,6 @@ See [API.md](API.md).
 ## Examples
 See [examples](examples) folder.
 
-## Memory usage
-
-Creating dynamic setup messages for the nRF8001 uses a quite a lot of memory.
-
- * base services/characteristics: ~229 bytes
- * per characteristic: up to ~144 bytes (with notify/indicate property)
- * per descriptor: ~70 bytes
-
-
 ## Useful Links
  * [@lizardo](https://github.com/lizardo)'s [nRF8001 Experiments](https://github.com/lizardo/nrf8001)
    * used as a starting point to reverse engineer the proprietary setup message format for the chips

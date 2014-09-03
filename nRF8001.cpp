@@ -94,13 +94,11 @@ uint16_t crc_16_ccitt(uint16_t crc, uint8_t * data_in, uint16_t data_len) {
   return crc;
 }
 
-
 nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
-  _setupRequired(false),
-  _isSetup(false),
-
   _pipeInfo(NULL),
   _numPipeInfo(0),
+
+  _crcSeed(0xFFFF),
 
   _eventListener(NULL)
 {
@@ -130,16 +128,6 @@ nRF8001::~nRF8001() {
   if (this->_pipeInfo) {
     free(this->_pipeInfo);
   }
-
-  if (this->_aciState.aci_setup_info.setup_msgs) {
-    for (int i = 0; i < this->_aciState.aci_setup_info.num_setup_msgs; i++) {
-      if (this->_aciState.aci_setup_info.setup_msgs[i]) {
-        free(this->_aciState.aci_setup_info.setup_msgs[i]);
-      }
-    }
-
-    free(this->_aciState.aci_setup_info.setup_msgs);
-  }
 }
 
 
@@ -155,70 +143,50 @@ void nRF8001::begin(const unsigned char* advertisementData,
                       BLEAttribute** attributes,
                       unsigned char numAttributes)
 {
-  hal_aci_data_t* setupMsg;
-  struct setupMsgData* setupMsgData;
-  int setupMsgIndex = 0;
   unsigned char numPipedCharacteristics = 0;
-
-  this->_aciState.aci_setup_info.num_setup_msgs = NB_BASE_SETUP_MESSAGES + 2; // GATT terminator + CRC
 
   for (int i = 0; i < numAttributes; i++) {
     BLEAttribute* attribute = attributes[i];
 
-    if (attribute->type() == BLETypeService) {
-      this->_aciState.aci_setup_info.num_setup_msgs++;
-    } else if (attribute->type() == BLETypeCharacteristic) {
+    if (attribute->type() == BLETypeCharacteristic) {
       BLECharacteristic* characteristic = (BLECharacteristic *)attribute;
 
-      this->_aciState.aci_setup_info.num_setup_msgs += 2;
-
       if (characteristic->properties()) {
-        this->_aciState.aci_setup_info.num_setup_msgs++;
         numPipedCharacteristics++;
       }
-
-      if (characteristic->properties() & (BLENotify | BLEIndicate)){
-        this->_aciState.aci_setup_info.num_setup_msgs++;
-      }
-    } else if (attribute->type() == BLETypeDescriptor) {
-      this->_aciState.aci_setup_info.num_setup_msgs++;
     }
   }
 
-  this->_aciState.aci_setup_info.setup_msgs = (hal_aci_data_t**)malloc(sizeof(hal_aci_data_t*) * this->_aciState.aci_setup_info.num_setup_msgs);
   this->_pipeInfo = (struct pipeInfo*)malloc(sizeof(struct pipeInfo) * numPipedCharacteristics);
 
+  lib_aci_init(&this->_aciState, false);
+
+  this->waitForSetupMode();
+
+  hal_aci_data_t setupMsg;
+  struct setupMsgData* setupMsgData = (struct setupMsgData*)setupMsg.buffer;
+
+  setupMsg.status_byte = 0;
 
   for (int i = 0; i < NB_BASE_SETUP_MESSAGES; i++) {
-    this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(pgm_read_byte_near(&baseSetupMsgs[i].buffer[0]) + 2);
-    setupMsgIndex++;
-    int setupMsgSize = 2 + setupMsg->buffer[0];
+    int setupMsgSize = pgm_read_byte_near(&baseSetupMsgs[i].buffer[0]) + 2;
 
-    memcpy_P(setupMsg, &baseSetupMsgs[i], setupMsgSize);
-  }
+    memcpy_P(&setupMsg, &baseSetupMsgs[i], setupMsgSize);
 
-  if (advertisementData && advertisementDataLength) {
-    setupMsg = this->_aciState.aci_setup_info.setup_msgs[2];
-    setupMsgData = (struct setupMsgData*)setupMsg->buffer;
+    if (i == 1) {
+      setupMsgData->data[6] = numPipedCharacteristics;
+      setupMsgData->data[8] = numPipedCharacteristics;
+    } else if (i == 2 && advertisementData && advertisementDataLength) {
+      setupMsgData->data[22] = 0x40;
+    } else if (i == 3 && scanData && scanDataLength) {
+      setupMsgData->data[12] = 0x40;
+    } else if (i == 5 && advertisementData && advertisementDataLength) {
+      memcpy(setupMsgData->data, advertisementData, advertisementDataLength);
+    } else if (i == 6 && scanData && scanDataLength) {
+      memcpy(setupMsgData->data, scanData, scanDataLength);
+    }
 
-    setupMsgData->data[22] = 0x40;
-
-    setupMsg = this->_aciState.aci_setup_info.setup_msgs[5];
-    setupMsgData = (struct setupMsgData*)setupMsg->buffer;
-
-    memcpy(setupMsgData->data, advertisementData, advertisementDataLength);
-  }
-
-  if (scanData && scanDataLength) {
-    setupMsg = this->_aciState.aci_setup_info.setup_msgs[3];
-    setupMsgData = (struct setupMsgData*)setupMsg->buffer;
-
-    setupMsgData->data[12] = 0x40;
-
-    setupMsg = this->_aciState.aci_setup_info.setup_msgs[6];
-    setupMsgData = (struct setupMsgData*)setupMsg->buffer;
-
-    memcpy(setupMsgData->data, scanData, scanDataLength);
+    this->sendSetupMessage(&setupMsg);
   }
 
   // GATT
@@ -234,11 +202,6 @@ void nRF8001::begin(const unsigned char* advertisementData,
     if (attribute->type() == BLETypeService) {
       BLEService* service = (BLEService *)attribute;
 
-      this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(14 + uuid.length());
-      setupMsgIndex++;
-      setupMsgData = (struct setupMsgData*)setupMsg->buffer;
-
-      setupMsg->status_byte = 0;
       setupMsgData->length  = 12 + uuid.length();
       setupMsgData->cmd     = ACI_CMD_SETUP;
       setupMsgData->type    = 0x20;
@@ -261,6 +224,8 @@ void nRF8001::begin(const unsigned char* advertisementData,
       memcpy(&setupMsgData->data[9], uuid.data(), uuid.length());
 
       gattSetupMsgOffset += 9 + uuid.length();
+
+      this->sendSetupMessage(&setupMsg);
     } else if (attribute->type() == BLETypeCharacteristic) {
       BLECharacteristic* characteristic = (BLECharacteristic *)attribute;
 
@@ -306,11 +271,6 @@ void nRF8001::begin(const unsigned char* advertisementData,
         }
       }
 
-      this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(17 + uuid.length());
-      setupMsgIndex++;
-      setupMsgData = (struct setupMsgData*)setupMsg->buffer;
-
-      setupMsg->status_byte  = 0;
       setupMsgData->length   = 15 + uuid.length();
       setupMsgData->cmd      = ACI_CMD_SETUP;
       setupMsgData->type     = 0x20;
@@ -340,11 +300,8 @@ void nRF8001::begin(const unsigned char* advertisementData,
 
       gattSetupMsgOffset += 12 + uuid.length();
 
-      this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(14 + characteristic->valueSize());
-      setupMsgIndex++;
-      setupMsgData = (struct setupMsgData*)setupMsg->buffer;
+      this->sendSetupMessage(&setupMsg);
 
-      setupMsg->status_byte  = 0;
       setupMsgData->length   = 12 + characteristic->valueSize();
       setupMsgData->cmd      = ACI_CMD_SETUP;
       setupMsgData->type     = 0x20;
@@ -394,12 +351,9 @@ void nRF8001::begin(const unsigned char* advertisementData,
 
       gattSetupMsgOffset += 9 + characteristic->valueSize();
 
-      if (characteristic->properties() & (BLENotify | BLEIndicate)) {
-        this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(16);
-        setupMsgIndex++;
-        setupMsgData = (struct setupMsgData*)setupMsg->buffer;
+      this->sendSetupMessage(&setupMsg);
 
-        setupMsg->status_byte  = 0;
+      if (characteristic->properties() & (BLENotify | BLEIndicate)) {
         setupMsgData->length   = 14;
         setupMsgData->cmd      = ACI_CMD_SETUP;
         setupMsgData->type     = 0x20;
@@ -425,15 +379,12 @@ void nRF8001::begin(const unsigned char* advertisementData,
         setupMsgData->data[10] = 0x00;
 
         gattSetupMsgOffset += 11;
+
+        this->sendSetupMessage(&setupMsg);
       }
     } else if (attribute->type() == BLETypeDescriptor) {
       BLEDescriptor* descriptor = (BLEDescriptor *)attribute;
 
-      this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(14 + descriptor->valueSize());
-      setupMsgIndex++;
-      setupMsgData = (struct setupMsgData*)setupMsg->buffer;
-
-      setupMsg->status_byte  = 0;
       setupMsgData->length   = 12 + descriptor->valueSize();
       setupMsgData->cmd      = ACI_CMD_SETUP;
       setupMsgData->type     = 0x20;
@@ -457,15 +408,14 @@ void nRF8001::begin(const unsigned char* advertisementData,
       memcpy(&setupMsgData->data[9], descriptor->value(), descriptor->valueLength());
 
       gattSetupMsgOffset += 9 + descriptor->valueSize();
+
+      this->sendSetupMessage(&setupMsg);
     }
   }
 
-  // terminator
-  this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(6);
-  setupMsgIndex++;
-  setupMsgData = (struct setupMsgData*)setupMsg->buffer;
+  this->_numPipeInfo = numPiped;
 
-  setupMsg->status_byte  = 0;
+  // terminator
   setupMsgData->length   = 4;
   setupMsgData->cmd      = ACI_CMD_SETUP;
   setupMsgData->type     = 0x20;
@@ -475,14 +425,7 @@ void nRF8001::begin(const unsigned char* advertisementData,
 
   gattSetupMsgOffset += 6;
 
-
-  // update number of piped handles
-  setupMsg = this->_aciState.aci_setup_info.setup_msgs[1];
-  setupMsgData = (struct setupMsgData*)setupMsg->buffer;
-
-  setupMsgData->data[6] = numPiped;
-  setupMsgData->data[8] = numPiped;
-  this->_numPipeInfo = numPiped;
+  this->sendSetupMessage(&setupMsg);
 
   // pipes
   unsigned char pipeSetupMsgOffet  = 0;
@@ -490,11 +433,6 @@ void nRF8001::begin(const unsigned char* advertisementData,
   for (int i = 0; i < numPiped; i++) {
     struct pipeInfo pipeInfo = this->_pipeInfo[i];
 
-    this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(15);
-    setupMsgIndex++;
-    setupMsgData = (struct setupMsgData*)setupMsg->buffer;
-
-    setupMsg->status_byte  = 0;
     setupMsgData->length   = 13;
     setupMsgData->cmd      = ACI_CMD_SETUP;
     setupMsgData->type     = 0x40;
@@ -537,62 +475,11 @@ void nRF8001::begin(const unsigned char* advertisementData,
     }
 
     pipeSetupMsgOffet += 10;
+
+    this->sendSetupMessage(&setupMsg);
   }
 
-  // crc
-  unsigned short crcSeed = 0xFFFF;
-  unsigned char msgLen;
-
-  //Run the CRC algorithm on the modified Setup to find the new CRC
-  for (int i = 0; i < this->_aciState.aci_setup_info.num_setup_msgs; i++) {
-    setupMsg = this->_aciState.aci_setup_info.setup_msgs[i];
-
-    if (this->_aciState.aci_setup_info.num_setup_msgs - 1 == i) {
-      msgLen = setupMsg->buffer[0] - 1; //since the 2 bytes of CRC itself should not be used
-                                                    //to calculate the CRC
-    } else {
-      msgLen = setupMsg->buffer[0] + 1;
-    }
-    crcSeed = crc_16_ccitt(crcSeed, setupMsg->buffer, msgLen);
-  }
-
-  this->_aciState.aci_setup_info.setup_msgs[setupMsgIndex] = setupMsg = (hal_aci_data_t*)malloc(8);
-  setupMsgIndex++;
-  setupMsgData = (struct setupMsgData*)setupMsg->buffer;
-
-  setupMsg->status_byte = 0;
-
-  setupMsgData->length  = 3 + 3;
-  setupMsgData->cmd     = ACI_CMD_SETUP;
-  setupMsgData->type    = 0xf0;
-  setupMsgData->offset  = 0x00;
-
-  setupMsgData->data[0] = 0x03;
-  setupMsgData->data[1] = (crcSeed >> 8) & 0xff;
-  setupMsgData->data[2] = crcSeed & 0xff;
-
-#ifdef NRF_8001_DEBUG
-  Serial.println();
-  for (int i = 0; i < this->_aciState.aci_setup_info.num_setup_msgs; i++) {
-    setupMsg = this->_aciState.aci_setup_info.setup_msgs[i];
-
-    for (int j = 0; j < (setupMsg->buffer[0] + 1); j++) {
-      if ((setupMsg->buffer[j] & 0xf0) == 00) {
-        Serial.print("0");
-      }
-
-      Serial.print(setupMsg->buffer[j], HEX);
-      Serial.print(" ");
-    }
-    Serial.println();
-  }
-#endif
-
-  lib_aci_init(&this->_aciState, false);
-
-  while (!this->_isSetup) {
-    this->poll();
-  }
+  this->sendCrc();
 }
 
 void nRF8001::poll() {
@@ -615,7 +502,6 @@ void nRF8001::poll() {
 #ifdef NRF_8001_DEBUG
             Serial.println(F("Evt Device Started: Setup"));
 #endif
-            this->_setupRequired = true;
             break;
 
           case ACI_DEVICE_STANDBY:
@@ -866,39 +752,50 @@ void nRF8001::poll() {
     // Arduino can go to sleep now
     // Wakeup from sleep from the RDYN line
   }
-
-  /* setup_required is set to true when the device starts up and enters setup mode.
-   * It indicates that do_aci_setup() should be called. The flag should be cleared if
-   * do_aci_setup() returns ACI_STATUS_TRANSACTION_COMPLETE.
-   */
-  if(this->_setupRequired && SETUP_SUCCESS == do_aci_setup(&this->_aciState))
-  {
-    this->_setupRequired = false;
-
-    this->_isSetup = true;
-  }
 }
 
-void nRF8001::updateCharacteristicValue(BLECharacteristic& characteristic) {
+bool nRF8001::updateCharacteristicValue(BLECharacteristic& characteristic) {
+  bool success = true;
+
   for (int i = 0; i < this->_numPipeInfo; i++) {
     struct pipeInfo* pipeInfo = &this->_pipeInfo[i];
 
     if (pipeInfo->characteristic == &characteristic) {
       if (pipeInfo->setPipe) {
-        lib_aci_set_local_data(&this->_aciState, pipeInfo->setPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
+        success &= lib_aci_set_local_data(&this->_aciState, pipeInfo->setPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
       }
 
-      if (pipeInfo->txPipe && pipeInfo->txPipeOpen && lib_aci_get_nb_available_credits(&this->_aciState)) {
-        lib_aci_send_data(pipeInfo->txPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
+      if (pipeInfo->txPipe && pipeInfo->txPipeOpen) {
+        if (this->canNotifyCharacteristic(characteristic)) {
+          this->_aciState.data_credit_available--;
+          success &= lib_aci_send_data(pipeInfo->txPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
+        } else {
+          success = false;
+        }
       }
 
-      if (pipeInfo->txAckPipe && pipeInfo->txAckPipeOpen && lib_aci_get_nb_available_credits(&this->_aciState)) {
-        lib_aci_send_data(pipeInfo->txAckPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
+      if (pipeInfo->txAckPipe && pipeInfo->txAckPipeOpen) {
+        if (this->canIndicateCharacteristic(characteristic)) {
+          this->_aciState.data_credit_available--;
+          success &= lib_aci_send_data(pipeInfo->txAckPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
+        } else {
+          success = false;
+        }
       }
 
       break;
     }
   }
+
+  return success;
+}
+
+bool nRF8001::canNotifyCharacteristic(BLECharacteristic& characteristic) {
+  return (lib_aci_get_nb_available_credits(&this->_aciState) > 0);
+}
+
+bool nRF8001::canIndicateCharacteristic(BLECharacteristic& characteristic) {
+  return (lib_aci_get_nb_available_credits(&this->_aciState) > 0);
 }
 
 void nRF8001::disconnect() {
@@ -915,3 +812,130 @@ void nRF8001::requestTemperature() {
 void nRF8001::requestBatteryLevel() {
   lib_aci_get_battery_level();
 }
+
+void nRF8001::waitForSetupMode()
+{
+  bool setupMode = false;
+
+  while (!setupMode) {
+    if (lib_aci_event_get(&this->_aciState, &this->_aciData)) {
+      aci_evt_t* aciEvt = &this->_aciData.evt;
+
+      switch(aciEvt->evt_opcode) {
+        case ACI_EVT_DEVICE_STARTED: {
+          switch(aciEvt->params.device_started.device_mode) {
+            case ACI_DEVICE_SETUP:
+              /**
+              When the device is in the setup mode
+              */
+#ifdef NRF_8001_DEBUG
+              Serial.println(F("Evt Device Started: Setup"));
+#endif
+              setupMode = true;
+              break;
+          }
+        }
+      }
+    } else {
+      delay(1);
+    }
+  }
+}
+
+void nRF8001::sendSetupMessage(hal_aci_data_t* data)
+{
+  this->_crcSeed = crc_16_ccitt(this->_crcSeed, data->buffer, data->buffer[0] + 1);
+
+#ifdef NRF_8001_DEBUG
+  for (int j = 0; j < (data->buffer[0] + 1); j++) {
+    if ((data->buffer[j] & 0xf0) == 00) {
+      Serial.print("0");
+    }
+
+    Serial.print(data->buffer[j], HEX);
+    Serial.print(" ");
+  }
+  Serial.println();
+#endif
+
+  hal_aci_tl_send(data);
+
+  bool setupMsgSent = false;
+
+  while (!setupMsgSent) {
+    if (lib_aci_event_get(&this->_aciState, &this->_aciData)) {
+      aci_evt_t* aciEvt = &this->_aciData.evt;
+
+      switch(aciEvt->evt_opcode) {
+        case ACI_EVT_CMD_RSP: {
+          switch(aciEvt->params.cmd_rsp.cmd_status) {
+            case ACI_STATUS_TRANSACTION_CONTINUE:
+#ifdef NRF_8001_DEBUG
+              Serial.println(F("Evt Cmd Rsp: Transaction Continue"));
+#endif
+              setupMsgSent = true;
+              break;
+          }
+        }
+      }
+    } else {
+      delay(1);
+    }
+  }
+}
+
+void nRF8001::sendCrc()
+{
+  hal_aci_data_t data;
+  data.status_byte = 0;
+
+  data.buffer[0]  = 3 + 3;
+  data.buffer[1]  = ACI_CMD_SETUP;
+  data.buffer[2]  = 0xf0;
+  data.buffer[3]  = 0x00;
+
+  data.buffer[4] = 0x03;
+
+  this->_crcSeed = crc_16_ccitt(this->_crcSeed, data.buffer, data.buffer[0] - 1);
+
+  data.buffer[5] = (this->_crcSeed >> 8) & 0xff;
+  data.buffer[6] = this->_crcSeed & 0xff;
+
+#ifdef NRF_8001_DEBUG
+  for (int j = 0; j < (data.buffer[0] + 1); j++) {
+    if ((data.buffer[j] & 0xf0) == 00) {
+      Serial.print("0");
+    }
+
+    Serial.print(data.buffer[j], HEX);
+    Serial.print(" ");
+  }
+  Serial.println();
+#endif
+
+  hal_aci_tl_send(&data);
+
+  bool setupMsgSent = false;
+
+  while (!setupMsgSent) {
+    if (lib_aci_event_get(&this->_aciState, &this->_aciData)) {
+      aci_evt_t* aciEvt = &this->_aciData.evt;
+
+      switch(aciEvt->evt_opcode) {
+        case ACI_EVT_CMD_RSP: {
+          switch(aciEvt->params.cmd_rsp.cmd_status) {
+            case ACI_STATUS_TRANSACTION_COMPLETE:
+#ifdef NRF_8001_DEBUG
+              Serial.println(F("Evt Cmd Rsp: Transaction Complete"));
+#endif
+              setupMsgSent = true;
+              break;
+          }
+        }
+      }
+    } else {
+      delay(1);
+    }
+  }
+}
+

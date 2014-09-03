@@ -20,10 +20,8 @@ BLEPeripheral::BLEPeripheral(unsigned char req, unsigned char rdy, unsigned char
   _genericAccessService("1800"),
   _deviceNameCharacteristic("2a00", BLERead, 19),
   _appearanceCharacteristic("2a01", BLERead, 2),
-#if !defined(__AVR_ATmega328P__)
   _genericAttributeService("1801"),
   _servicesChangedCharacteristic("2a05", BLEIndicate, 4),
-#endif
 
   _central(this)
 {
@@ -133,14 +131,10 @@ void BLEPeripheral::addAttribute(BLEAttribute& attribute) {
     this->_attributes[1] = &this->_deviceNameCharacteristic;
     this->_attributes[2] = &this->_appearanceCharacteristic;
 
-#if !defined(__AVR_ATmega328P__)
     this->_attributes[3] = &this->_genericAttributeService;
     this->_attributes[4] = &this->_servicesChangedCharacteristic;
 
     this->_numAttributes = 5;
-#else
-    this->_numAttributes = 3;
-#endif
   }
 
   this->_attributes[this->_numAttributes] = &attribute;
@@ -169,8 +163,16 @@ void BLEPeripheral::setEventHandler(BLEPeripheralEvent event, BLEPeripheralEvent
   }
 }
 
-void BLEPeripheral::characteristicValueChanged(BLECharacteristic& characteristic) {
-  this->_nRF8001.updateCharacteristicValue(characteristic);
+bool BLEPeripheral::characteristicValueChanged(BLECharacteristic& characteristic) {
+  return this->_nRF8001.updateCharacteristicValue(characteristic);
+}
+
+bool BLEPeripheral::canNotifyCharacteristic(BLECharacteristic& characteristic) {
+  return this->_nRF8001.canNotifyCharacteristic(characteristic);
+}
+
+bool BLEPeripheral::canIndicateCharacteristic(BLECharacteristic& characteristic) {
+  return this->_nRF8001.canIndicateCharacteristic(characteristic);
 }
 
 void BLEPeripheral::nRF8001Connected(nRF8001& nRF8001, const unsigned char* address) {
@@ -208,7 +210,6 @@ void BLEPeripheral::nRF8001CharacteristicValueChanged(nRF8001& nRF8001, BLEChara
 void BLEPeripheral::nRF8001CharacteristicSubscribedChanged(nRF8001& nRF8001, BLECharacteristic& characteristic, bool subscribed) {
   characteristic.setSubscribed(this->_central, subscribed);
 }
-
 
 void BLEPeripheral::nRF8001AddressReceived(nRF8001& nRF8001, const unsigned char* address) {
 #ifdef BLE_PERIPHERAL_DEBUG
