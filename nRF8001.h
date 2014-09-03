@@ -65,7 +65,9 @@ class nRF8001
 
     void disconnect();
 
-    void updateCharacteristicValue(BLECharacteristic& characteristic);
+    bool updateCharacteristicValue(BLECharacteristic& characteristic);
+    bool canNotifyCharacteristic(BLECharacteristic& characteristic);
+    bool canIndicateCharacteristic(BLECharacteristic& characteristic);
 
     void requestAddress();
     void requestTemperature();

@@ -44,7 +44,9 @@ class BLEPeripheral : public nRF8001EventListener, public BLECharacteristicValue
     void setEventHandler(BLEPeripheralEvent event, BLEPeripheralEventHandler eventHandler);
 
   protected:
-    void characteristicValueChanged(BLECharacteristic& characteristic);
+    bool characteristicValueChanged(BLECharacteristic& characteristic);
+    bool canNotifyCharacteristic(BLECharacteristic& characteristic);
+    bool canIndicateCharacteristic(BLECharacteristic& characteristic);
 
     virtual void nRF8001Connected(nRF8001& nRF8001, const unsigned char* address);
     virtual void nRF8001Disconnected(nRF8001& nRF8001);

@@ -163,8 +163,16 @@ void BLEPeripheral::setEventHandler(BLEPeripheralEvent event, BLEPeripheralEvent
   }
 }
 
-void BLEPeripheral::characteristicValueChanged(BLECharacteristic& characteristic) {
-  this->_nRF8001.updateCharacteristicValue(characteristic);
+bool BLEPeripheral::characteristicValueChanged(BLECharacteristic& characteristic) {
+  return this->_nRF8001.updateCharacteristicValue(characteristic);
+}
+
+bool BLEPeripheral::canNotifyCharacteristic(BLECharacteristic& characteristic) {
+  return this->_nRF8001.canNotifyCharacteristic(characteristic);
+}
+
+bool BLEPeripheral::canIndicateCharacteristic(BLECharacteristic& characteristic) {
+  return this->_nRF8001.canIndicateCharacteristic(characteristic);
 }
 
 void BLEPeripheral::nRF8001Connected(nRF8001& nRF8001, const unsigned char* address) {
@@ -202,7 +210,6 @@ void BLEPeripheral::nRF8001CharacteristicValueChanged(nRF8001& nRF8001, BLEChara
 void BLEPeripheral::nRF8001CharacteristicSubscribedChanged(nRF8001& nRF8001, BLECharacteristic& characteristic, bool subscribed) {
   characteristic.setSubscribed(this->_central, subscribed);
 }
-
 
 void BLEPeripheral::nRF8001AddressReceived(nRF8001& nRF8001, const unsigned char* address) {
 #ifdef BLE_PERIPHERAL_DEBUG

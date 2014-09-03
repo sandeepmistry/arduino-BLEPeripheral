@@ -754,26 +754,48 @@ void nRF8001::poll() {
   }
 }
 
-void nRF8001::updateCharacteristicValue(BLECharacteristic& characteristic) {
+bool nRF8001::updateCharacteristicValue(BLECharacteristic& characteristic) {
+  bool success = true;
+
   for (int i = 0; i < this->_numPipeInfo; i++) {
     struct pipeInfo* pipeInfo = &this->_pipeInfo[i];
 
     if (pipeInfo->characteristic == &characteristic) {
       if (pipeInfo->setPipe) {
-        lib_aci_set_local_data(&this->_aciState, pipeInfo->setPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
+        success &= lib_aci_set_local_data(&this->_aciState, pipeInfo->setPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
       }
 
-      if (pipeInfo->txPipe && pipeInfo->txPipeOpen && lib_aci_get_nb_available_credits(&this->_aciState)) {
-        lib_aci_send_data(pipeInfo->txPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
+      if (pipeInfo->txPipe && pipeInfo->txPipeOpen) {
+        if (this->canNotifyCharacteristic(characteristic)) {
+          this->_aciState.data_credit_available--;
+          success &= lib_aci_send_data(pipeInfo->txPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
+        } else {
+          success = false;
+        }
       }
 
-      if (pipeInfo->txAckPipe && pipeInfo->txAckPipeOpen && lib_aci_get_nb_available_credits(&this->_aciState)) {
-        lib_aci_send_data(pipeInfo->txAckPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
+      if (pipeInfo->txAckPipe && pipeInfo->txAckPipeOpen) {
+        if (this->canIndicateCharacteristic(characteristic)) {
+          this->_aciState.data_credit_available--;
+          success &= lib_aci_send_data(pipeInfo->txAckPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
+        } else {
+          success = false;
+        }
       }
 
       break;
     }
   }
+
+  return success;
+}
+
+bool nRF8001::canNotifyCharacteristic(BLECharacteristic& characteristic) {
+  return (lib_aci_get_nb_available_credits(&this->_aciState) > 0);
+}
+
+bool nRF8001::canIndicateCharacteristic(BLECharacteristic& characteristic) {
+  return (lib_aci_get_nb_available_credits(&this->_aciState) > 0);
 }
 
 void nRF8001::disconnect() {

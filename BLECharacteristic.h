@@ -25,7 +25,9 @@ typedef void (*BLECharacteristicEventHandler)(BLECentral& central, BLECharacteri
 class BLECharacteristicValueChangeListener
 {
   public:
-    virtual void characteristicValueChanged(BLECharacteristic& characteristic) = 0;
+    virtual bool characteristicValueChanged(BLECharacteristic& characteristic) = 0;
+    virtual bool canNotifyCharacteristic(BLECharacteristic& characteristic) = 0;
+    virtual bool canIndicateCharacteristic(BLECharacteristic& characteristic) = 0;
 };
 
 class BLECharacteristic : public BLEAttribute
@@ -45,11 +47,13 @@ class BLECharacteristic : public BLEAttribute
     unsigned char valueLength() const;
     bool fixedLength() const;
 
-    void setValue(const unsigned char value[], unsigned char length);
-    void setValue(const char* value);
+    bool setValue(const unsigned char value[], unsigned char length);
+    bool setValue(const char* value);
 
     bool written();
     bool subscribed();
+    bool canNotify();
+    bool canIndicate();
 
     void setEventHandler(BLECharacteristicEvent event, BLECharacteristicEventHandler eventHandler);
 
