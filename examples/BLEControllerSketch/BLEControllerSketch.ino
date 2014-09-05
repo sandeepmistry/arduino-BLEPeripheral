@@ -12,7 +12,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 /*
  *    BLEControllerSketch
- *
+ *    To use the sketch, the pins for REQN & RDYN can not be provided to user. 
+ *    The Boards.h has excluded D8 and D9 to be notified to app since it treats these two pins as REQN & RDYN defaultly.
+ *    So you have to set D8(D9) as REQN and set D9(D8) as RDYN in the sketch, except the Blend Micro board. 
+ *    As the REQN & RDYN pins is flexible on those boards except Blend Micro.  
+ *    Unless you modify the Boards.h to exculde the pins used as REQN & RDYN in your sketch.
+ *    
  *    The sketch works with the BLEController iOS/Android App.
  *    It reports every available Arduino's pin mode and pin state to the App in real-time,
  *    Such as D3 is now acts as INPUT and its state is HIGH.
