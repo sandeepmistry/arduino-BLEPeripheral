@@ -27,6 +27,7 @@
  * @brief Implementation of the acilib module.
  */
 
+#ifndef NRF51
 
 #include "hal_platform.h"
 #include "aci.h"
@@ -261,7 +262,7 @@ void acil_encode_cmd_broadcast(uint8_t *buffer, aci_cmd_params_broadcast_t * p_a
   *(buffer + OFFSET_ACI_CMD_T_BROADCAST + OFFSET_ACI_CMD_PARAMS_BROADCAST_T_ADV_INTERVAL_LSB) = (p_aci_cmd_params_broadcast->adv_interval & 0xff);
   *(buffer + OFFSET_ACI_CMD_T_BROADCAST + OFFSET_ACI_CMD_PARAMS_BROADCAST_T_ADV_INTERVAL_MSB) = (uint8_t)(p_aci_cmd_params_broadcast->adv_interval >> 8);
 }
-  
+
 void acil_encode_cmd_open_adv_pipes(uint8_t *buffer, aci_cmd_params_open_adv_pipe_t * p_aci_cmd_params_open_adv_pipe)
 {
   *(buffer + OFFSET_ACI_CMD_T_LEN) = MSG_OPEN_ADV_PIPES_LEN;
@@ -413,26 +414,26 @@ void acil_decode_evt_command_response(uint8_t *buffer_in, aci_evt_params_cmd_rsp
       memcpy((uint8_t *)(p_device_address->bd_addr_own), (buffer_in + OFFSET_ACI_EVT_T_CMD_RSP+OFFSET_ACI_EVT_PARAMS_CMD_RSP_T_GET_DEVICE_ADDRESS+OFFSET_ACI_EVT_CMD_RSP_PARAMS_GET_DEVICE_ADDRESS_T_BD_ADDR_OWN), BTLE_DEVICE_ADDRESS_SIZE);
       p_device_address->bd_addr_type = (aci_bd_addr_type_t) *(buffer_in + OFFSET_ACI_EVT_T_CMD_RSP+OFFSET_ACI_EVT_PARAMS_CMD_RSP_T_GET_DEVICE_ADDRESS+OFFSET_ACI_EVT_CMD_RSP_PARAMS_GET_DEVICE_ADDRESS_T_BD_ADDR_TYPE);
       break;
-      
+
     case ACI_CMD_GET_TEMPERATURE:
       p_temperature = &(p_evt_params_cmd_rsp->params.get_temperature);
       p_temperature->temperature_value =  (int16_t)*(buffer_in + OFFSET_ACI_EVT_T_CMD_RSP + OFFSET_ACI_EVT_PARAMS_CMD_RSP_T_GET_TEMPERATURE + OFFSET_ACI_EVT_CMD_RSP_PARAMS_GET_TEMPERATURE_T_TEMPERATURE_VALUE_LSB);
       p_temperature->temperature_value |= (int16_t)*(buffer_in + OFFSET_ACI_EVT_T_CMD_RSP + OFFSET_ACI_EVT_PARAMS_CMD_RSP_T_GET_TEMPERATURE + OFFSET_ACI_EVT_CMD_RSP_PARAMS_GET_TEMPERATURE_T_TEMPERATURE_VALUE_MSB) << 8;
       break;
-      
+
     case ACI_CMD_GET_BATTERY_LEVEL:
       p_batt_lvl = &(p_evt_params_cmd_rsp->params.get_battery_level);
       p_batt_lvl->battery_level =  (int16_t)*(buffer_in + OFFSET_ACI_EVT_T_CMD_RSP + OFFSET_ACI_EVT_PARAMS_CMD_RSP_T_GET_BATTERY_LEVEL + OFFSET_ACI_EVT_CMD_RSP_PARAMS_GET_BATTERY_LEVEL_T_BATTERY_LEVEL_LSB);
       p_batt_lvl->battery_level |= (int16_t)*(buffer_in + OFFSET_ACI_EVT_T_CMD_RSP + OFFSET_ACI_EVT_PARAMS_CMD_RSP_T_GET_BATTERY_LEVEL + OFFSET_ACI_EVT_CMD_RSP_PARAMS_GET_BATTERY_LEVEL_T_BATTERY_LEVEL_MSB) << 8;
       break;
-    
+
     case ACI_CMD_READ_DYNAMIC_DATA:
       p_read_dyn_data = &(p_evt_params_cmd_rsp->params.read_dynamic_data);
       p_read_dyn_data->seq_no =  (uint8_t)*(buffer_in + OFFSET_ACI_EVT_T_CMD_RSP + OFFSET_ACI_EVT_PARAMS_CMD_RSP_T_READ_DYNAMIC_DATA + OFFSET_ACI_EVT_CMD_RSP_READ_DYNAMIC_DATA_T_SEQ_NO);
       memcpy((uint8_t *)(p_read_dyn_data->dynamic_data), (buffer_in + OFFSET_ACI_EVT_T_CMD_RSP + OFFSET_ACI_EVT_PARAMS_CMD_RSP_T_READ_DYNAMIC_DATA + OFFSET_ACI_CMD_PARAMS_WRITE_DYNAMIC_DATA_T_DYNAMIC_DATA), ACIL_DECODE_EVT_GET_LENGTH(buffer_in) - 3); // 3 bytes subtracted account for EventCode, CommandOpCode and Status bytes.
       // Now that the p_read_dyn_data->dynamic_data will be pointing to memory location with enough space to accommodate upto 27 bytes of dynamic data received. This is because of the padding element in aci_evt_params_cmd_rsp_t
       break;
-    
+
     case ACI_CMD_DTM_CMD:
       p_dtm_evt = &(p_evt_params_cmd_rsp->params.dtm_cmd);
       p_dtm_evt->evt_msb = (uint8_t)*(buffer_in + OFFSET_ACI_EVT_T_CMD_RSP + OFFSET_ACI_EVT_PARAMS_CMD_RSP_T_DTM_CMD + OFFSET_ACI_EVT_CMD_RSP_PARAMS_DTM_CMD_T_EVT_MSB);
@@ -445,7 +446,7 @@ void acil_decode_evt_device_started(uint8_t *buffer_in, aci_evt_params_device_st
 {
   p_evt_params_device_started->device_mode = (aci_device_operation_mode_t) *(buffer_in + OFFSET_ACI_EVT_T_DEVICE_STARTED+OFFSET_ACI_EVT_PARAMS_DEVICE_STARTED_T_DEVICE_MODE);
   p_evt_params_device_started->hw_error = (aci_hw_error_t) *(buffer_in + OFFSET_ACI_EVT_T_DEVICE_STARTED+OFFSET_ACI_EVT_PARAMS_DEVICE_STARTED_T_HW_ERROR);
-  p_evt_params_device_started->credit_available = *(buffer_in + OFFSET_ACI_EVT_T_DEVICE_STARTED+OFFSET_ACI_EVT_PARAMS_DEVICE_STARTED_T_CREDIT_AVAILABLE); 
+  p_evt_params_device_started->credit_available = *(buffer_in + OFFSET_ACI_EVT_T_DEVICE_STARTED+OFFSET_ACI_EVT_PARAMS_DEVICE_STARTED_T_CREDIT_AVAILABLE);
 }
 
 void acil_decode_evt_pipe_status(uint8_t *buffer_in, aci_evt_params_pipe_status_t *p_aci_evt_params_pipe_status)
@@ -600,7 +601,7 @@ bool acil_decode_evt(uint8_t *buffer_in, aci_evt_t *p_aci_evt)
       acil_decode_evt_key_request(buffer_in, &(p_aci_evt->params.key_request));
       break;
     case ACI_EVT_DISPLAY_PASSKEY:
-      acil_decode_evt_display_passkey(buffer_in, &(p_aci_evt->params.display_passkey));     
+      acil_decode_evt_display_passkey(buffer_in, &(p_aci_evt->params.display_passkey));
       break;
     default:
       ret_val = false;
@@ -608,3 +609,5 @@ bool acil_decode_evt(uint8_t *buffer_in, aci_evt_t *p_aci_evt)
   }
   return ret_val;
 }
+
+#endif

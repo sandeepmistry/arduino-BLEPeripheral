@@ -23,6 +23,8 @@
 @brief Implementation of the ACI transport layer module
 */
 
+#ifndef NRF51
+
 #include <SPI.h>
 #include "hal_platform.h"
 #include "hal_aci_tl.h"
@@ -455,3 +457,5 @@ void hal_aci_tl_q_flush (void)
 {
   m_aci_q_flush();
 }
+
+#endif

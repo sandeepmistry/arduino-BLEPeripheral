@@ -19,11 +19,13 @@
  * SOFTWARE.
  */
 
+#ifndef NRF51
+
 #include <lib_aci.h>
 #include "aci_setup.h"
 
 
-// aci_struct that will contain 
+// aci_struct that will contain
 // total initial credits
 // current credit
 // current state of the aci (setup/standby/active/sleep)
@@ -50,19 +52,19 @@ extern hal_aci_data_t msg_to_send;
 static bool aci_setup_fill(aci_state_t *aci_stat, uint8_t *num_cmd_offset)
 {
   bool ret_val = false;
-  
+
   while (*num_cmd_offset < aci_stat->aci_setup_info.num_setup_msgs)
   {
 	//Board dependent defines
 	#if defined (__AVR__)
 		//For Arduino copy the setup ACI message from Flash to RAM.
-		memcpy_P(&msg_to_send, &(aci_stat->aci_setup_info.setup_msgs[*num_cmd_offset]), 
-				  pgm_read_byte_near(&(aci_stat->aci_setup_info.setup_msgs[*num_cmd_offset].buffer[0]))+2); 
+		memcpy_P(&msg_to_send, &(aci_stat->aci_setup_info.setup_msgs[*num_cmd_offset]),
+				  pgm_read_byte_near(&(aci_stat->aci_setup_info.setup_msgs[*num_cmd_offset].buffer[0]))+2);
 	#elif defined(__PIC32MX__)
 		//In ChipKit we store the setup messages in RAM
 		//Add 2 bytes to the length byte for status byte, length for the total number of bytes
-		memcpy(&msg_to_send, &(aci_stat->aci_setup_info.setup_msgs[*num_cmd_offset]), 
-				  (aci_stat->aci_setup_info.setup_msgs[*num_cmd_offset].buffer[0]+2)); 
+		memcpy(&msg_to_send, &(aci_stat->aci_setup_info.setup_msgs[*num_cmd_offset]),
+				  (aci_stat->aci_setup_info.setup_msgs[*num_cmd_offset].buffer[0]+2));
 	#endif
 
     //Put the Setup ACI message in the command queue
@@ -72,12 +74,12 @@ static bool aci_setup_fill(aci_state_t *aci_stat, uint8_t *num_cmd_offset)
       // *num_cmd_offset is now pointing to the index of the Setup command that did not get sent
       return ret_val;
     }
-   
+
     ret_val = true;
-    
+
     (*num_cmd_offset)++;
   }
-  
+
   return ret_val;
 }
 
@@ -87,13 +89,13 @@ uint8_t do_aci_setup(aci_state_t *aci_stat)
   uint32_t i                   = 0x0000;
   aci_evt_t * aci_evt          = NULL;
   aci_status_code_t cmd_status = ACI_STATUS_ERROR_CRC_MISMATCH;
-  
+
   /*
-  We are using the same buffer since we are copying the contents of the buffer 
+  We are using the same buffer since we are copying the contents of the buffer
   when queuing and immediately processing the buffer when receiving
   */
   hal_aci_evt_t  *aci_data = (hal_aci_evt_t *)&msg_to_send;
-  
+
   /* Messages in the outgoing queue must be handled before the Setup routine can run.
    * If it is non-empty we return. The user should then process the messages before calling
    * do_aci_setup() again.
@@ -102,7 +104,7 @@ uint8_t do_aci_setup(aci_state_t *aci_stat)
   {
     return SETUP_FAIL_COMMAND_QUEUE_NOT_EMPTY;
   }
-  
+
   /* If there are events pending from the device that are not relevant to setup, we return false
    * so that the user can handle them. At this point we don't care what the event is,
    * as any event is an error.
@@ -111,10 +113,10 @@ uint8_t do_aci_setup(aci_state_t *aci_stat)
   {
     return SETUP_FAIL_EVENT_QUEUE_NOT_EMPTY;
   }
-  
+
   /* Fill the ACI command queue with as many Setup messages as it will hold. */
   aci_setup_fill(aci_stat, &setup_offset);
-  
+
   while (cmd_status != ACI_STATUS_TRANSACTION_COMPLETE)
   {
     /* This counter is used to ensure that this function does not loop forever. When the device
@@ -122,41 +124,41 @@ uint8_t do_aci_setup(aci_state_t *aci_stat)
      */
     if (i++ > 0xFFFFE)
     {
-      return SETUP_FAIL_TIMEOUT;	
+      return SETUP_FAIL_TIMEOUT;
     }
-    
+
     if (lib_aci_event_peek(aci_data))
     {
       aci_evt = &(aci_data->evt);
-      
+
       if (ACI_EVT_CMD_RSP != aci_evt->evt_opcode)
       {
         //Receiving something other than a Command Response Event is an error.
         return SETUP_FAIL_NOT_COMMAND_RESPONSE;
       }
-      
+
       cmd_status = (aci_status_code_t) aci_evt->params.cmd_rsp.cmd_status;
       switch (cmd_status)
       {
         case ACI_STATUS_TRANSACTION_CONTINUE:
           //As the device is responding, reset guard counter
           i = 0;
-          
+
           /* As the device has processed the Setup messages we put in the command queue earlier,
            * we can proceed to fill the queue with new messages
            */
           aci_setup_fill(aci_stat, &setup_offset);
           break;
-        
+
         case ACI_STATUS_TRANSACTION_COMPLETE:
           //Break out of the while loop when this status code appears
           break;
-        
+
         default:
           //An event with any other status code should be handled by the application
           return SETUP_FAIL_NOT_SETUP_EVENT;
       }
-      
+
       /* If we haven't returned at this point, the event was either ACI_STATUS_TRANSACTION_CONTINUE
        * or ACI_STATUS_TRANSACTION_COMPLETE. We don't need the event itself, so we simply
        * remove it from the queue.
@@ -164,8 +166,8 @@ uint8_t do_aci_setup(aci_state_t *aci_stat)
        lib_aci_event_get (aci_stat, aci_data);
     }
   }
-  
+
   return SETUP_SUCCESS;
 }
-  
 
+#endif

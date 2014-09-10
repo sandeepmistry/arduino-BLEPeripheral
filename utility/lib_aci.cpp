@@ -23,6 +23,8 @@
   @brief Implementation of the ACI library.
  */
 
+#ifndef NRF51
+
 #include "hal_platform.h"
 #include "aci.h"
 #include "aci_cmds.h"
@@ -38,7 +40,7 @@
 #define LIB_ACI_DEFAULT_CREDIT_NUMBER   1
 
 /*
-Global additionally used used in aci_setup 
+Global additionally used used in aci_setup
 */
 hal_aci_data_t  msg_to_send;
 
@@ -58,9 +60,9 @@ static uint8_t request_operation_pipe = 0;
 static uint8_t indicate_operation_pipe = 0;
 
 
-// The following structure (aci_cmd_params_open_adv_pipe) will be used to store the complete command 
-// including the pipes to be opened. 
-static aci_cmd_params_open_adv_pipe_t aci_cmd_params_open_adv_pipe; 
+// The following structure (aci_cmd_params_open_adv_pipe) will be used to store the complete command
+// including the pipes to be opened.
+static aci_cmd_params_open_adv_pipe_t aci_cmd_params_open_adv_pipe;
 
 
 
@@ -102,7 +104,7 @@ void lib_aci_board_init(aci_state_t *aci_stat)
 {
 	hal_aci_evt_t *aci_data = NULL;
 	aci_data = (hal_aci_evt_t *)&msg_to_send;
-					
+
 	if (REDBEARLAB_SHIELD_V1_1 == aci_stat->aci_pins.board_name)
 	{
 	  /*
@@ -110,24 +112,24 @@ void lib_aci_board_init(aci_state_t *aci_stat)
 	  This is not required for the nRF2740, nRF2741 modules
 	  */
 	  delay(100);
-  
+
 	  /*
 	  Send the soft reset command to the nRF8001 to get the nRF8001 to a known state.
 	  */
 	  lib_aci_radio_reset();
-  
+
 	  while (1)
 	  {
 		/*Wait for the command response of the radio reset command.
 		as the nRF8001 will be in either SETUP or STANDBY after the ACI Reset Radio is processed
 		*/
 
-			
+
 		if (true == lib_aci_event_get(aci_stat, aci_data))
 		{
-		  aci_evt_t * aci_evt;      
+		  aci_evt_t * aci_evt;
 		  aci_evt = &(aci_data->evt);
-	  
+
 		  if (ACI_EVT_CMD_RSP == aci_evt->evt_opcode)
 		  {
 				if (ACI_STATUS_ERROR_DEVICE_STATE_INVALID == aci_evt->params.cmd_rsp.cmd_status) //in SETUP
@@ -160,17 +162,17 @@ void lib_aci_board_init(aci_state_t *aci_stat)
 					msg_to_send.buffer[4] = 0;    //Data Credit Available
 					aci_queue_enqueue(&aci_rx_q, &msg_to_send);
 				}
-				
+
 				//Break out of the while loop
 				break;
 		  }
 		  else
-		  {			
+		  {
 			//Serial.println(F("Discard any other ACI Events"));
 		  }
-	  
+
 		}
-	  }		
+	  }
 	}
 }
 
@@ -185,31 +187,31 @@ void lib_aci_init(aci_state_t *aci_stat, bool debug)
     aci_stat->pipes_closed_bitmap[i]        = 0;
     aci_cmd_params_open_adv_pipe.pipes[i]   = 0;
   }
-  
+
 
 
 
   is_request_operation_pending     = false;
-  is_indicate_operation_pending    = false; 
+  is_indicate_operation_pending    = false;
   is_open_remote_pipe_pending      = false;
   is_close_remote_pipe_pending     = false;
 
 
 
-  
-  
+
+
   request_operation_pipe           = 0;
   indicate_operation_pipe          = 0;
-  
-  
-  
+
+
+
   p_services_pipe_type_map = aci_stat->aci_setup_info.services_pipe_type_mapping;
-  
+
   p_setup_msgs             = aci_stat->aci_setup_info.setup_msgs;
-  
-  
+
+
   hal_aci_tl_init(&aci_stat->aci_pins, debug);
-  
+
   lib_aci_board_init(aci_stat);
 }
 
@@ -223,11 +225,11 @@ uint16_t lib_aci_get_cx_interval_ms(aci_state_t *aci_stat)
 {
   uint32_t cx_rf_interval_ms_32bits;
   uint16_t cx_rf_interval_ms;
-  
+
   cx_rf_interval_ms_32bits  = aci_stat->connection_interval;
   cx_rf_interval_ms_32bits *= 125;                      // the connection interval is given in multiples of 0.125 milliseconds
   cx_rf_interval_ms         = cx_rf_interval_ms_32bits / 100;
-  
+
   return cx_rf_interval_ms;
 }
 
@@ -247,11 +249,11 @@ uint16_t lib_aci_get_slave_latency(aci_state_t *aci_stat)
 bool lib_aci_set_app_latency(uint16_t latency, aci_app_latency_mode_t latency_mode)
 {
   aci_cmd_params_set_app_latency_t aci_set_app_latency;
-  
+
   aci_set_app_latency.mode    = latency_mode;
-  aci_set_app_latency.latency = latency;  
+  aci_set_app_latency.latency = latency;
   acil_encode_cmd_set_app_latency(&(msg_to_send.buffer[0]), &aci_set_app_latency);
-  
+
   return hal_aci_tl_send(&msg_to_send);
 }
 
@@ -296,7 +298,7 @@ bool lib_aci_device_version()
 bool lib_aci_set_local_data(aci_state_t *aci_stat, uint8_t pipe, uint8_t *p_value, uint8_t size)
 {
   aci_cmd_params_set_local_data_t aci_cmd_params_set_local_data;
-  
+
   // if ((p_services_pipe_type_map[pipe-1].location != ACI_STORE_LOCAL)
   //     ||
   //     (size > ACI_PIPE_TX_DATA_MAX_LEN))
@@ -397,7 +399,7 @@ bool lib_aci_send_data(uint8_t pipe, uint8_t *p_value, uint8_t size)
   bool ret_val = false;
   aci_cmd_params_send_data_t aci_cmd_params_send_data;
 
-  
+
   // if(!((p_services_pipe_type_map[pipe-1].pipe_type == ACI_TX) ||
   //     (p_services_pipe_type_map[pipe-1].pipe_type == ACI_TX_ACK)))
   // {
@@ -412,8 +414,8 @@ bool lib_aci_send_data(uint8_t pipe, uint8_t *p_value, uint8_t size)
       aci_cmd_params_send_data.tx_data.pipe_number = pipe;
       memcpy(&(aci_cmd_params_send_data.tx_data.aci_data[0]), p_value, size);
       acil_encode_cmd_send_data(&(msg_to_send.buffer[0]), &aci_cmd_params_send_data, size);
-      
-      ret_val = hal_aci_tl_send(&msg_to_send);          
+
+      ret_val = hal_aci_tl_send(&msg_to_send);
   }
   return ret_val;
 }
@@ -451,8 +453,8 @@ bool lib_aci_change_timing(uint16_t minimun_cx_interval, uint16_t maximum_cx_int
   aci_cmd_params_change_timing_t aci_cmd_params_change_timing;
   aci_cmd_params_change_timing.conn_params.min_conn_interval = minimun_cx_interval;
   aci_cmd_params_change_timing.conn_params.max_conn_interval = maximum_cx_interval;
-  aci_cmd_params_change_timing.conn_params.slave_latency     = slave_latency;    
-  aci_cmd_params_change_timing.conn_params.timeout_mult      = timeout;     
+  aci_cmd_params_change_timing.conn_params.slave_latency     = slave_latency;
+  aci_cmd_params_change_timing.conn_params.timeout_mult      = timeout;
   acil_encode_cmd_change_timing_req(&(msg_to_send.buffer[0]), &aci_cmd_params_change_timing);
   return hal_aci_tl_send(&msg_to_send);
 }
@@ -478,7 +480,7 @@ bool lib_aci_open_remote_pipe(aci_state_t *aci_stat, uint8_t pipe)
     return false;
   }
 
-  
+
   {
 
     is_request_operation_pending = true;
@@ -503,7 +505,7 @@ bool lib_aci_close_remote_pipe(aci_state_t *aci_stat, uint8_t pipe)
          (p_services_pipe_type_map[pipe-1].pipe_type == ACI_RX_ACK))))
   {
     return false;
-  }  
+  }
 
 
   {
@@ -563,25 +565,25 @@ bool lib_aci_event_peek(hal_aci_evt_t *p_aci_evt_data)
 bool lib_aci_event_get(aci_state_t *aci_stat, hal_aci_evt_t *p_aci_evt_data)
 {
   bool status = false;
-  
+
   status = hal_aci_tl_event_get((hal_aci_data_t *)p_aci_evt_data);
-  
+
   /**
-  Update the state of the ACI with the 
+  Update the state of the ACI with the
   ACI Events -> Pipe Status, Disconnected, Connected, Bond Status, Pipe Error
   */
   if (true == status)
   {
     aci_evt_t * aci_evt;
-    
-    aci_evt = &p_aci_evt_data->evt;  
-    
+
+    aci_evt = &p_aci_evt_data->evt;
+
     switch(aci_evt->evt_opcode)
     {
         case ACI_EVT_PIPE_STATUS:
             {
                 uint8_t i=0;
-                
+
                 for (i=0; i < PIPES_ARRAY_SIZE; i++)
                 {
                   aci_stat->pipes_open_bitmap[i]   = aci_evt->params.pipe_status.pipes_open_bitmap[i];
@@ -589,11 +591,11 @@ bool lib_aci_event_get(aci_state_t *aci_stat, hal_aci_evt_t *p_aci_evt_data)
                 }
             }
             break;
-        
+
         case ACI_EVT_DISCONNECTED:
             {
                 uint8_t i=0;
-                
+
                 for (i=0; i < PIPES_ARRAY_SIZE; i++)
                 {
                   aci_stat->pipes_open_bitmap[i] = 0;
@@ -601,11 +603,11 @@ bool lib_aci_event_get(aci_state_t *aci_stat, hal_aci_evt_t *p_aci_evt_data)
                 }
                 aci_stat->confirmation_pending = false;
                 aci_stat->data_credit_available = aci_stat->data_credit_total;
-                
+
             }
             break;
-            
-        case ACI_EVT_TIMING:            
+
+        case ACI_EVT_TIMING:
                 aci_stat->connection_interval = aci_evt->params.timing.conn_rf_interval;
                 aci_stat->slave_latency       = aci_evt->params.timing.conn_slave_rf_latency;
                 aci_stat->supervision_timeout = aci_evt->params.timing.conn_rf_timeout;
@@ -617,8 +619,8 @@ bool lib_aci_event_get(aci_state_t *aci_stat, hal_aci_evt_t *p_aci_evt_data)
              */
             break;
 
-			
-			
+
+
     }
   }
   return status;
@@ -630,7 +632,7 @@ bool lib_aci_send_ack(aci_state_t *aci_stat, const uint8_t pipe)
   bool ret_val = false;
   {
     acil_encode_cmd_send_data_ack(&(msg_to_send.buffer[0]), pipe);
-    
+
     ret_val = hal_aci_tl_send(&msg_to_send);
   }
   return ret_val;
@@ -640,9 +642,9 @@ bool lib_aci_send_ack(aci_state_t *aci_stat, const uint8_t pipe)
 bool lib_aci_send_nack(aci_state_t *aci_stat, const uint8_t pipe, const uint8_t error_code)
 {
   bool ret_val = false;
-  
+
   {
-    
+
     acil_encode_cmd_send_data_nack(&(msg_to_send.buffer[0]), pipe, error_code);
     ret_val = hal_aci_tl_send(&msg_to_send);
   }
@@ -656,9 +658,9 @@ bool lib_aci_broadcast(const uint16_t timeout, const uint16_t adv_interval)
   if (timeout > 16383)
   {
     return false;
-  }  
-  
-  // The adv_interval should be between 160 and 16384 (which translates to the advertisement 
+  }
+
+  // The adv_interval should be between 160 and 16384 (which translates to the advertisement
   // interval values 100 ms and 10.24 s.
   if ((160 > adv_interval) || (adv_interval > 16384))
   {
@@ -675,7 +677,7 @@ bool lib_aci_broadcast(const uint16_t timeout, const uint16_t adv_interval)
 bool lib_aci_open_adv_pipes(const uint8_t * const adv_service_data_pipes)
 {
   uint8_t i;
-    
+
   for (i = 0; i < PIPES_ARRAY_SIZE; i++)
   {
     aci_cmd_params_open_adv_pipe.pipes[i] = adv_service_data_pipes[i];
@@ -688,7 +690,7 @@ bool lib_aci_open_adv_pipes(const uint8_t * const adv_service_data_pipes)
 bool lib_aci_open_adv_pipe(const uint8_t pipe)
 {
   uint8_t byte_idx = pipe / 8;
-  
+
   aci_cmd_params_open_adv_pipe.pipes[byte_idx] |= (0x01 << (pipe % 8));
   acil_encode_cmd_open_adv_pipes(&(msg_to_send.buffer[0]), &aci_cmd_params_open_adv_pipe);
   return hal_aci_tl_send(&msg_to_send);
@@ -752,3 +754,5 @@ bool lib_aci_command_queue_full(void)
 {
   return hal_aci_tl_tx_q_full();
 }
+
+#endif

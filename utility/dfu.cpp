@@ -1,3 +1,5 @@
+#ifndef NRF51
+
 #include <lib_aci.h>
 #include <ble_assert.h>
 #include <dfu.h>
@@ -373,3 +375,5 @@ void dfu_update (aci_state_t *aci_state, aci_evt_t *aci_evt)
   /* Unhandled event */
   ble_assert(false);
 }
+
+#endif
