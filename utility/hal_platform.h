@@ -27,7 +27,7 @@
 */
 
 //Board dependent defines
-#if defined (__AVR__) || defined(__SAM3X8E__)
+#if defined (__AVR__) || defined(__SAM3X8E__) || defined(__SAMD21G18A__)
     //For Arduino this AVR specific library has to be used for reading from Flash memory
     #include <avr/pgmspace.h>
     #include "Arduino.h"
