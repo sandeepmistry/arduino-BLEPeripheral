@@ -114,7 +114,11 @@ nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
     this->_aciState.aci_pins.board_name           = BOARD_DEFAULT;
   }
 
+#if defined(__SAM3X8E__)
+  this->_aciState.aci_pins.spi_clock_divider      = 48;
+#else
   this->_aciState.aci_pins.spi_clock_divider      = SPI_CLOCK_DIV8;
+#endif
 
   this->_aciState.aci_pins.reset_pin              = rst;
   this->_aciState.aci_pins.active_pin             = UNUSED;

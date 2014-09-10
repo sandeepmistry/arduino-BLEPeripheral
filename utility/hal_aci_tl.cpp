@@ -27,7 +27,9 @@
 #include "hal_platform.h"
 #include "hal_aci_tl.h"
 #include "aci_queue.h"
+#if defined (__AVR__)
 #include <avr/sleep.h>
+#endif
 
 /*
 PIC32 supports only MSbit transfer on SPI and the nRF8001 uses LSBit
