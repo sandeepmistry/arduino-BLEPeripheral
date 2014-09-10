@@ -3,7 +3,11 @@
 
 #include "Arduino.h"
 
-#include "nRF8001.h"
+#ifdef NRF51
+  #include "nRF51822.h"
+#else
+  #include "nRF8001.h"
+#endif
 
 #include "BLEAttribute.h"
 #include "BLECentral.h"
@@ -18,7 +22,13 @@ enum BLEPeripheralEvent {
 
 typedef void (*BLEPeripheralEventHandler)(BLECentral& central);
 
-class BLEPeripheral : public nRF8001EventListener, public BLECharacteristicValueChangeListener
+class BLEPeripheral :
+#ifdef NRF51
+  public nRF51822EventListener,
+#else
+  public nRF8001EventListener,
+#endif
+  public BLECharacteristicValueChangeListener
 {
   public:
     BLEPeripheral(unsigned char req, unsigned char rdy, unsigned char rst);
@@ -48,6 +58,17 @@ class BLEPeripheral : public nRF8001EventListener, public BLECharacteristicValue
     bool canNotifyCharacteristic(BLECharacteristic& characteristic);
     bool canIndicateCharacteristic(BLECharacteristic& characteristic);
 
+#ifdef NRF51
+    virtual void nRF51822Connected(nRF51822& nRF51822, const unsigned char* address);
+    virtual void nRF51822Disconnected(nRF51822& nRF51822);
+
+    virtual void nRF51822CharacteristicValueChanged(nRF51822& nRF51822, BLECharacteristic& characteristic, const unsigned char* value, unsigned char valueLength);
+    virtual void nRF51822CharacteristicSubscribedChanged(nRF51822& nRF51822, BLECharacteristic& characteristic, bool subscribed);
+
+    virtual void nRF51822AddressReceived(nRF51822& nRF51822, const unsigned char* address);
+    virtual void nRF51822TemperatureReceived(nRF51822& nRF51822, float temperature);
+    virtual void nRF51822BatteryLevelReceived(nRF51822& nRF51822, float batteryLevel);
+#else
     virtual void nRF8001Connected(nRF8001& nRF8001, const unsigned char* address);
     virtual void nRF8001Disconnected(nRF8001& nRF8001);
 
@@ -57,9 +78,14 @@ class BLEPeripheral : public nRF8001EventListener, public BLECharacteristicValue
     virtual void nRF8001AddressReceived(nRF8001& nRF8001, const unsigned char* address);
     virtual void nRF8001TemperatureReceived(nRF8001& nRF8001, float temperature);
     virtual void nRF8001BatteryLevelReceived(nRF8001& nRF8001, float batteryLevel);
+#endif
 
   private:
+#ifdef NRF51
+    nRF51822                       _nRF51822;
+#else
     nRF8001                        _nRF8001;
+#endif
 
     const char*                    _advertisedServiceUuid;
     const unsigned char*           _manufacturerData;

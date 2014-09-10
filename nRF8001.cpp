@@ -1,3 +1,5 @@
+#ifndef NRF51
+
 #include <SPI.h>
 
 #include "BLEAttribute.h"
@@ -136,10 +138,12 @@ void nRF8001::setEventListener(nRF8001EventListener* eventListener) {
   this->_eventListener = eventListener;
 }
 
-void nRF8001::begin(const unsigned char* advertisementData,
+void nRF8001::begin(unsigned char advertisementDataType,
                       unsigned char advertisementDataLength,
-                      const unsigned char* scanData,
+                      const unsigned char* advertisementData,
+                      unsigned char scanDataType,
                       unsigned char scanDataLength,
+                      const unsigned char* scanData,
                       BLEAttribute** attributes,
                       unsigned char numAttributes)
 {
@@ -176,14 +180,18 @@ void nRF8001::begin(const unsigned char* advertisementData,
     if (i == 1) {
       setupMsgData->data[6] = numPipedCharacteristics;
       setupMsgData->data[8] = numPipedCharacteristics;
-    } else if (i == 2 && advertisementData && advertisementDataLength) {
+    } else if (i == 2 && advertisementDataType && advertisementDataLength && advertisementData) {
       setupMsgData->data[22] = 0x40;
-    } else if (i == 3 && scanData && scanDataLength) {
+    } else if (i == 3 && scanDataType && scanDataLength && scanData) {
       setupMsgData->data[12] = 0x40;
-    } else if (i == 5 && advertisementData && advertisementDataLength) {
-      memcpy(setupMsgData->data, advertisementData, advertisementDataLength);
-    } else if (i == 6 && scanData && scanDataLength) {
-      memcpy(setupMsgData->data, scanData, scanDataLength);
+    } else if (i == 5 && advertisementDataType && advertisementDataLength && advertisementData) {
+      setupMsgData->data[0] = advertisementDataType;
+      setupMsgData->data[1] = advertisementDataLength + 2;
+      memcpy(&setupMsgData->data[2], advertisementData, advertisementDataLength);
+    } else if (i == 6 && scanDataType && scanDataLength && scanData) {
+      setupMsgData->data[0] = scanDataType;
+      setupMsgData->data[1] = scanDataLength + 2;
+      memcpy(&setupMsgData->data[2], scanData, scanDataLength);
     }
 
     this->sendSetupMessage(&setupMsg);
@@ -939,3 +947,4 @@ void nRF8001::sendCrc()
   }
 }
 
+#endif

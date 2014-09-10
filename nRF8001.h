@@ -54,10 +54,12 @@ class nRF8001
 
     void setEventListener(nRF8001EventListener* eventListener);
 
-    void begin(const unsigned char* advertisementData,
+    void begin(unsigned char advertisementDataType,
                 unsigned char advertisementDataLength,
-                const unsigned char* scanData,
+                const unsigned char* advertisementData,
+                unsigned char scanDataType,
                 unsigned char scanDataLength,
+                const unsigned char* scanData,
                 BLEAttribute** attributes,
                 unsigned char numAttributes);
 
