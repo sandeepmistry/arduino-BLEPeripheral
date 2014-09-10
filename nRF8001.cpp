@@ -115,7 +115,7 @@ nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
   }
 
 #if defined(__SAM3X8E__)
-  this->_aciState.aci_pins.spi_clock_divider      = 48;
+  this->_aciState.aci_pins.spi_clock_divider      = 84;
 #elif defined(__SAMD21G18A__)
   this->_aciState.aci_pins.spi_clock_divider      = 6;
 #else
