@@ -33,25 +33,12 @@ class nRF51822
   friend class BLEPeripheral;
 
   protected:
-    struct serviceInfo {
-      BLEService* service;
-
-      ble_uuid_t uuid;
-      uint16_t handle;
-    };
-
     struct characteristicInfo {
       BLECharacteristic* characteristic;
 
-      ble_uuid_t uuid;
       ble_gatts_char_handles_t handles;
-    };
-
-    struct descriptorInfo {
-      BLEDescriptor* descriptor;
-
-      ble_uuid_t uuid;
-      uint16_t handle;
+      bool notifySubscribed;
+      bool indicateSubscribed;
     };
 
     nRF51822();
@@ -92,13 +79,8 @@ class nRF51822
 
     uint16_t                     _connectionHandle;
 
-    unsigned char                _numServices;
     unsigned char                _numCharacteristics;
-    unsigned char                _numDescriptors;
-
-    struct serviceInfo*          _serviceInfo;
     struct characteristicInfo*   _characteristicInfo;
-    struct descriptorInfo*       _descriptorInfo;
 
     nRF51822EventListener*       _eventListener;
 };

@@ -1,18 +1,10 @@
 #ifdef NRF51
-//
-#include <ble_stack_handler_types.h>
-#include <ble_radio_notification.h>
-#include <ble_flash.h>
-#include <ble_bondmngr.h>
+
 #include <ble_conn_params.h>
-
-#include <nordic_common.h>
-#include <softdevice_handler.h>
-#include <pstorage.h>
-
 #include <ble_gatts.h>
 #include <ble_hci.h>
-//
+#include <nordic_common.h>
+#include <softdevice_handler.h>
 
 #include "Arduino.h"
 
@@ -29,7 +21,6 @@
 #define ADVERTISING_INTERVAL 0x050
 
 void assert_nrf_callback(uint16_t line_num, const uint8_t *p_file_name) {
-
 }
 
 nRF51822* nRF51822::_instance = NULL;
@@ -37,13 +28,8 @@ nRF51822* nRF51822::_instance = NULL;
 nRF51822::nRF51822() :
   _connectionHandle(BLE_CONN_HANDLE_INVALID),
 
-  _numServices(0),
   _numCharacteristics(0),
-  _numDescriptors(0),
-
-  _serviceInfo(NULL),
   _characteristicInfo(NULL),
-  _descriptorInfo(NULL),
 
   _eventListener(NULL)
 {
@@ -141,32 +127,21 @@ void nRF51822::begin(unsigned char advertisementDataType,
   for (int i = 0; i < numAttributes; i++) {
     BLEAttribute *attribute = attributes[i];
 
-    if (attribute->type() == BLETypeService) {
-      this->_numServices++;
-    } else if (attribute->type() == BLETypeCharacteristic) {
+    if (attribute->type() == BLETypeCharacteristic) {
       this->_numCharacteristics++;
-    } else if (attribute->type() == BLETypeDescriptor) {
-      this->_numDescriptors++;
     }
   }
 
-  this->_numServices -= 2; // 0x1800, 0x1801
   this->_numCharacteristics -= 3; // 0x2a00, 0x2a01, 0x2a05
 
-  this->_serviceInfo = (struct serviceInfo*)malloc(sizeof(struct serviceInfo) * this->_numServices);
   this->_characteristicInfo = (struct characteristicInfo*)malloc(sizeof(struct characteristicInfo) * this->_numCharacteristics);
-  this->_descriptorInfo = (struct descriptorInfo*)malloc(sizeof(struct descriptorInfo) * this->_numDescriptors);
 
   ble_gap_conn_sec_mode_t secMode;
   BLE_GAP_CONN_SEC_MODE_SET_OPEN(&secMode); // no security is needed
 
-  uint16_t serviceHandle            = 0;
-  uint16_t characteristicHandle     = 0;
-  uint16_t descriptorHandle         = 0;
-
-  unsigned char serviceIndex        = 0;
   unsigned char characteristicIndex = 0;
-  unsigned char descriptorIndex     = 0;
+
+  uint16_t handle = 0;
 
   for (int i = 0; i < numAttributes; i++) {
     BLEAttribute *attribute = attributes[i];
@@ -190,14 +165,8 @@ void nRF51822::begin(unsigned char advertisementDataType,
         continue; // skip
       }
 
-      this->_serviceInfo[serviceIndex].service = service;
-      this->_serviceInfo[serviceIndex].uuid = nordicUUID;
+      sd_ble_gatts_service_add(BLE_GATTS_SRVC_TYPE_PRIMARY, &nordicUUID, &handle);
 
-      sd_ble_gatts_service_add(BLE_GATTS_SRVC_TYPE_PRIMARY, &this->_serviceInfo[serviceIndex].uuid, &this->_serviceInfo[serviceIndex].handle);
-
-      serviceHandle = this->_serviceInfo[serviceIndex].handle;
-
-      serviceIndex++;
     } else if (attribute->type() == BLETypeCharacteristic) {
       BLECharacteristic *characteristic = (BLECharacteristic *)attribute;
 
@@ -214,48 +183,78 @@ void nRF51822::begin(unsigned char advertisementDataType,
         uint16_t valueLength = characteristic->valueLength();
 
         this->_characteristicInfo[characteristicIndex].characteristic = characteristic;
-        this->_characteristicInfo[characteristicIndex].uuid = nordicUUID;
+        this->_characteristicInfo[characteristicIndex].notifySubscribed = false;
+        this->_characteristicInfo[characteristicIndex].indicateSubscribed = false;
 
-        ble_gatts_char_md_t characteristicMetaData = { 0 };
+        ble_gatts_char_md_t characteristicMetaData;
         ble_gatts_attr_md_t clientCharacteristicConfigurationMetaData;
+        ble_gatts_attr_t    characteristicValueAttribute;
+        ble_gatts_attr_md_t characteristicValueAttributeMetaData;
+
+        memset(&characteristicMetaData, 0, sizeof(characteristicMetaData));
+
+        memcpy(&characteristicMetaData.char_props, &properties, 1);
+
+        characteristicMetaData.p_char_user_desc  = NULL;
+        characteristicMetaData.p_char_pf         = NULL;
+        characteristicMetaData.p_user_desc_md    = NULL;
+        characteristicMetaData.p_cccd_md         = NULL;
+        characteristicMetaData.p_sccd_md         = NULL;
 
         if (properties & (BLENotify | BLEIndicate)) {
-          /* Notification requires cccd */
           memset(&clientCharacteristicConfigurationMetaData, 0, sizeof(clientCharacteristicConfigurationMetaData));
-          clientCharacteristicConfigurationMetaData.vloc = BLE_GATTS_VLOC_STACK;
+
           BLE_GAP_CONN_SEC_MODE_SET_OPEN(&clientCharacteristicConfigurationMetaData.read_perm);
           BLE_GAP_CONN_SEC_MODE_SET_OPEN(&clientCharacteristicConfigurationMetaData.write_perm);
 
-          characteristicMetaData.p_cccd_md  = &clientCharacteristicConfigurationMetaData;
-        } else {
-          characteristicMetaData.p_cccd_md  = NULL;
+          clientCharacteristicConfigurationMetaData.vloc = BLE_GATTS_VLOC_STACK;
+
+          characteristicMetaData.p_cccd_md = &clientCharacteristicConfigurationMetaData;
         }
 
-        memcpy(&characteristicMetaData.char_props, &properties, sizeof(characteristicMetaData.char_props));
-
-        /* Attribute declaration */
-        ble_gatts_attr_md_t characteristicValueMetaData = { 0 };
-
-        characteristicValueMetaData.vloc = BLE_GATTS_VLOC_STACK;
-        characteristicValueMetaData.vlen = (valueLength == characteristic->valueSize()) ? 0 : 1;
+        memset(&characteristicValueAttributeMetaData, 0, sizeof(characteristicValueAttributeMetaData));
 
         if (properties & (BLERead | BLENotify | BLEIndicate)) {
-          BLE_GAP_CONN_SEC_MODE_SET_OPEN(&characteristicValueMetaData.read_perm);
+          BLE_GAP_CONN_SEC_MODE_SET_OPEN(&characteristicValueAttributeMetaData.read_perm);
         }
 
-        if (properties & (BLEWrite | BLEWriteWithoutResponse)) {
-          BLE_GAP_CONN_SEC_MODE_SET_OPEN(&characteristicValueMetaData.write_perm);
+        if (properties & (BLEWriteWithoutResponse | BLEWrite)) {
+          BLE_GAP_CONN_SEC_MODE_SET_OPEN(&characteristicValueAttributeMetaData.write_perm);
         }
 
-        ble_gatts_attr_t characteristicValueAttribute = { 0 };
+        characteristicValueAttributeMetaData.vloc       = BLE_GATTS_VLOC_STACK;
+        characteristicValueAttributeMetaData.rd_auth    = 0;
+        characteristicValueAttributeMetaData.wr_auth    = 0;
+        characteristicValueAttributeMetaData.vlen       = 0;
 
-        characteristicValueAttribute.p_uuid    = &this->_characteristicInfo[characteristicIndex].uuid;
-        characteristicValueAttribute.p_attr_md = &characteristicValueMetaData;
-        characteristicValueAttribute.init_len  = valueLength;
-        characteristicValueAttribute.max_len   = characteristic->valueSize();
-        characteristicValueAttribute.p_value   = NULL;
+        for (int j = (i + 1); j < numAttributes; j++) {
+          attribute = attributes[j];
 
-        sd_ble_gatts_characteristic_add(serviceHandle, &characteristicMetaData, &characteristicValueAttribute, &this->_characteristicInfo[characteristicIndex].handles);
+          if (attribute->type() != BLETypeDescriptor) {
+            break;
+          }
+
+          BLEDescriptor *descriptor = (BLEDescriptor *)attribute;
+
+          if (strcmp(descriptor->uuid(), "2901") == 0) {
+            characteristicMetaData.p_char_user_desc        = (uint8_t*)descriptor->value();
+            characteristicMetaData.char_user_desc_max_size = descriptor->valueSize();
+            characteristicMetaData.char_user_desc_size     = descriptor->valueLength();
+          } else if (strcmp(descriptor->uuid(), "2904") == 0) {
+            characteristicMetaData.p_char_pf = (ble_gatts_char_pf_t *)descriptor->value();
+          }
+        }
+
+        memset(&characteristicValueAttribute, 0, sizeof(characteristicValueAttribute));
+
+        characteristicValueAttribute.p_uuid       = &nordicUUID;
+        characteristicValueAttribute.p_attr_md    = &characteristicValueAttributeMetaData;
+        characteristicValueAttribute.init_len     = valueLength;
+        characteristicValueAttribute.init_offs    = 0;
+        characteristicValueAttribute.max_len      = characteristic->valueSize();
+        characteristicValueAttribute.p_value      = NULL;
+
+        sd_ble_gatts_characteristic_add(BLE_GATT_HANDLE_INVALID, &characteristicMetaData, &characteristicValueAttribute, &this->_characteristicInfo[characteristicIndex].handles);
 
         if (valueLength) {
           sd_ble_gatts_value_set(this->_characteristicInfo[characteristicIndex].handles.value_handle, 0, &valueLength, characteristic->value());
@@ -264,6 +263,14 @@ void nRF51822::begin(unsigned char advertisementDataType,
         characteristicIndex++;
       }
     } else if (attribute->type() == BLETypeDescriptor) {
+      BLEDescriptor *descriptor = (BLEDescriptor *)attribute;
+
+      if (strcmp(descriptor->uuid(), "2901") == 0 ||
+          strcmp(descriptor->uuid(), "2902") == 0 ||
+          strcmp(descriptor->uuid(), "2903") == 0 ||
+          strcmp(descriptor->uuid(), "2904") == 0) {
+        continue; // skip
+      }
     }
   }
 
@@ -275,25 +282,54 @@ void nRF51822::poll() {
 }
 
 bool nRF51822::updateCharacteristicValue(BLECharacteristic& characteristic) {
-
   for (int i = 0; i < this->_numCharacteristics; i++) {
     struct characteristicInfo* characteristicInfo = &this->_characteristicInfo[i];
 
     if (characteristicInfo->characteristic == &characteristic) {
-      uint16_t valueLength = characteristicInfo->characteristic->valueLength();
+      uint16_t valueLength = characteristic.valueLength();
 
-      sd_ble_gatts_value_set(characteristicInfo->handles.value_handle, 0, &valueLength, characteristicInfo->characteristic->value());
+      sd_ble_gatts_value_set(characteristicInfo->handles.value_handle, 0, &valueLength, characteristic.value());
+
+      ble_gatts_hvx_params_t hvxParams;
+
+      memset(&hvxParams, 0, sizeof(hvxParams));
+
+      hvxParams.handle = characteristicInfo->handles.value_handle;
+      hvxParams.offset = 0;
+      hvxParams.p_data = NULL;
+      hvxParams.p_len  = &valueLength;
+
+      if (characteristicInfo->notifySubscribed) {
+        hvxParams.type = BLE_GATT_HVX_NOTIFICATION;
+
+        sd_ble_gatts_hvx(this->_connectionHandle, &hvxParams);
+      }
+
+      if (characteristicInfo->indicateSubscribed) {
+        hvxParams.type = BLE_GATT_HVX_INDICATION;
+
+        sd_ble_gatts_hvx(this->_connectionHandle, &hvxParams);
+      }
     }
   }
+
   return true;
 }
 
 bool nRF51822::canNotifyCharacteristic(BLECharacteristic& characteristic) {
-  return true;
+  uint8_t count = 0;
+
+  sd_ble_tx_buffer_count_get(&count);
+
+  return (count > 0);
 }
 
 bool nRF51822::canIndicateCharacteristic(BLECharacteristic& characteristic) {
-  return true;
+  uint8_t count = 0;
+
+  sd_ble_tx_buffer_count_get(&count);
+
+  return (count > 0);
 }
 
 void nRF51822::startAdvertising() {
@@ -343,7 +379,7 @@ void nRF51822::handleEvent(ble_evt_t* bleEvent) {
 
   switch (bleEvent->header.evt_id) {
     case BLE_GAP_EVT_CONNECTED:
-      this->_connectionHandle = _connectionHandle;
+      this->_connectionHandle = bleEvent->evt.gap_evt.conn_handle;
 
       if (this->_eventListener) {
         this->_eventListener->nRF51822Connected(*this, bleEvent->evt.gap_evt.params.connected.peer_addr.addr);
@@ -352,6 +388,19 @@ void nRF51822::handleEvent(ble_evt_t* bleEvent) {
 
     case BLE_GAP_EVT_DISCONNECTED:
       this->_connectionHandle = BLE_CONN_HANDLE_INVALID;
+
+      for (int i = 0; i < this->_numCharacteristics; i++) {
+        struct characteristicInfo* characteristicInfo = &this->_characteristicInfo[i];
+
+        characteristicInfo->notifySubscribed = false;
+        characteristicInfo->indicateSubscribed = false;
+
+        if (characteristicInfo->characteristic->subscribed()) {
+          if (this->_eventListener) {
+            this->_eventListener->nRF51822CharacteristicSubscribedChanged(*this, *characteristicInfo->characteristic, false);
+          }
+        }
+      }
 
       if (this->_eventListener) {
         this->_eventListener->nRF51822Disconnected(*this);
@@ -372,7 +421,18 @@ void nRF51822::handleEvent(ble_evt_t* bleEvent) {
           }
           break;
         } else if (characteristicInfo->handles.cccd_handle == handle) {
-          // TODO: notify/indicate
+          uint16_t value = bleEvent->evt.gatts_evt.params.write.data[0] | (bleEvent->evt.gatts_evt.params.write.data[1] << 8);
+
+          characteristicInfo->notifySubscribed = (value & 0x0001);
+          characteristicInfo->indicateSubscribed = (value & 0x0002);
+
+          bool subscribed = (characteristicInfo->notifySubscribed || characteristicInfo->indicateSubscribed);
+
+          if (subscribed != characteristicInfo->characteristic->subscribed()) {
+            if (this->_eventListener) {
+              this->_eventListener->nRF51822CharacteristicSubscribedChanged(*this, *characteristicInfo->characteristic, subscribed);
+            }
+          }
         }
       }
       break;
