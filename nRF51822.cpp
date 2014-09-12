@@ -271,6 +271,31 @@ void nRF51822::begin(unsigned char advertisementDataType,
           strcmp(descriptor->uuid(), "2904") == 0) {
         continue; // skip
       }
+
+      uint16_t valueLength = descriptor->valueLength();
+
+      ble_gatts_attr_t descriptorAttribute;
+      ble_gatts_attr_md_t descriptorMetaData;
+
+      memset(&descriptorAttribute, 0, sizeof(descriptorAttribute));
+      memset(&descriptorMetaData, 0, sizeof(descriptorMetaData));
+
+      descriptorMetaData.vloc = BLE_GATTS_VLOC_STACK;
+      descriptorMetaData.vlen = (valueLength == descriptor->valueSize()) ? 0 : 1;
+
+      BLE_GAP_CONN_SEC_MODE_SET_OPEN(&descriptorMetaData.read_perm);
+
+      descriptorAttribute.p_uuid    = &nordicUUID;
+      descriptorAttribute.p_attr_md = &descriptorMetaData;
+      descriptorAttribute.init_len  = valueLength;
+      descriptorAttribute.max_len   = descriptor->valueSize();
+      descriptorAttribute.p_value   = NULL;
+
+      sd_ble_gatts_descriptor_add(BLE_GATT_HANDLE_INVALID, &descriptorAttribute, &handle);
+
+      if (valueLength) {
+        sd_ble_gatts_value_set(handle, 0, &valueLength, descriptor->value());
+      }
     }
   }
 
