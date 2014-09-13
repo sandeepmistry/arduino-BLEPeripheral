@@ -56,7 +56,7 @@ static bool aci_setup_fill(aci_state_t *aci_stat, uint8_t *num_cmd_offset)
   while (*num_cmd_offset < aci_stat->aci_setup_info.num_setup_msgs)
   {
 	//Board dependent defines
-	#if defined (__AVR__)
+	#if defined (__AVR__) || defined(__SAM3X8E__) || defined(__SAMD21G18A__)
 		//For Arduino copy the setup ACI message from Flash to RAM.
 		memcpy_P(&msg_to_send, &(aci_stat->aci_setup_info.setup_msgs[*num_cmd_offset]),
 				  pgm_read_byte_near(&(aci_stat->aci_setup_info.setup_msgs[*num_cmd_offset].buffer[0]))+2);
