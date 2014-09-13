@@ -14,7 +14,7 @@ BLEPeripheral(unsigned char req, unsigned char rdy, unsigned char rst);
 ```
 void setLocalName(const char *localName);
 ```
- * localName - local name to advertise (up to 20 characters)
+ * localName - local name to advertise (up to: 20 characters on nRF8001, 29 characters on nRF51822)
 
 ### Service UUID
 ```
@@ -27,7 +27,7 @@ void setAdvertisedServiceUuid(const char* advertisedServiceUuid);
 void setManufacturerData(const unsigned char manufacturerData[], unsigned char manufacturerDataLength);
 ```
  * manufacturerData - array of bytes
- * manufacturerDataLength - length of array, up to 20 bytes
+ * manufacturerDataLength - length of array, up to: 20 bytes on nRF8001, 26 bytes on nRF51822
 
 ## Built-in characteristics
 
@@ -35,7 +35,7 @@ void setManufacturerData(const unsigned char manufacturerData[], unsigned char m
 ```
 void setDeviceName(const char* deviceName);
 ```
- * deviceName - device name, up to 19 characters - default value is ```"Arduino"```
+ * deviceName - device name, up to: 19 characters on nRF8001, 20 characters on nRF51822 - default value is ```"Arduino"```
 
 ### Appearance
 ```
@@ -170,11 +170,11 @@ BLECharacteristic(const char* uuid, unsigned char properties, const char* value)
     * ```BLEIndicate```
 
 Choice of:
-  * valueSize - size of characteristic in bytes (max 19 bytes)
+  * valueSize - size of characteristic in bytes (max: 19 bytes on nRF8001, 20 bytes on nRF51822)
 
 or
 
-  * value - string value (max 19 bytes)
+  * value - string value (max: 19 bytes on nRF8001, 20 bytes on nRF51822)
 
 ## Get value
 ```
@@ -283,11 +283,11 @@ BLEDescriptor(const char* uuid, const char* value);
   * uuid - UUID of descriptor
 
 Choice of:
-  * valueSize - size of characteristic in bytes (max 19 bytes)
+  * valueSize - size of characteristic in bytes (max: 19 bytes on nRF8001, 20 bytes on nRF51822)
 
 or
 
-  * value - string value (max 19 bytes)
+  * value - string value (max: 19 bytes on nRF8001, 20 bytes on nRF51822)
 
 ## Get value
 ```

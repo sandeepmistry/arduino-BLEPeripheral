@@ -28,7 +28,7 @@ BLEDescriptor                    testDescriptor      = BLEDescriptor("2901", "co
 unsigned long long               lastSent            = 0;
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
 #if defined (__AVR_ATmega32U4__)
   //Wait until the serial port is available (useful only for the Leonardo)
   //As the Leonardo board is not reseted every time you open the Serial Monitor

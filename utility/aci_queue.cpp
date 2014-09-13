@@ -23,6 +23,8 @@
 @brief Implementation of a circular queue for ACI data
 */
 
+#ifndef NRF51
+
 #include "hal_aci_tl.h"
 #include "aci_queue.h"
 #include "ble_assert.h"
@@ -200,3 +202,5 @@ bool aci_queue_peek_from_isr(aci_queue_t *aci_q, hal_aci_data_t *p_data)
 
   return true;
 }
+
+#endif

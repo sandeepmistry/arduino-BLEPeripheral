@@ -23,6 +23,8 @@
 @brief Implementation of the ACI transport layer module
 */
 
+#ifndef NRF51
+
 #include <SPI.h>
 #include "hal_platform.h"
 #include "hal_aci_tl.h"
@@ -37,7 +39,7 @@ Use the REVERSE_BITS macro to convert from MSBit to LSBit
 The outgoing command and the incoming event needs to be converted
 */
 //Board dependent defines
-#if defined (__AVR__)
+#if defined (__AVR__) || defined(__SAM3X8E__) || defined(__SAMD21G18A__)
     //For Arduino add nothing
 #elif defined(__PIC32MX__)
     //For ChipKit as the transmission has to be reversed, the next definitions have to be added
@@ -349,7 +351,7 @@ void hal_aci_tl_init(aci_pins_t *a_pins, bool debug)
   */
   SPI.begin();
   //Board dependent defines
-  #if defined (__AVR__)
+  #if defined (__AVR__) || defined(__SAM3X8E__) || defined(__SAMD21G18A__)
     //For Arduino use the LSB first
     SPI.setBitOrder(LSBFIRST);
   #elif defined(__PIC32MX__)
@@ -422,7 +424,7 @@ bool hal_aci_tl_send(hal_aci_data_t *p_aci_cmd)
 static uint8_t spi_readwrite(const uint8_t aci_byte)
 {
 	//Board dependent defines
-#if defined (__AVR__)
+#if defined (__AVR__) || defined(__SAM3X8E__) || defined(__SAMD21G18A__)
     //For Arduino the transmission does not have to be reversed
     return SPI.transfer(aci_byte);
 #elif defined(__PIC32MX__)
@@ -457,3 +459,5 @@ void hal_aci_tl_q_flush (void)
 {
   m_aci_q_flush();
 }
+
+#endif
