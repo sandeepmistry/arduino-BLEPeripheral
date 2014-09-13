@@ -1,5 +1,7 @@
 #include "Arduino.h"
 
+#include "BLEDeviceLimits.h"
+
 #include "BLEDescriptor.h"
 
 BLEDescriptor::BLEDescriptor(const char* uuid, unsigned char valueSize) :

@@ -15,6 +15,12 @@ An [Arduino](http://arduino.cc) library for creating custom BLE peripherals.
 
 **Note:** Does not require use of [nRFgo Studio](http://www.nordicsemi.com/chi/node_176/2.4GHz-RF/nRFgo-Studio)!
 
+### [Nordic Semiconductor nRF51822](http://www.nordicsemi.com/eng/Products/Bluetooth-R-low-energy/nRF51822)
+
+ * [RedBearLab](http://redbearlab.com)
+   * [nRF51822](http://redbearlab.com/redbearlab-nrf51822)
+   * [Blend Nano](http://redbearlab.com/blenano-mk20usb)
+
 #### Pinouts
 
 | Shield/Board | REQ Pin | RDY Pin | RST Pin |
@@ -24,6 +30,8 @@ An [Arduino](http://arduino.cc) library for creating custom BLE peripherals.
 | BLE Shield 2.x | 9 | 8 | UNUSED or 4/7 via jumper|
 | Blend | 9 | 8 | UNUSED or 5/6 via jumper |
 | Blend Micro | 6 | 7 | UNUSED or 4 |
+| RedBearLab nRF51822 | UNUSED | UNUSED | UNUSED |
+| BLE Nano | UNUSED | UNUSED | UNUSED |
 
 ## Usage
 

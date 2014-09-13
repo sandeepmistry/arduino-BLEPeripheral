@@ -7,8 +7,6 @@ enum BLEAttributeType {
   BLETypeDescriptor     = 0x2900
 };
 
-#define BLE_ATTRIBUTE_MAX_VALUE_LENGTH    19
-
 class BLEAttribute
 {
   public:

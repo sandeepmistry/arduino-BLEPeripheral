@@ -6,27 +6,9 @@
 #include <utility/lib_aci.h>
 #include <utility/aci_setup.h>
 
-#include "BLEAttribute.h"
-#include "BLECharacteristic.h"
+#include "BLEDevice.h"
 
-class nRF8001;
-
-class nRF8001EventListener
-{
-  public:
-    virtual void nRF8001Connected(nRF8001& nRF8001, const unsigned char* address) = 0;
-    virtual void nRF8001Disconnected(nRF8001& nRF8001) = 0;
-
-    virtual void nRF8001CharacteristicValueChanged(nRF8001& nRF8001, BLECharacteristic& characteristic, const unsigned char* value, unsigned char valueLength) = 0;
-    virtual void nRF8001CharacteristicSubscribedChanged(nRF8001& nRF8001, BLECharacteristic& characteristic, bool subscribed) = 0;
-
-    virtual void nRF8001AddressReceived(nRF8001& nRF8001, const unsigned char* address) = 0;
-    virtual void nRF8001TemperatureReceived(nRF8001& nRF8001, float temperature) = 0;
-    virtual void nRF8001BatteryLevelReceived(nRF8001& nRF8001, float batteryLevel) = 0;
-};
-
-
-class nRF8001
+class nRF8001 : protected BLEDevice
 {
   friend class BLEPeripheral;
 
@@ -52,9 +34,7 @@ class nRF8001
 
     virtual ~nRF8001();
 
-    void setEventListener(nRF8001EventListener* eventListener);
-
-    void begin(unsigned char advertisementDataType,
+    virtual void begin(unsigned char advertisementDataType,
                 unsigned char advertisementDataLength,
                 const unsigned char* advertisementData,
                 unsigned char scanDataType,
@@ -63,17 +43,17 @@ class nRF8001
                 BLEAttribute** attributes,
                 unsigned char numAttributes);
 
-    void poll();
+    virtual void poll();
 
-    void disconnect();
+    virtual void disconnect();
 
-    bool updateCharacteristicValue(BLECharacteristic& characteristic);
-    bool canNotifyCharacteristic(BLECharacteristic& characteristic);
-    bool canIndicateCharacteristic(BLECharacteristic& characteristic);
+    virtual bool updateCharacteristicValue(BLECharacteristic& characteristic);
+    virtual bool canNotifyCharacteristic(BLECharacteristic& characteristic);
+    virtual bool canIndicateCharacteristic(BLECharacteristic& characteristic);
 
-    void requestAddress();
-    void requestTemperature();
-    void requestBatteryLevel();
+    virtual void requestAddress();
+    virtual void requestTemperature();
+    virtual void requestBatteryLevel();
 
   private:
     void waitForSetupMode();
@@ -88,8 +68,6 @@ class nRF8001
     unsigned char               _numPipeInfo;
 
     unsigned short              _crcSeed;
-
-    nRF8001EventListener*       _eventListener;
 };
 
 #endif

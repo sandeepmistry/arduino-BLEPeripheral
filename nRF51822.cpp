@@ -20,7 +20,7 @@
 
 #define ADVERTISING_INTERVAL 0x050
 
-void assert_nrf_callback(uint16_t line_num, const uint8_t *p_file_name) {
+void assert_nrf_callback(uint16_t line_num, const uint8_t *file_name) {
 }
 
 nRF51822* nRF51822::_instance = NULL;
@@ -29,14 +29,15 @@ nRF51822::nRF51822() :
   _connectionHandle(BLE_CONN_HANDLE_INVALID),
 
   _numCharacteristics(0),
-  _characteristicInfo(NULL),
-
-  _eventListener(NULL)
+  _characteristicInfo(NULL)
 {
   _instance = this;
 }
 
 nRF51822::~nRF51822() {
+  if (this->_characteristicInfo) {
+    free(this->_characteristicInfo);
+  }
 }
 
 void nRF51822::eventHandler(ble_evt_t* bleEvent) {
@@ -45,10 +46,6 @@ void nRF51822::eventHandler(ble_evt_t* bleEvent) {
 
 void nRF51822::systemEventHandler(uint32_t sysEvent) {
 
-}
-
-void nRF51822::setEventListener(nRF51822EventListener* eventListener) {
-  this->_eventListener = eventListener;
 }
 
 void nRF51822::begin(unsigned char advertisementDataType,
@@ -380,7 +377,7 @@ void nRF51822::requestAddress() {
   sd_ble_gap_address_get(&gapAddress);
 
   if (this->_eventListener) {
-    this->_eventListener->nRF51822AddressReceived(*this, gapAddress.addr);
+    this->_eventListener->BLEDeviceAddressReceived(*this, gapAddress.addr);
   }
 }
 
@@ -392,7 +389,7 @@ void nRF51822::requestTemperature() {
   float temperature = rawTemperature / 4.0;
 
   if (this->_eventListener) {
-    this->_eventListener->nRF51822TemperatureReceived(*this, temperature);
+    this->_eventListener->BLEDeviceTemperatureReceived(*this, temperature);
   }
 }
 
@@ -407,7 +404,7 @@ void nRF51822::handleEvent(ble_evt_t* bleEvent) {
       this->_connectionHandle = bleEvent->evt.gap_evt.conn_handle;
 
       if (this->_eventListener) {
-        this->_eventListener->nRF51822Connected(*this, bleEvent->evt.gap_evt.params.connected.peer_addr.addr);
+        this->_eventListener->BLEDeviceConnected(*this, bleEvent->evt.gap_evt.params.connected.peer_addr.addr);
       }
       break;
 
@@ -422,13 +419,13 @@ void nRF51822::handleEvent(ble_evt_t* bleEvent) {
 
         if (characteristicInfo->characteristic->subscribed()) {
           if (this->_eventListener) {
-            this->_eventListener->nRF51822CharacteristicSubscribedChanged(*this, *characteristicInfo->characteristic, false);
+            this->_eventListener->BLEDeviceCharacteristicSubscribedChanged(*this, *characteristicInfo->characteristic, false);
           }
         }
       }
 
       if (this->_eventListener) {
-        this->_eventListener->nRF51822Disconnected(*this);
+        this->_eventListener->BLEDeviceDisconnected(*this);
       }
 
       this->startAdvertising();
@@ -442,7 +439,7 @@ void nRF51822::handleEvent(ble_evt_t* bleEvent) {
 
         if (characteristicInfo->handles.value_handle == handle) {
           if (this->_eventListener) {
-            this->_eventListener->nRF51822CharacteristicValueChanged(*this, *characteristicInfo->characteristic, bleEvent->evt.gatts_evt.params.write.data, bleEvent->evt.gatts_evt.params.write.len);
+            this->_eventListener->BLEDeviceCharacteristicValueChanged(*this, *characteristicInfo->characteristic, bleEvent->evt.gatts_evt.params.write.data, bleEvent->evt.gatts_evt.params.write.len);
           }
           break;
         } else if (characteristicInfo->handles.cccd_handle == handle) {
@@ -455,7 +452,7 @@ void nRF51822::handleEvent(ble_evt_t* bleEvent) {
 
           if (subscribed != characteristicInfo->characteristic->subscribed()) {
             if (this->_eventListener) {
-              this->_eventListener->nRF51822CharacteristicSubscribedChanged(*this, *characteristicInfo->characteristic, subscribed);
+              this->_eventListener->BLEDeviceCharacteristicSubscribedChanged(*this, *characteristicInfo->characteristic, subscribed);
             }
           }
         }

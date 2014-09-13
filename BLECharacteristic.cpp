@@ -1,5 +1,7 @@
 #include "Arduino.h"
 
+#include "BLEDeviceLimits.h"
+
 #include "BLECharacteristic.h"
 
 BLECharacteristic::BLECharacteristic(const char* uuid, unsigned char properties, unsigned char valueSize, bool fixedLength) :

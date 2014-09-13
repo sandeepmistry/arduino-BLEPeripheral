@@ -20,7 +20,7 @@ BLEPeripheral                    blePeripheral       = BLEPeripheral(BLE_REQ, BL
 // create service
 BLEService                       testService         = BLEService("fff0");
 // create counter characteristic
-BLEUnsignedShortCharacteristic   testCharacteristic  = BLEUnsignedShortCharacteristic("fff1", BLERead | BLEWrite | BLEWriteWithoutResponse /*| BLENotify | BLEIndicate*/);
+BLEUnsignedShortCharacteristic   testCharacteristic  = BLEUnsignedShortCharacteristic("fff1", BLERead | BLEWrite | BLEWriteWithoutResponse | BLENotify /*| BLEIndicate*/);
 // create user description descriptor for characteristic
 BLEDescriptor                    testDescriptor      = BLEDescriptor("2901", "counter");
 

@@ -100,9 +100,7 @@ nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
   _pipeInfo(NULL),
   _numPipeInfo(0),
 
-  _crcSeed(0xFFFF),
-
-  _eventListener(NULL)
+  _crcSeed(0xFFFF)
 {
   this->_aciState.aci_pins.reqn_pin               = req;
   this->_aciState.aci_pins.rdyn_pin               = rdy;
@@ -116,7 +114,11 @@ nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
     this->_aciState.aci_pins.board_name           = BOARD_DEFAULT;
   }
 
+#if defined(__SAM3X8E__)
+  this->_aciState.aci_pins.spi_clock_divider      = 42;
+#else
   this->_aciState.aci_pins.spi_clock_divider      = SPI_CLOCK_DIV8;
+#endif
 
   this->_aciState.aci_pins.reset_pin              = rst;
   this->_aciState.aci_pins.active_pin             = UNUSED;
@@ -130,12 +132,6 @@ nRF8001::~nRF8001() {
   if (this->_pipeInfo) {
     free(this->_pipeInfo);
   }
-}
-
-
-
-void nRF8001::setEventListener(nRF8001EventListener* eventListener) {
-  this->_eventListener = eventListener;
 }
 
 void nRF8001::begin(unsigned char advertisementDataType,
@@ -566,7 +562,7 @@ void nRF8001::poll() {
               Serial.println(aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_type, DEC);
 #endif
               if (this->_eventListener) {
-                this->_eventListener->nRF8001AddressReceived(*this, aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_own);
+                this->_eventListener->BLEDeviceAddressReceived(*this, aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_own);
               }
               break;
             }
@@ -578,7 +574,7 @@ void nRF8001::poll() {
               Serial.println(batteryLevel);
 #endif
               if (this->_eventListener) {
-                this->_eventListener->nRF8001BatteryLevelReceived(*this, batteryLevel);
+                this->_eventListener->BLEDeviceBatteryLevelReceived(*this, batteryLevel);
               }
               break;
             }
@@ -590,7 +586,7 @@ void nRF8001::poll() {
               Serial.println(temperature);
 #endif
               if (this->_eventListener) {
-                this->_eventListener->nRF8001TemperatureReceived(*this, temperature);
+                this->_eventListener->BLEDeviceTemperatureReceived(*this, temperature);
               }
               break;
             }
@@ -613,7 +609,7 @@ void nRF8001::poll() {
         Serial.println(address);
 #endif
         if (this->_eventListener) {
-          this->_eventListener->nRF8001Connected(*this, aciEvt->params.connected.dev_addr);
+          this->_eventListener->BLEDeviceConnected(*this, aciEvt->params.connected.dev_addr);
         }
 
         this->_aciState.data_credit_available = this->_aciState.data_credit_total;
@@ -648,7 +644,7 @@ void nRF8001::poll() {
 
           if (pipeInfo->characteristic->subscribed() != subscribed) {
             if (this->_eventListener) {
-              this->_eventListener->nRF8001CharacteristicSubscribedChanged(*this, *pipeInfo->characteristic, subscribed);
+              this->_eventListener->BLEDeviceCharacteristicSubscribedChanged(*this, *pipeInfo->characteristic, subscribed);
             }
           }
         }
@@ -667,13 +663,13 @@ void nRF8001::poll() {
 
           if (pipeInfo->characteristic->subscribed()) {
             if (this->_eventListener) {
-              this->_eventListener->nRF8001CharacteristicSubscribedChanged(*this, *pipeInfo->characteristic, false);
+              this->_eventListener->BLEDeviceCharacteristicSubscribedChanged(*this, *pipeInfo->characteristic, false);
             }
           }
         }
 
         if (this->_eventListener) {
-          this->_eventListener->nRF8001Disconnected(*this);
+          this->_eventListener->BLEDeviceDisconnected(*this);
         }
 
         lib_aci_connect(0/* in seconds  : 0 means forever */, ADVERTISING_INTERVAL);
@@ -709,7 +705,7 @@ void nRF8001::poll() {
             }
 
             if (this->_eventListener) {
-              this->_eventListener->nRF8001CharacteristicValueChanged(*this, *pipeInfo->characteristic, aciEvt->params.data_received.rx_data.aci_data, dataLen);
+              this->_eventListener->BLEDeviceCharacteristicValueChanged(*this, *pipeInfo->characteristic, aciEvt->params.data_received.rx_data.aci_data, dataLen);
             }
             break;
           }
