@@ -188,11 +188,11 @@ void nRF8001::begin(unsigned char advertisementDataType,
       setupMsgData->data[12] = 0x40;
     } else if (i == 5 && advertisementDataType && advertisementDataLength && advertisementData) {
       setupMsgData->data[0] = advertisementDataType;
-      setupMsgData->data[1] = advertisementDataLength + 2;
+      setupMsgData->data[1] = advertisementDataLength;
       memcpy(&setupMsgData->data[2], advertisementData, advertisementDataLength);
     } else if (i == 6 && scanDataType && scanDataLength && scanData) {
       setupMsgData->data[0] = scanDataType;
-      setupMsgData->data[1] = scanDataLength + 2;
+      setupMsgData->data[1] = scanDataLength;
       memcpy(&setupMsgData->data[2], scanData, scanDataLength);
     }
 
