@@ -18,11 +18,11 @@ DHT dht(DHTPIN, DHTTYPE);
 BLEPeripheral blePeripheral = BLEPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
 
 BLEService tempService = BLEService("CCC0");
-BLECharacteristic tempCharacteristic = BLECharacteristic("CCC1", BLERead | BLENotify, 7);
+BLEFloatCharacteristic tempCharacteristic = BLEFloatCharacteristic("CCC1", BLERead | BLENotify);
 BLEDescriptor tempDescriptor = BLEDescriptor("2901", "Temp Celsius");
 
 BLEService humidityService = BLEService("DDD0");
-BLECharacteristic humidityCharacteristic = BLECharacteristic("DDD1", BLERead | BLENotify, 6);
+BLEFloatCharacteristic humidityCharacteristic = BLEFloatCharacteristic("DDD1", BLERead | BLENotify);
 BLEDescriptor humidityDescriptor = BLEDescriptor("2901", "Humidity Percent");
 
 volatile bool readFromSensor = false;
@@ -81,9 +81,7 @@ void setTempCharacteristicValue() {
 //  float reading = random(100);
   
   if (!isnan(reading) && significantChange(lastTempReading, reading, 0.5)) {
-    char formatted[7];
-    dtostrf(reading, 3, 1, formatted);
-    tempCharacteristic.setValue(formatted);
+    tempCharacteristic.setValue(reading);
     
     Serial.print(F("Temperature: ")); Serial.print(reading); Serial.println(F("C"));
     
@@ -96,9 +94,7 @@ void setHumidityCharacteristicValue() {
 //  float reading = random(100);
 
   if (!isnan(reading) && significantChange(lastHumidityReading, reading, 1.0)) {
-    char formatted[6];
-    dtostrf(reading, 3, 1, formatted);
-    humidityCharacteristic.setValue(formatted);
+    humidityCharacteristic.setValue(reading);
     
     Serial.print(F("Humidity: ")); Serial.print(reading); Serial.println(F("%"));
     
