@@ -172,15 +172,15 @@ void BLEPeripheral::setEventHandler(BLEPeripheralEvent event, BLEPeripheralEvent
 }
 
 bool BLEPeripheral::characteristicValueChanged(BLECharacteristic& characteristic) {
-  this->_device->updateCharacteristicValue(characteristic);
+  return this->_device->updateCharacteristicValue(characteristic);
 }
 
 bool BLEPeripheral::canNotifyCharacteristic(BLECharacteristic& characteristic) {
-  this->_device->canNotifyCharacteristic(characteristic);
+  return this->_device->canNotifyCharacteristic(characteristic);
 }
 
 bool BLEPeripheral::canIndicateCharacteristic(BLECharacteristic& characteristic) {
-  this->_device->canIndicateCharacteristic(characteristic);
+  return this->_device->canIndicateCharacteristic(characteristic);
 }
 
 void BLEPeripheral::BLEDeviceConnected(BLEDevice& device, const unsigned char* address) {
