@@ -14,7 +14,7 @@ BLEPeripheral blePeripheral = BLEPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
 BLEService physicalWebService = BLEService("fed8");
 
 // create characteristic
-BLECCharacteristic physicalWebCharacterisitc = BLECharCharacteristic("fed9", BLERead | BLEBroadcast, 15);
+BLECharacteristic physicalWebCharacterisitc = BLECharacteristic("fed9", BLERead | BLEBroadcast, 15);
 
 void setup() {
   Serial.begin(9600);
@@ -26,11 +26,11 @@ void setup() {
 #endif
 
   blePeripheral.setLocalName("physical-web");
-  blePeripheral.setAdvertisedServiceUuid(service.uuid());
+  blePeripheral.setAdvertisedServiceUuid(physicalWebService.uuid());
 
   // add attributes to peripheral
   blePeripheral.addAttribute(physicalWebService);
-  blePeripheral.addAttribute(characteristic);
+  blePeripheral.addAttribute(physicalWebCharacterisitc);
 
   // set value
   unsigned char physicalWebData[15]; // only 15 bytes (instead of 18), because flags (3 bytes) are in advertisement data
