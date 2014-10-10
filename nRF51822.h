@@ -13,6 +13,7 @@ class nRF51822 : public BLEDevice
   protected:
     struct characteristicInfo {
       BLECharacteristic* characteristic;
+      BLEService* service;
 
       ble_gatts_char_handles_t handles;
       bool notifySubscribed;
@@ -38,6 +39,7 @@ class nRF51822 : public BLEDevice
     virtual void disconnect();
 
     virtual bool updateCharacteristicValue(BLECharacteristic& characteristic);
+    virtual bool broadcastCharacteristic(BLECharacteristic& characteristic);
     virtual bool canNotifyCharacteristic(BLECharacteristic& characteristic);
     virtual bool canIndicateCharacteristic(BLECharacteristic& characteristic);
 
@@ -52,6 +54,10 @@ class nRF51822 : public BLEDevice
 
   private:
     static nRF51822*             _instance;
+
+    unsigned char                _advData[31];
+    unsigned char                _advDataLen;
+    BLECharacteristic*           _broadcastCharacteristic;
 
     uint16_t                     _connectionHandle;
 

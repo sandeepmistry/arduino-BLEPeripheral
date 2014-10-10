@@ -28,6 +28,9 @@ nRF51822* nRF51822::_instance = NULL;
 nRF51822::nRF51822() :
   _connectionHandle(BLE_CONN_HANDLE_INVALID),
 
+  _advDataLen(0),
+  _broadcastCharacteristic(NULL),
+
   _numCharacteristics(0),
   _characteristicInfo(NULL)
 {
@@ -97,20 +100,18 @@ void nRF51822::begin(unsigned char advertisementDataType,
   /* Wait for the radio to come back up */
   delay(1000);
 
-  unsigned char advData[31];
   unsigned char srData[31];
-  unsigned char advDataLen = 0;
   unsigned char srDataLen = 0;
 
-  advData[0] = 2;
-  advData[1] = 0x01;
-  advData[2] = 0x06;
+  this->_advData[0] = 2;
+  this->_advData[1] = 0x01;
+  this->_advData[2] = 0x06;
 
-  advData[3] = advertisementDataLength + 1;
-  advData[4] = advertisementDataType;
-  memcpy(&advData[5], advertisementData, advertisementDataLength);
+  this->_advData[3] = advertisementDataLength + 1;
+  this->_advData[4] = advertisementDataType;
+  memcpy(&this->_advData[5], advertisementData, advertisementDataLength);
 
-  advDataLen = 5 + advertisementDataLength;
+  this->_advDataLen = 5 + advertisementDataLength;
 
   srData[0] = scanDataLength + 1;
   srData[1] = scanDataType;
@@ -118,7 +119,7 @@ void nRF51822::begin(unsigned char advertisementDataType,
 
   srDataLen = 2 + scanDataLength;
 
-  sd_ble_gap_adv_data_set(advData, advDataLen, srData, srDataLen);
+  sd_ble_gap_adv_data_set(this->_advData, this->_advDataLen, srData, srDataLen);
   sd_ble_gap_appearance_set(0);
 
   for (int i = 0; i < numAttributes; i++) {
@@ -139,6 +140,7 @@ void nRF51822::begin(unsigned char advertisementDataType,
   unsigned char characteristicIndex = 0;
 
   uint16_t handle = 0;
+  BLEService *lastService = NULL;
 
   for (int i = 0; i < numAttributes; i++) {
     BLEAttribute *attribute = attributes[i];
@@ -164,6 +166,7 @@ void nRF51822::begin(unsigned char advertisementDataType,
 
       sd_ble_gatts_service_add(BLE_GATTS_SRVC_TYPE_PRIMARY, &nordicUUID, &handle);
 
+      lastService = service;
     } else if (attribute->type() == BLETypeCharacteristic) {
       BLECharacteristic *characteristic = (BLECharacteristic *)attribute;
 
@@ -176,12 +179,13 @@ void nRF51822::begin(unsigned char advertisementDataType,
       } else if (strcmp(characteristic->uuid(), "2a05") == 0) {
         // do nothing
       } else {
-        uint8_t properties = characteristic->properties();
+        uint8_t properties = characteristic->properties() & 0xfe;
         uint16_t valueLength = characteristic->valueLength();
 
         this->_characteristicInfo[characteristicIndex].characteristic = characteristic;
         this->_characteristicInfo[characteristicIndex].notifySubscribed = false;
         this->_characteristicInfo[characteristicIndex].indicateSubscribed = false;
+        this->_characteristicInfo[characteristicIndex].service = lastService;
 
         ble_gatts_char_md_t characteristicMetaData;
         ble_gatts_attr_md_t clientCharacteristicConfigurationMetaData;
@@ -308,6 +312,10 @@ bool nRF51822::updateCharacteristicValue(BLECharacteristic& characteristic) {
     struct characteristicInfo* characteristicInfo = &this->_characteristicInfo[i];
 
     if (characteristicInfo->characteristic == &characteristic) {
+      if (&characteristic == this->_broadcastCharacteristic) {
+        this->broadcastCharacteristic(characteristic);
+      }
+
       uint16_t valueLength = characteristic.valueLength();
 
       sd_ble_gatts_value_set(characteristicInfo->handles.value_handle, 0, &valueLength, characteristic.value());
@@ -336,6 +344,44 @@ bool nRF51822::updateCharacteristicValue(BLECharacteristic& characteristic) {
   }
 
   return true;
+}
+
+bool nRF51822::broadcastCharacteristic(BLECharacteristic& characteristic) {
+  bool success = false;
+
+  for (int i = 0; i < this->_numCharacteristics; i++) {
+    struct characteristicInfo* characteristicInfo = &this->_characteristicInfo[i];
+
+    if (characteristicInfo->characteristic == &characteristic) {
+      if (characteristic.properties() & BLEBroadcast && characteristicInfo->service) {
+        unsigned char advData[31];
+        unsigned char advDataLen = this->_advDataLen;
+
+        // copy the existing advertisement data
+        memcpy(advData, this->_advData, advDataLen);
+
+        advDataLen += (4 + characteristic.valueLength());
+
+        if (advDataLen <= 31) {
+          BLEUuid uuid = BLEUuid(characteristicInfo->service->uuid());
+
+          advData[this->_advDataLen + 0] = 3 + characteristic.valueLength();
+          advData[this->_advDataLen + 1] = 0x16;
+
+          memcpy(&advData[this->_advDataLen + 2], uuid.data(), 2);
+          memcpy(&advData[this->_advDataLen + 4], characteristic.value(), characteristic.valueLength());
+
+          sd_ble_gap_adv_data_set(advData, advDataLen, NULL, 0); // update advertisement data
+          success = true;
+
+          this->_broadcastCharacteristic = &characteristic;
+        }
+      }
+    }
+    break;
+  }
+
+  return success;
 }
 
 bool nRF51822::canNotifyCharacteristic(BLECharacteristic& characteristic) {
