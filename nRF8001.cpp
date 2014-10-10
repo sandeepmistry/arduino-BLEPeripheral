@@ -46,7 +46,7 @@ static const hal_aci_data_t baseSetupMsgs[NB_BASE_SETUP_MESSAGES] /*PROGMEM*/ =
   {0x00,\
     {\
       0x1f,0x06,0x10,0x1c,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,\
-      0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x03,0x90,0x00,0xff,\
+      0x00,0x00,0x00,0x00,0x00,0x00,0x10,0x00,0x03,0x90,0x00,0xff,\
     },\
   },\
   {0x00,\
@@ -105,6 +105,7 @@ uint16_t crc_16_ccitt(uint16_t crc, uint8_t * data_in, uint16_t data_len) {
 nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
   _pipeInfo(NULL),
   _numPipeInfo(0),
+  _broadcastPipe(0),
 
   _crcSeed(0xFFFF)
 {
@@ -150,6 +151,7 @@ void nRF8001::begin(unsigned char advertisementDataType,
                       unsigned char numAttributes)
 {
   unsigned char numPipedCharacteristics = 0;
+  unsigned char numPipes = 0;
 
   for (int i = 0; i < numAttributes; i++) {
     BLEAttribute* attribute = attributes[i];
@@ -159,6 +161,30 @@ void nRF8001::begin(unsigned char advertisementDataType,
 
       if (characteristic->properties()) {
         numPipedCharacteristics++;
+
+        if (characteristic->properties() & BLEBroadcast) {
+          numPipes++;
+        }
+
+        if (characteristic->properties() & BLENotify) {
+          numPipes++;
+        }
+
+        if (characteristic->properties() & BLEIndicate) {
+          numPipes++;
+        }
+
+        if (characteristic->properties() & BLEWriteWithoutResponse) {
+          numPipes++;
+        }
+
+        if (characteristic->properties() & BLEWrite) {
+          numPipes++;
+        }
+
+        if (characteristic->properties() & BLERead) {
+          numPipes++;
+        }
       }
     }
   }
@@ -181,11 +207,11 @@ void nRF8001::begin(unsigned char advertisementDataType,
 
     if (i == 1) {
       setupMsgData->data[6] = numPipedCharacteristics;
-      setupMsgData->data[8] = numPipedCharacteristics;
+      setupMsgData->data[8] = numPipes;
     } else if (i == 2 && advertisementDataType && advertisementDataLength && advertisementData) {
-      setupMsgData->data[22] = 0x40;
+      setupMsgData->data[22] |= 0x40;
     } else if (i == 3 && scanDataType && scanDataLength && scanData) {
-      setupMsgData->data[12] = 0x40;
+      setupMsgData->data[12] |= 0x40;
     } else if (i == 5 && advertisementDataType && advertisementDataLength && advertisementData) {
       setupMsgData->data[0] = advertisementDataType;
       setupMsgData->data[1] = advertisementDataLength;
@@ -248,7 +274,11 @@ void nRF8001::begin(unsigned char advertisementDataType,
       if (characteristic->properties()) {
         numPiped++;
 
-        pipeInfo->startPipe = pipe;
+        if (characteristic->properties() & BLEBroadcast) {
+          pipeInfo->advPipe = pipe;
+
+          pipe++;
+        }
 
         if (characteristic->properties() & BLENotify) {
           pipeInfo->txPipe = pipe;
@@ -299,7 +329,7 @@ void nRF8001::begin(unsigned char advertisementDataType,
       setupMsgData->data[7]  = characteristic->type() & 0xff;
 
       setupMsgData->data[8]  = ACI_STORE_LOCAL;
-      setupMsgData->data[9]  = characteristic->properties();
+      setupMsgData->data[9]  = characteristic->properties() & 0xfe;
 
       setupMsgData->data[10] = handle & 0xff;
       setupMsgData->data[11] = (handle >> 8) & 0xff;
@@ -354,7 +384,7 @@ void nRF8001::begin(unsigned char advertisementDataType,
       setupMsgData->data[6]  = 0x00;
       setupMsgData->data[7]  = 0x00;
 
-      setupMsgData->data[8]  = 0x02;
+      setupMsgData->data[8]  = 0x01;
 
       memset(&setupMsgData->data[9], 0x00, characteristic->valueSize());
       memcpy(&setupMsgData->data[9], characteristic->value(), characteristic->valueLength());
@@ -451,7 +481,7 @@ void nRF8001::begin(unsigned char advertisementDataType,
     setupMsgData->data[0]  = 0x00;
     setupMsgData->data[1]  = 0x00;
 
-    setupMsgData->data[2]  = pipeInfo.startPipe;
+    setupMsgData->data[2]  = 0x01;
 
     setupMsgData->data[3]  = 0x00;
     setupMsgData->data[4]  = 0x00;
@@ -464,12 +494,16 @@ void nRF8001::begin(unsigned char advertisementDataType,
     setupMsgData->data[8]  = (pipeInfo.configHandle >> 8) & 0xff;
     setupMsgData->data[9]  = pipeInfo.configHandle & 0xff;
 
-    if (pipeInfo.characteristic->properties() & BLEIndicate) {
-      setupMsgData->data[4] |= 0x04; // TX Ack
+    if (pipeInfo.characteristic->properties() & BLEBroadcast) {
+      setupMsgData->data[4] |= 0x01; // Adv
     }
 
     if (pipeInfo.characteristic->properties() & BLENotify) {
       setupMsgData->data[4] |= 0x02; // TX
+    }
+
+    if (pipeInfo.characteristic->properties() & BLEIndicate) {
+      setupMsgData->data[4] |= 0x04; // TX Ack
     }
 
     if (pipeInfo.characteristic->properties() & BLEWriteWithoutResponse) {
@@ -771,6 +805,10 @@ bool nRF8001::updateCharacteristicValue(BLECharacteristic& characteristic) {
     struct pipeInfo* pipeInfo = &this->_pipeInfo[i];
 
     if (pipeInfo->characteristic == &characteristic) {
+      if (pipeInfo->advPipe && (this->_broadcastPipe == pipeInfo->advPipe)) {
+        success &= lib_aci_set_local_data(&this->_aciState, pipeInfo->advPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
+      }
+
       if (pipeInfo->setPipe) {
         success &= lib_aci_set_local_data(&this->_aciState, pipeInfo->setPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
       }
@@ -790,6 +828,31 @@ bool nRF8001::updateCharacteristicValue(BLECharacteristic& characteristic) {
           success &= lib_aci_send_data(pipeInfo->txAckPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
         } else {
           success = false;
+        }
+      }
+
+      break;
+    }
+  }
+
+  return success;
+}
+
+bool nRF8001::broadcastCharacteristic(BLECharacteristic& characteristic) {
+  bool success = false;
+
+  for (int i = 0; i < this->_numPipeInfo; i++) {
+    struct pipeInfo* pipeInfo = &this->_pipeInfo[i];
+
+    if (pipeInfo->characteristic == &characteristic) {
+      if (pipeInfo->advPipe) {
+        uint64_t advPipes = ((uint64_t)1) << (pipeInfo->advPipe);
+
+        success = lib_aci_open_adv_pipes((uint8_t*)&advPipes) &&
+                    lib_aci_set_local_data(&this->_aciState, pipeInfo->advPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
+
+        if (success) {
+          this->_broadcastPipe = pipeInfo->advPipe;
         }
       }
 
