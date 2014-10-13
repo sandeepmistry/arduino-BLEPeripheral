@@ -10,7 +10,7 @@
 
 #include "nRF8001.h"
 
-//#define NRF_8001_DEBUG
+#define NRF_8001_DEBUG
 
 #define ADVERTISING_INTERVAL 0x050
 
@@ -56,7 +56,7 @@ static const hal_aci_data_t baseSetupMsgs[NB_BASE_SETUP_MESSAGES] /*PROGMEM*/ =
   {0x00,\
     {\
       0x1f,0x06,0x10,0x38,0xff,0xff,0x02,0x58,0x0a,0x05,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,\
-      0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x02,0x00,0x00,\
+      0x10,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x02,0x00,0x00,\
     },\
   },\
   {0x00,\
@@ -107,6 +107,8 @@ uint16_t crc_16_ccitt(uint16_t crc, uint8_t * data_in, uint16_t data_len) {
 }
 
 nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
+  BLEDevice(),
+
   _pipeInfo(NULL),
   _numPipeInfo(0),
   _broadcastPipe(0),
@@ -214,8 +216,16 @@ void nRF8001::begin(unsigned char advertisementDataType,
       setupMsgData->data[8] = numPipes;
     } else if (i == 2 && advertisementDataType && advertisementDataLength && advertisementData) {
       setupMsgData->data[22] |= 0x40;
-    } else if (i == 3 && scanDataType && scanDataLength && scanData) {
-      setupMsgData->data[12] |= 0x40;
+    } else if (i == 3) {
+      if (advertisementDataType && advertisementDataLength && advertisementData) {
+        setupMsgData->data[16] |= 0x40;
+      }
+
+      if (scanDataType && scanDataLength && scanData) {
+        setupMsgData->data[12] |= 0x40;
+
+        setupMsgData->data[20] |= 0x40;
+      }
     } else if (i == 5 && advertisementDataType && advertisementDataLength && advertisementData) {
       setupMsgData->data[0] = advertisementDataType;
       setupMsgData->data[1] = advertisementDataLength;
@@ -561,7 +571,11 @@ void nRF8001::poll() {
             if (aciEvt->params.device_started.hw_error) {
               delay(20); //Handle the HW error event correctly.
             } else {
-              lib_aci_connect(0/* in seconds : 0 means forever */, ADVERTISING_INTERVAL);
+              if (this->_connectable) {
+                lib_aci_connect(0/* in seconds, 0 means forever */, ADVERTISING_INTERVAL);
+              } else {
+                lib_aci_broadcast(0/* in seconds, 0 means forever */, ADVERTISING_INTERVAL);
+              }
 #ifdef NRF_8001_DEBUG
               Serial.println(F("Advertising started"));
 #endif
@@ -716,7 +730,11 @@ void nRF8001::poll() {
           this->_eventListener->BLEDeviceDisconnected(*this);
         }
 
-        lib_aci_connect(0/* in seconds  : 0 means forever */, ADVERTISING_INTERVAL);
+        if (this->_connectable) {
+          lib_aci_connect(0/* in seconds, 0 means forever */, ADVERTISING_INTERVAL);
+        } else {
+          lib_aci_broadcast(0/* in seconds, 0 means forever */, ADVERTISING_INTERVAL);
+        }
 #ifdef NRF_8001_DEBUG
         Serial.println(F("Advertising started."));
 #endif
@@ -788,7 +806,11 @@ void nRF8001::poll() {
         }
         Serial.println();
 #endif
-        lib_aci_connect(0/* in seconds, 0 means forever */, ADVERTISING_INTERVAL);
+        if (this->_connectable) {
+          lib_aci_connect(0/* in seconds, 0 means forever */, ADVERTISING_INTERVAL);
+        } else {
+          lib_aci_broadcast(0/* in seconds, 0 means forever */, ADVERTISING_INTERVAL);
+        }
 #ifdef NRF_8001_DEBUG
         Serial.println(F("Advertising started."));
 #endif

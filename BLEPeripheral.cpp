@@ -102,7 +102,10 @@ void BLEPeripheral::begin() {
     }
   }
 
-  this->_device->begin(advertisementDataType, advertisementDataLength, advertisementData, scanDataType, scanDataLength, scanData, this->_attributes, this->_numAttributes);
+  this->_device->begin(advertisementDataType, advertisementDataLength, advertisementData,
+                        scanDataType, scanDataLength, scanData,
+                        this->_attributes, this->_numAttributes);
+
   this->_device->requestAddress();
 }
 
@@ -121,6 +124,10 @@ void BLEPeripheral::setManufacturerData(const unsigned char manufacturerData[], 
 
 void BLEPeripheral::setLocalName(const char* localName) {
   this->_localName = localName;
+}
+
+void BLEPeripheral::setConnectable(bool connectable) {
+  this->_device->setConnectable(connectable);
 }
 
 void BLEPeripheral::setDeviceName(const char* deviceName) {

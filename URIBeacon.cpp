@@ -25,6 +25,8 @@ URIBeacon::URIBeacon(unsigned char req, unsigned char rdy, unsigned char rst) :
 
   this->_blePeripheral.setAdvertisedServiceUuid(this->_bleService.uuid());
 
+  this->_blePeripheral.setConnectable(false);
+
   this->_blePeripheral.addAttribute(this->_bleService);
   this->_blePeripheral.addAttribute(this->_bleCharacteristic);
 }
@@ -62,17 +64,5 @@ unsigned char URIBeacon::compressURI(const char* uri, char *compressedUri, unsig
 }
 
 void URIBeacon::loop() {
-  BLECentral central = this->_blePeripheral.central();
-
-  if (central) {
-    // central connected to peripheral
-    Serial.println(central.address());
-
-    while (central.connected()) {
-      central.disconnect(); // disconnect central ASAP
-    }
-
-    // central disconnected
-    Serial.println(central.address());
-  }
+  this->_blePeripheral.poll();
 }

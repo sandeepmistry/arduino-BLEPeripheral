@@ -32,6 +32,8 @@ class BLEDevice
 
     void setEventListener(BLEDeviceEventListener* eventListener);
 
+    void setConnectable(bool connectable);
+
     virtual void begin(unsigned char advertisementDataType,
                 unsigned char advertisementDataLength,
                 const unsigned char* advertisementData,
@@ -55,6 +57,7 @@ class BLEDevice
     virtual void requestBatteryLevel() = 0;
 
   protected:
+    bool                          _connectable;
     BLEDeviceEventListener*       _eventListener;
 };
 

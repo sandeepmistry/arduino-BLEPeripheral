@@ -26,6 +26,8 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t *file_name) {
 nRF51822* nRF51822::_instance = NULL;
 
 nRF51822::nRF51822() :
+  BLEDevice(),
+
   _connectionHandle(BLE_CONN_HANDLE_INVALID),
 
   _advDataLen(0),
@@ -77,9 +79,9 @@ void nRF51822::begin(unsigned char advertisementDataType,
 
   /* Connection Parameters */
   enum {
-      FIRST_UPDATE_DELAY = APP_TIMER_TICKS(5000, /*CFG_TIMER_PRESCALER*/0),
-      NEXT_UPDATE_DELAY  = APP_TIMER_TICKS(5000, /*CFG_TIMER_PRESCALER*/0),
-      MAX_UPDATE_COUNT   = 3
+    FIRST_UPDATE_DELAY = APP_TIMER_TICKS(5000, /*CFG_TIMER_PRESCALER*/0),
+    NEXT_UPDATE_DELAY  = APP_TIMER_TICKS(5000, /*CFG_TIMER_PRESCALER*/0),
+    MAX_UPDATE_COUNT   = 3
   };
 
   ble_conn_params_init_t cp_init = {0};
@@ -103,21 +105,33 @@ void nRF51822::begin(unsigned char advertisementDataType,
   unsigned char srData[31];
   unsigned char srDataLen = 0;
 
-  this->_advData[0] = 2;
-  this->_advData[1] = 0x01;
-  this->_advData[2] = 0x06;
+  this->_advDataLen = 0;
 
-  this->_advData[3] = advertisementDataLength + 1;
-  this->_advData[4] = advertisementDataType;
-  memcpy(&this->_advData[5], advertisementData, advertisementDataLength);
+  if (this->_connectable) {
+    this->_advData[this->_advDataLen + 0] = 2;
+    this->_advData[this->_advDataLen + 1] = 0x01;
+    this->_advData[this->_advDataLen + 2] = 0x06;
 
-  this->_advDataLen = 5 + advertisementDataLength;
+    this->_advDataLen += 3;
+  }
 
-  srData[0] = scanDataLength + 1;
-  srData[1] = scanDataType;
-  memcpy(&srData[2], scanData, scanDataLength);
+  if (advertisementDataType && advertisementDataLength && advertisementData) {
+    this->_advData[this->_advDataLen + 0] = advertisementDataLength + 1;
+    this->_advData[this->_advDataLen + 1] = advertisementDataType;
+    this->_advDataLen += 2;
 
-  srDataLen = 2 + scanDataLength;
+    memcpy(&this->_advData[this->_advDataLen], advertisementData, advertisementDataLength);
+
+    this->_advDataLen += advertisementDataLength;
+  }
+
+  if (scanDataType && scanDataLength && srData) {
+    srData[0] = scanDataLength + 1;
+    srData[1] = scanDataType;
+    memcpy(&srData[2], scanData, scanDataLength);
+
+    srDataLen = 2 + scanDataLength;
+  }
 
   sd_ble_gap_adv_data_set(this->_advData, this->_advDataLen, srData, srDataLen);
   sd_ble_gap_appearance_set(0);
@@ -403,8 +417,8 @@ bool nRF51822::canIndicateCharacteristic(BLECharacteristic& characteristic) {
 void nRF51822::startAdvertising() {
   ble_gap_adv_params_t advertisingParameters = {0};
 
-  advertisingParameters.type        = 0;
-  advertisingParameters.p_peer_addr = NULL;                         // Undirected advertisement
+  advertisingParameters.type        = this->_connectable ? BLE_GAP_ADV_TYPE_ADV_IND : BLE_GAP_ADV_TYPE_ADV_NONCONN_IND;
+  advertisingParameters.p_peer_addr = NULL;
   advertisingParameters.fp          = BLE_GAP_ADV_FP_ANY;
   advertisingParameters.p_whitelist = NULL;
   advertisingParameters.interval    = ADVERTISING_INTERVAL; // advertising interval (in units of 0.625 ms)
