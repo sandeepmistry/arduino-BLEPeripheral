@@ -26,7 +26,7 @@ struct setupMsgData {
 
 #if defined (__AVR__)
 /* Store the setup for the nRF8001 in the flash of the AVR to save on RAM */
-static const hal_aci_data_t baseSetupMsgs[NB_BASE_SETUP_MESSAGES] PROGMEM =
+static /*const*/ hal_aci_data_t baseSetupMsgs[NB_BASE_SETUP_MESSAGES] PROGMEM =
 #else
 /* Having PROGMEM here caused the setup messages to be zeroed out */
 static const hal_aci_data_t baseSetupMsgs[NB_BASE_SETUP_MESSAGES] /*PROGMEM*/ =
