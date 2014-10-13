@@ -19,7 +19,7 @@ class nRF8001 : protected BLEDevice
       unsigned short     valueHandle;
       unsigned short     configHandle;
 
-      unsigned char      startPipe;
+      unsigned char      advPipe;
       unsigned char      txPipe;
       unsigned char      txAckPipe;
       unsigned char      rxPipe;
@@ -48,6 +48,7 @@ class nRF8001 : protected BLEDevice
     virtual void disconnect();
 
     virtual bool updateCharacteristicValue(BLECharacteristic& characteristic);
+    virtual bool broadcastCharacteristic(BLECharacteristic& characteristic);
     virtual bool canNotifyCharacteristic(BLECharacteristic& characteristic);
     virtual bool canIndicateCharacteristic(BLECharacteristic& characteristic);
 
@@ -66,6 +67,7 @@ class nRF8001 : protected BLEDevice
 
     struct pipeInfo*            _pipeInfo;
     unsigned char               _numPipeInfo;
+    unsigned char               _broadcastPipe;
 
     unsigned short              _crcSeed;
 };

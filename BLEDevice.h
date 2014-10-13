@@ -46,6 +46,7 @@ class BLEDevice
     virtual void disconnect() = 0;
 
     virtual bool updateCharacteristicValue(BLECharacteristic& characteristic) = 0;
+    virtual bool broadcastCharacteristic(BLECharacteristic& characteristic) = 0;
     virtual bool canNotifyCharacteristic(BLECharacteristic& characteristic) = 0;
     virtual bool canIndicateCharacteristic(BLECharacteristic& characteristic) = 0;
 

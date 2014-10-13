@@ -175,6 +175,10 @@ bool BLEPeripheral::characteristicValueChanged(BLECharacteristic& characteristic
   return this->_device->updateCharacteristicValue(characteristic);
 }
 
+bool BLEPeripheral::broadcastCharacteristic(BLECharacteristic& characteristic) {
+  return this->_device->broadcastCharacteristic(characteristic);
+}
+
 bool BLEPeripheral::canNotifyCharacteristic(BLECharacteristic& characteristic) {
   return this->_device->canNotifyCharacteristic(characteristic);
 }

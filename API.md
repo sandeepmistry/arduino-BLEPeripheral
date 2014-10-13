@@ -163,6 +163,7 @@ BLECharacteristic(const char* uuid, unsigned char properties, const char* value)
 ```
   * uuid - UUID of characteristic
   * properties - combination of (|'ed):
+    * ```BLEBroadcast```
     * ```BLERead```
     * ```BLEWriteWithoutResponse ```
     * ```BLEWrite```
@@ -184,7 +185,7 @@ unsigned char valueLength();
 
 ## Set value
 
-Will automatically notify/indicate central, if characteristic has notify/indicate property and central is subscribed.
+Will automatically notify/indicate central, if characteristic has notify/indicate property and central is subscribed and update broadcasted value if broadcasting.
 
 ```
 bool setValue(const unsigned char value[], unsigned char length);
@@ -200,6 +201,16 @@ bool setValue(const char* value);
  * value - new value as string
 
 Returns true on success (central notified/indicated, if applicable), false on failure (cannot be notified/indicated, if applicable)
+
+## Broadcast
+
+Broadcast characteristic value in advertisement data.
+
+```
+bool broadcast();
+```
+
+Returns true on success, false on failure
 
 ## Writes
 Has the central written a new value since the last call to this method? (only for write or write without response characteristics)

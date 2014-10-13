@@ -4,6 +4,7 @@
 #include "BLEAttribute.h"
 
 enum BLEProperty {
+  BLEBroadcast            = 0x01,
   BLERead                 = 0x02,
   BLEWriteWithoutResponse = 0x04,
   BLEWrite                = 0x08,
@@ -26,6 +27,7 @@ class BLECharacteristicValueChangeListener
 {
   public:
     virtual bool characteristicValueChanged(BLECharacteristic& characteristic) = 0;
+    virtual bool broadcastCharacteristic(BLECharacteristic& characteristic) = 0;
     virtual bool canNotifyCharacteristic(BLECharacteristic& characteristic) = 0;
     virtual bool canIndicateCharacteristic(BLECharacteristic& characteristic) = 0;
 };
@@ -49,6 +51,8 @@ class BLECharacteristic : public BLEAttribute
 
     bool setValue(const unsigned char value[], unsigned char length);
     bool setValue(const char* value);
+
+    bool broadcast();
 
     bool written();
     bool subscribed();

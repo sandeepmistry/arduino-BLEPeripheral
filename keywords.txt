@@ -80,6 +80,7 @@ BLETypeService	LITERAL1
 BLETypeCharacteristic	LITERAL1
 BLETypeDescriptor	LITERAL1
 
+BLEBroadcast	LITERAL1
 BLERead	LITERAL1
 BLEWriteWithoutResponse	LITERAL1
 BLEWrite	LITERAL1

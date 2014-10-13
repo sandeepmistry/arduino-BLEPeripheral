@@ -50,6 +50,7 @@ class BLEPeripheral : public BLEDeviceEventListener, public BLECharacteristicVal
 
   protected:
     bool characteristicValueChanged(BLECharacteristic& characteristic);
+    bool broadcastCharacteristic(BLECharacteristic& characteristic);
     bool canNotifyCharacteristic(BLECharacteristic& characteristic);
     bool canIndicateCharacteristic(BLECharacteristic& characteristic);
 

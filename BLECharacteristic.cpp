@@ -79,6 +79,16 @@ bool BLECharacteristic::setValue(const char* value) {
   return this->setValue((const unsigned char *)value, strlen(value));
 }
 
+bool BLECharacteristic::broadcast() {
+  bool success = false;
+
+  if (this->_listener) {
+    success = this-_listener->broadcastCharacteristic(*this);
+  }
+
+  return success;
+}
+
 bool BLECharacteristic::written() {
   bool written = this->_written;
 
