@@ -7,7 +7,7 @@
 * [led_switch](led_switch)
   * read/write characteristic + notify characteristic to turn an LED on/off and button status
 * [physical_web_beacon](physical_web_beacon)
-  * broadcast [http://physical-web.org](physical web) beacon
+  * broadcast [physical web](http://physical-web.org) beacon
 * [test](test)
   * read/write/notify characteristic for counter
 
