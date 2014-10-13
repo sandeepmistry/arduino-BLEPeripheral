@@ -1,10 +1,15 @@
 // Import libraries (BLEPeripheral depends on SPI)
 #include <SPI.h>
 #include <BLEPeripheral.h>
-
-#include "URIBeacon.h"
+#include <URIBeacon.h>
 
 // define pins (varies per shield/board)
+//
+//   Adafruit Bluefruit LE   10, 2, 9
+//   Blend                    9, 8, UNUSED
+//   Blend Micro              6, 7, 4
+//   RBL BLE Shield           9, 8, UNUSED
+
 #define URI_BEACON_REQ   10
 #define URI_BEACON_RDY   2
 #define URI_BEACON_RST   9
