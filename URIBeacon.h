@@ -1,8 +1,7 @@
 #ifndef _URI_BEACON_H_
 #define _URI_BEACON_H_
 
-#include <SPI.h>
-#include <BLEPeripheral.h>
+#include "BLEPeripheral.h"
 
 class URIBeacon
 {
