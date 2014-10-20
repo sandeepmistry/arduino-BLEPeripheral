@@ -4,6 +4,8 @@
 #include "BLEAttribute.h"
 #include "BLECharacteristic.h"
 
+#define ADVERTISING_INTERVAL 0x0A0
+
 class BLEDevice;
 
 class BLEDeviceEventListener

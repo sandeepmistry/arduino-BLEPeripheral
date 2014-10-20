@@ -12,8 +12,6 @@
 
 #define NRF_8001_DEBUG
 
-#define ADVERTISING_INTERVAL 0x050
-
 struct setupMsgData {
   unsigned char length;
   unsigned char cmd;

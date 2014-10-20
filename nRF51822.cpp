@@ -18,8 +18,6 @@
 
 #define NRF_51822_DEBUG
 
-#define ADVERTISING_INTERVAL 0x050
-
 void assert_nrf_callback(uint16_t line_num, const uint8_t *file_name) {
 }
 
