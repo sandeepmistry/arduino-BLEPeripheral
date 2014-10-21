@@ -29,6 +29,14 @@ void setManufacturerData(const unsigned char manufacturerData[], unsigned char m
  * manufacturerData - array of bytes
  * manufacturerDataLength - length of array, up to: 20 bytes on nRF8001, 26 bytes on nRF51822
 
+## Connectable
+
+```
+void setConnectable(bool connectable);
+```
+
+ * make peripheral connectable (**default**) or non-connectable (broadcast only)
+
 ## Built-in characteristics
 
 ### Device name
@@ -315,6 +323,6 @@ void setValue(const unsigned char value[], unsigned char length);
  * length - value length (upto value size)
 
 ```
-    void setValue(const char* value);
+void setValue(const char* value);
 ```
  * value - new value as string
