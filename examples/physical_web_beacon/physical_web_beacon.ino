@@ -27,7 +27,7 @@ void setup() {
   delay(5000);  //5 seconds delay for enabling to see the start up comments on the serial board
 #endif
 
-  uriBeacon.begin(0x00, 0x20, "http://www.ABC.com"); // flags, power, URI
+  uriBeacon.begin(0x00, 0x20, "http://www.example.com"); // flags, power, URI
 
   Serial.println(F("URI Beacon"));
 }
@@ -35,4 +35,3 @@ void setup() {
 void loop() {
   uriBeacon.loop();
 }
-
