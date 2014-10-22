@@ -19,7 +19,7 @@ An [Arduino](http://arduino.cc) library for creating custom BLE peripherals.
 
  * [RedBearLab](http://redbearlab.com)
    * [nRF51822](http://redbearlab.com/redbearlab-nrf51822)
-   * [Blend Nano](http://redbearlab.com/blenano/)
+   * [BLE Nano](http://redbearlab.com/blenano/)
 
 #### Pinouts
 
