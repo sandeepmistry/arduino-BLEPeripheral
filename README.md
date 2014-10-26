@@ -1,5 +1,7 @@
 # Arduino BLEPeripheral
 
+[![Analytics](https://ga-beacon.appspot.com/UA-56089547-1/sandeepmistry/arduino-BLEPeripheral?pixel)](https://github.com/igrigorik/ga-beacon)
+
 An [Arduino](http://arduino.cc) library for creating custom BLE peripherals.
 
 ## Compatible Hardware
