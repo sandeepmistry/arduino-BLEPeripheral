@@ -1,6 +1,10 @@
 #include "URIBeacon.h"
 
-#define MAX_SERVICE_DATA_SIZE 15 // only 15 bytes (instead of 18), because flags (3 bytes) are in advertisement data
+#ifdef NRF51
+  #define MAX_SERVICE_DATA_SIZE 18
+#else
+  #define MAX_SERVICE_DATA_SIZE 15 // only 15 bytes (instead of 18), because flags (3 bytes) are in advertisement data
+#endif
 
 static const char* URI_BEACON_SUBSTITUTIONS[] = {
   "http://www.",
