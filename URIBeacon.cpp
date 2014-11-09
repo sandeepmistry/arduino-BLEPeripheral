@@ -6,17 +6,29 @@
   #define MAX_SERVICE_DATA_SIZE 15 // only 15 bytes (instead of 18), because flags (3 bytes) are in advertisement data
 #endif
 
-static const char* URI_BEACON_SUBSTITUTIONS[] = {
+static const char* URI_BEACON_PREFIX_SUBSTITUTIONS[] = {
   "http://www.",
   "https://www.",
   "http://",
   "https://",
-  "tel:",
-  "mailto:",
-  "geo:",
+  "urn:uuid:"
+};
+
+static const char* URI_BEACON_SUFFIX_SUBSTITUTIONS[] = {
+  ".com/",
+  ".org/",
+  ".edu/",
+  ".net/",
+  ".info/",
+  ".biz/",
+  ".gov/",
   ".com",
   ".org",
-  ".edu"
+  ".edu",
+  ".net",
+  ".info",
+  ".biz",
+  ".gov"
 };
 
 URIBeacon::URIBeacon(unsigned char req, unsigned char rdy, unsigned char rst) :
@@ -52,11 +64,20 @@ void URIBeacon::begin(unsigned char flags, unsigned char power, const char* uri)
 unsigned char URIBeacon::compressURI(const char* uri, char *compressedUri, unsigned char compressedUriSize) {
   String uriString = uri;
 
-  for (int i = 0; i < (sizeof(URI_BEACON_SUBSTITUTIONS) / sizeof(char *)); i++) {
+  // replace prefixes
+  for (int i = 0; i < (sizeof(URI_BEACON_PREFIX_SUBSTITUTIONS) / sizeof(char *)); i++) {
     String replacement = " ";
     replacement[0] = (char)(i | 0x80); // set high bit, String.replace does not like '\0' replacement
 
-    uriString.replace(URI_BEACON_SUBSTITUTIONS[i], replacement);
+    uriString.replace(URI_BEACON_PREFIX_SUBSTITUTIONS[i], replacement);
+  }
+
+  // replace suffixes
+  for (int i = 0; i < (sizeof(URI_BEACON_SUFFIX_SUBSTITUTIONS) / sizeof(char *)); i++) {
+    String replacement = " ";
+    replacement[0] = (char)(i | 0x80); // set high bit, String.replace does not like '\0' replacement
+
+    uriString.replace(URI_BEACON_SUFFIX_SUBSTITUTIONS[i], replacement);
   }
 
   unsigned char i = 0;
