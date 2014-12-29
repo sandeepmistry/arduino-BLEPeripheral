@@ -447,7 +447,7 @@ void nRF8001::begin(unsigned char advertisementDataType,
         setupMsgData->data[0] |= 0x20;
       }
 
-      setupMsgData->data[2]  = characteristic->valueSize();
+      setupMsgData->data[2]  = characteristic->valueSize() + 1;
       if (characteristic->fixedLength()) {
         setupMsgData->data[2]++;
       }
@@ -473,6 +473,17 @@ void nRF8001::begin(unsigned char advertisementDataType,
       gattSetupMsgOffset += 9 + characteristic->valueSize();
 
       this->sendSetupMessage(&setupMsg);
+
+
+        //This is where the insanity begins
+        setupMsgData->length   = 4;
+        setupMsgData->cmd      = ACI_CMD_SETUP;
+        setupMsgData->type     = 0x20;
+        setupMsgData->offset   = gattSetupMsgOffset++;
+        setupMsgData->data[0]  = 0x00;
+
+        this->sendSetupMessage(&setupMsg);
+        //and this is where things get back to normal
 
       if (characteristic->properties() & (BLENotify | BLEIndicate)) {
         setupMsgData->length   = 14;
