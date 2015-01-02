@@ -29,6 +29,14 @@ void setManufacturerData(const unsigned char manufacturerData[], unsigned char m
  * manufacturerData - array of bytes
  * manufacturerDataLength - length of array, up to: 20 bytes on nRF8001, 26 bytes on nRF51822
 
+## Set Advertising Interval
+
+```
+void setAdvertisingInterval(unsigned short advertisingInterval);
+```
+
+ * set advertising interval in ms, default is 100ms
+
 ## Connectable
 
 ```

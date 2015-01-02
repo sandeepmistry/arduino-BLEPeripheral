@@ -4,8 +4,6 @@
 #include "BLEAttribute.h"
 #include "BLECharacteristic.h"
 
-#define ADVERTISING_INTERVAL 0x0A0
-
 class BLEDevice;
 
 class BLEDeviceEventListener
@@ -34,6 +32,7 @@ class BLEDevice
 
     void setEventListener(BLEDeviceEventListener* eventListener);
 
+    void setAdvertisingInterval(unsigned short advertisingInterval);
     void setConnectable(bool connectable);
 
     virtual void begin(unsigned char advertisementDataType,
@@ -47,6 +46,7 @@ class BLEDevice
 
     virtual void poll() = 0;
 
+    virtual void startAdvertising() = 0;
     virtual void disconnect() = 0;
 
     virtual bool updateCharacteristicValue(BLECharacteristic& characteristic) = 0;
@@ -59,6 +59,7 @@ class BLEDevice
     virtual void requestBatteryLevel() = 0;
 
   protected:
+    unsigned short                _advertisingInterval;
     bool                          _connectable;
     BLEDeviceEventListener*       _eventListener;
 };

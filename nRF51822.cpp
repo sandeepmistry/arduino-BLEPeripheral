@@ -419,7 +419,7 @@ void nRF51822::startAdvertising() {
   advertisingParameters.p_peer_addr = NULL;
   advertisingParameters.fp          = BLE_GAP_ADV_FP_ANY;
   advertisingParameters.p_whitelist = NULL;
-  advertisingParameters.interval    = ADVERTISING_INTERVAL; // advertising interval (in units of 0.625 ms)
+  advertisingParameters.interval    = (this->_advertisingInterval * 16) / 10; // advertising interval (in units of 0.625 ms)
   advertisingParameters.timeout     = 0;
 
   sd_ble_gap_adv_start(&advertisingParameters);

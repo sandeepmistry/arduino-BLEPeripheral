@@ -569,14 +569,7 @@ void nRF8001::poll() {
             if (aciEvt->params.device_started.hw_error) {
               delay(20); //Handle the HW error event correctly.
             } else {
-              if (this->_connectable) {
-                lib_aci_connect(0/* in seconds, 0 means forever */, ADVERTISING_INTERVAL);
-              } else {
-                lib_aci_broadcast(0/* in seconds, 0 means forever */, ADVERTISING_INTERVAL);
-              }
-#ifdef NRF_8001_DEBUG
-              Serial.println(F("Advertising started"));
-#endif
+              this->startAdvertising();
             }
             break;
         }
@@ -728,14 +721,7 @@ void nRF8001::poll() {
           this->_eventListener->BLEDeviceDisconnected(*this);
         }
 
-        if (this->_connectable) {
-          lib_aci_connect(0/* in seconds, 0 means forever */, ADVERTISING_INTERVAL);
-        } else {
-          lib_aci_broadcast(0/* in seconds, 0 means forever */, ADVERTISING_INTERVAL);
-        }
-#ifdef NRF_8001_DEBUG
-        Serial.println(F("Advertising started."));
-#endif
+        this->startAdvertising();
         break;
 
       case ACI_EVT_DATA_RECEIVED: {
@@ -804,14 +790,7 @@ void nRF8001::poll() {
         }
         Serial.println();
 #endif
-        if (this->_connectable) {
-          lib_aci_connect(0/* in seconds, 0 means forever */, ADVERTISING_INTERVAL);
-        } else {
-          lib_aci_broadcast(0/* in seconds, 0 means forever */, ADVERTISING_INTERVAL);
-        }
-#ifdef NRF_8001_DEBUG
-        Serial.println(F("Advertising started."));
-#endif
+        this->startAdvertising();
         break;
     }
   } else {
@@ -893,6 +872,20 @@ bool nRF8001::canNotifyCharacteristic(BLECharacteristic& characteristic) {
 
 bool nRF8001::canIndicateCharacteristic(BLECharacteristic& characteristic) {
   return (lib_aci_get_nb_available_credits(&this->_aciState) > 0);
+}
+
+void nRF8001::startAdvertising() {
+  uint16_t advertisingInterval = (this->_advertisingInterval * 16) / 10;
+
+  if (this->_connectable) {
+    lib_aci_connect(0/* in seconds, 0 means forever */, advertisingInterval);
+  } else {
+    lib_aci_broadcast(0/* in seconds, 0 means forever */, advertisingInterval);
+  }
+
+#ifdef NRF_8001_DEBUG
+  Serial.println(F("Advertising started."));
+#endif
 }
 
 void nRF8001::disconnect() {

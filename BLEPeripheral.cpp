@@ -156,6 +156,10 @@ void BLEPeripheral::addAttribute(BLEAttribute& attribute) {
   this->_numAttributes++;
 }
 
+void BLEPeripheral::setAdvertisingInterval(unsigned short advertisingInterval) {
+  this->_device->setAdvertisingInterval(advertisingInterval);
+}
+
 void BLEPeripheral::disconnect() {
   this->_device->disconnect();
 }

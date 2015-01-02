@@ -36,6 +36,7 @@ class BLEPeripheral : public BLEDeviceEventListener, public BLECharacteristicVal
     void setManufacturerData(const unsigned char manufacturerData[], unsigned char manufacturerDataLength);
     void setLocalName(const char *localName);
 
+    void setAdvertisingInterval(unsigned short advertisingInterval);
     void setConnectable(bool connectable);
 
     void setDeviceName(const char* deviceName);

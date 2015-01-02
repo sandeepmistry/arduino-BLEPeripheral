@@ -45,6 +45,7 @@ class nRF8001 : protected BLEDevice
 
     virtual void poll();
 
+    virtual void startAdvertising();
     virtual void disconnect();
 
     virtual bool updateCharacteristicValue(BLECharacteristic& characteristic);
