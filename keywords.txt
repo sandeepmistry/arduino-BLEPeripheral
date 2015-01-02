@@ -23,6 +23,7 @@ BLEUnsignedShortCharacteristic	KEYWORD1
 BLEIntCharacteristic	KEYWORD1
 BLEUnsignedIntCharacteristic	KEYWORD1
 BLELongCharacteristic	KEYWORD1
+BLEUnsignedLongCharacteristic	KEYWORD1
 BLEFloatCharacteristic	KEYWORD1
 BLEDoubleCharacteristic	KEYWORD1
 
