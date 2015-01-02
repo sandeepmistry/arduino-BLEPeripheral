@@ -10,7 +10,8 @@
 
 #include "nRF8001.h"
 
-//#define NRF_8001_DEBUG
+// #define NRF_8001_DEBUG
+// #define NRF_8001_ENABLE_DC_DC_CONVERTER
 
 struct setupMsgData {
   unsigned char length;
@@ -212,6 +213,10 @@ void nRF8001::begin(unsigned char advertisementDataType,
     if (i == 1) {
       setupMsgData->data[6] = numPipedCharacteristics;
       setupMsgData->data[8] = numPipes;
+
+#ifdef NRF_8001_ENABLE_DC_DC_CONVERTER
+      setupMsgData->data[13] |= 0x01;
+#endif
     } else if (i == 2 && advertisementDataType && advertisementDataLength && advertisementData) {
       setupMsgData->data[22] |= 0x40;
     } else if (i == 3) {
