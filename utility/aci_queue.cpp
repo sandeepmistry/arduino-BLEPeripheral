@@ -54,8 +54,8 @@ bool aci_queue_dequeue(aci_queue_t *aci_q, hal_aci_data_t *p_data)
     return false;
   }
 
-  memcpy((uint8_t *)p_data, (uint8_t *)&(aci_q->aci_data[aci_q->head]), sizeof(hal_aci_data_t));
-  aci_q->head = (aci_q->head + 1) % ACI_QUEUE_SIZE;
+  memcpy((uint8_t *)p_data, (uint8_t *)&(aci_q->aci_data[aci_q->head % ACI_QUEUE_SIZE]), sizeof(hal_aci_data_t));
+  ++aci_q->head;
 
   return true;
 }
@@ -70,8 +70,8 @@ bool aci_queue_dequeue_from_isr(aci_queue_t *aci_q, hal_aci_data_t *p_data)
     return false;
   }
 
-  memcpy((uint8_t *)p_data, (uint8_t *)&(aci_q->aci_data[aci_q->head]), sizeof(hal_aci_data_t));
-  aci_q->head = (aci_q->head + 1) % ACI_QUEUE_SIZE;
+  memcpy((uint8_t *)p_data, (uint8_t *)&(aci_q->aci_data[aci_q->head % ACI_QUEUE_SIZE]), sizeof(hal_aci_data_t));
+  ++aci_q->head;
 
   return true;
 }
@@ -88,9 +88,9 @@ bool aci_queue_enqueue(aci_queue_t *aci_q, hal_aci_data_t *p_data)
     return false;
   }
 
-  aci_q->aci_data[aci_q->tail].status_byte = 0;
-  memcpy((uint8_t *)&(aci_q->aci_data[aci_q->tail].buffer[0]), (uint8_t *)&p_data->buffer[0], length + 1);
-  aci_q->tail = (aci_q->tail + 1) % ACI_QUEUE_SIZE;
+  aci_q->aci_data[aci_q->tail % ACI_QUEUE_SIZE].status_byte = 0;
+  memcpy((uint8_t *)&(aci_q->aci_data[aci_q->tail % ACI_QUEUE_SIZE].buffer[0]), (uint8_t *)&p_data->buffer[0], length + 1);
+  ++aci_q->tail;
 
   return true;
 }
@@ -107,9 +107,9 @@ bool aci_queue_enqueue_from_isr(aci_queue_t *aci_q, hal_aci_data_t *p_data)
     return false;
   }
 
-  aci_q->aci_data[aci_q->tail].status_byte = 0;
-  memcpy((uint8_t *)&(aci_q->aci_data[aci_q->tail].buffer[0]), (uint8_t *)&p_data->buffer[0], length + 1);
-  aci_q->tail = (aci_q->tail + 1) % ACI_QUEUE_SIZE;
+  aci_q->aci_data[aci_q->tail % ACI_QUEUE_SIZE].status_byte = 0;
+  memcpy((uint8_t *)&(aci_q->aci_data[aci_q->tail % ACI_QUEUE_SIZE].buffer[0]), (uint8_t *)&p_data->buffer[0], length + 1);
+  ++aci_q->tail;
 
   return true;
 }
@@ -140,23 +140,14 @@ bool aci_queue_is_empty_from_isr(aci_queue_t *aci_q)
 
 bool aci_queue_is_full(aci_queue_t *aci_q)
 {
-  uint8_t next;
   bool state;
 
   ble_assert(NULL != aci_q);
 
   //This should be done in a critical section
   noInterrupts();
-  next = (aci_q->tail + 1) % ACI_QUEUE_SIZE;
 
-  if (next == aci_q->head)
-  {
-    state = true;
-  }
-  else
-  {
-    state = false;
-  }
+  state = (aci_q->tail == aci_q->head + ACI_QUEUE_SIZE);
 
   interrupts();
   //end
@@ -166,11 +157,9 @@ bool aci_queue_is_full(aci_queue_t *aci_q)
 
 bool aci_queue_is_full_from_isr(aci_queue_t *aci_q)
 {
-  const uint8_t next = (aci_q->tail + 1) % ACI_QUEUE_SIZE;
-
   ble_assert(NULL != aci_q);
 
-  return next == aci_q->head;
+  return (aci_q->tail == aci_q->head + ACI_QUEUE_SIZE);
 }
 
 bool aci_queue_peek(aci_queue_t *aci_q, hal_aci_data_t *p_data)
@@ -183,7 +172,7 @@ bool aci_queue_peek(aci_queue_t *aci_q, hal_aci_data_t *p_data)
     return false;
   }
 
-  memcpy((uint8_t *)p_data, (uint8_t *)&(aci_q->aci_data[aci_q->head]), sizeof(hal_aci_data_t));
+  memcpy((uint8_t *)p_data, (uint8_t *)&(aci_q->aci_data[aci_q->head % ACI_QUEUE_SIZE]), sizeof(hal_aci_data_t));
 
   return true;
 }
@@ -198,7 +187,7 @@ bool aci_queue_peek_from_isr(aci_queue_t *aci_q, hal_aci_data_t *p_data)
     return false;
   }
 
-  memcpy((uint8_t *)p_data, (uint8_t *)&(aci_q->aci_data[aci_q->head]), sizeof(hal_aci_data_t));
+  memcpy((uint8_t *)p_data, (uint8_t *)&(aci_q->aci_data[aci_q->head % ACI_QUEUE_SIZE]), sizeof(hal_aci_data_t));
 
   return true;
 }
