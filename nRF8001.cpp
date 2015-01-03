@@ -398,8 +398,13 @@ void nRF8001::begin(unsigned char advertisementDataType,
       setupMsgData->data[4]  = (pipeInfo->valueHandle >> 8) & 0xff;
       setupMsgData->data[5]  = pipeInfo->valueHandle & 0xff;
 
-      setupMsgData->data[6]  = 0x00;
-      setupMsgData->data[7]  = 0x00;
+      if (uuid.length() == 2) {
+        setupMsgData->data[6]  = uuid.data()[1];
+        setupMsgData->data[7]  = uuid.data()[0];
+      } else {
+        setupMsgData->data[6]  = 0x00;
+        setupMsgData->data[7]  = 0x00;
+      }
 
       setupMsgData->data[8]  = 0x01;
 
