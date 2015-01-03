@@ -613,6 +613,12 @@ bool lib_aci_event_get(aci_state_t *aci_stat, hal_aci_evt_t *p_aci_evt_data)
                 aci_stat->supervision_timeout = aci_evt->params.timing.conn_rf_timeout;
             break;
 
+        case ACI_EVT_CONNECTED:
+                aci_stat->connection_interval = aci_evt->params.connected.conn_rf_interval;
+                aci_stat->slave_latency       = aci_evt->params.connected.conn_slave_rf_latency;
+                aci_stat->supervision_timeout = aci_evt->params.connected.conn_rf_timeout;
+            break;
+
         default:
             /* Need default case to avoid compiler warnings about missing enum
              * values on some platforms.
