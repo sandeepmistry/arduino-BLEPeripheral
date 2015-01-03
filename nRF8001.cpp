@@ -12,6 +12,7 @@
 
 // #define NRF_8001_DEBUG
 // #define NRF_8001_ENABLE_DC_DC_CONVERTER
+// #define NRF_8001_ENABLE_UNAUTHENICATED_SECURITY
 
 struct setupMsgData {
   unsigned char length;
@@ -198,6 +199,10 @@ void nRF8001::begin(unsigned char advertisementDataType,
 
   lib_aci_init(&this->_aciState, false);
 
+#ifdef NRF_8001_ENABLE_UNAUTHENICATED_SECURITY
+  this->_aciState.bonded = ACI_BOND_STATUS_FAILED;
+#endif
+
   this->waitForSetupMode();
 
   hal_aci_data_t setupMsg;
@@ -214,6 +219,10 @@ void nRF8001::begin(unsigned char advertisementDataType,
       setupMsgData->data[6] = numPipedCharacteristics;
       setupMsgData->data[8] = numPipes;
 
+#ifdef NRF_8001_ENABLE_UNAUTHENICATED_SECURITY
+      setupMsgData->data[4] |= 0x02;
+#endif
+
 #ifdef NRF_8001_ENABLE_DC_DC_CONVERTER
       setupMsgData->data[13] |= 0x01;
 #endif
@@ -229,6 +238,10 @@ void nRF8001::begin(unsigned char advertisementDataType,
 
         setupMsgData->data[20] |= 0x40;
       }
+    } else if (i == 4) {
+#ifdef NRF_8001_ENABLE_UNAUTHENICATED_SECURITY
+      setupMsgData->data[0] |= 0x01;
+#endif
     } else if (i == 5 && advertisementDataType && advertisementDataLength && advertisementData) {
       setupMsgData->data[0] = advertisementDataType;
       setupMsgData->data[1] = advertisementDataLength;
@@ -374,6 +387,10 @@ void nRF8001::begin(unsigned char advertisementDataType,
       if (characteristic->properties() & BLERead) {
         setupMsgData->data[1] |= 0x04;
       }
+
+#ifdef NRF_8001_ENABLE_UNAUTHENICATED_SECURITY
+      setupMsgData->data[1] |= 0x08;
+#endif
 
       if (characteristic->properties() & (BLEWrite | BLEWriteWithoutResponse)) {
         setupMsgData->data[0] |= 0x40;
@@ -579,7 +596,11 @@ void nRF8001::poll() {
             if (aciEvt->params.device_started.hw_error) {
               delay(20); //Handle the HW error event correctly.
             } else {
+#ifdef NRF_8001_ENABLE_UNAUTHENICATED_SECURITY
+              lib_aci_read_dynamic_data();
+#else
               this->startAdvertising();
+#endif
             }
             break;
         }
@@ -588,7 +609,9 @@ void nRF8001::poll() {
 
       case ACI_EVT_CMD_RSP:
         //If an ACI command response event comes with an error -> stop
-        if (ACI_STATUS_SUCCESS != aciEvt->params.cmd_rsp.cmd_status) {
+        if (ACI_STATUS_SUCCESS != aciEvt->params.cmd_rsp.cmd_status &&
+            ACI_STATUS_TRANSACTION_CONTINUE != aciEvt->params.cmd_rsp.cmd_status &&
+            ACI_STATUS_TRANSACTION_COMPLETE != aciEvt->params.cmd_rsp.cmd_status) {
           //ACI ReadDynamicData and ACI WriteDynamicData will have status codes of
           //TRANSACTION_CONTINUE and TRANSACTION_COMPLETE
           //all other ACI commands will have status code of ACI_STATUS_SCUCCESS for a successful command
@@ -600,6 +623,27 @@ void nRF8001::poll() {
 #endif
         } else {
           switch (aciEvt->params.cmd_rsp.cmd_opcode) {
+            case ACI_CMD_READ_DYNAMIC_DATA:
+#ifdef NRF_8001_DEBUG
+              Serial.print(F("Dynamic data: "));
+
+              for (int i = 0; i < aciEvt->len - 3; i++) {
+                if ((aciEvt->params.cmd_rsp.params.padding[i] & 0xf0) == 00) {
+                  Serial.print("0");
+                }
+
+                Serial.print(aciEvt->params.cmd_rsp.params.padding[i], HEX);
+                Serial.print(" ");
+              }
+              Serial.println();
+#endif
+              if (aciEvt->params.cmd_rsp.cmd_status == ACI_STATUS_TRANSACTION_CONTINUE) {
+                lib_aci_read_dynamic_data();
+              } else if (aciEvt->params.cmd_rsp.cmd_status == ACI_STATUS_TRANSACTION_COMPLETE) {
+                this->startAdvertising();
+              }
+              break;
+
             case ACI_CMD_GET_DEVICE_VERSION:
               break;
 
@@ -654,7 +698,6 @@ void nRF8001::poll() {
         break;
 
       case ACI_EVT_CONNECTED:
-
 #ifdef NRF_8001_DEBUG
         char address[18];
         sprintf(address, "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x",
@@ -688,6 +731,11 @@ void nRF8001::poll() {
         Serial.println((unsigned long)closedPipes, HEX);
 #endif
 
+#ifdef NRF_8001_ENABLE_UNAUTHENICATED_SECURITY
+        // bonded ???
+        // lib_aci_is_pipe_available(&this->_aciState, this->_numPipeInfo)
+#endif
+
         for (int i = 0; i < this->_numPipeInfo; i++) {
           struct pipeInfo* pipeInfo = &this->_pipeInfo[i];
 
@@ -710,6 +758,10 @@ void nRF8001::poll() {
         break;
 
       case ACI_EVT_TIMING:
+#ifdef NRF_8001_DEBUG
+        Serial.print(F("Timing change received conn Interval: 0x"));
+        Serial.println(aciEvt->params.timing.conn_rf_interval, HEX);
+#endif
         break;
 
       case ACI_EVT_DISCONNECTED:
@@ -731,7 +783,24 @@ void nRF8001::poll() {
           this->_eventListener->BLEDeviceDisconnected(*this);
         }
 
+#ifdef NRF_8001_ENABLE_UNAUTHENICATED_SECURITY
+        if (ACI_BOND_STATUS_SUCCESS == this->_aciState.bonded) {
+          lib_aci_read_dynamic_data();
+        } else {
+          this->startAdvertising();
+        }
+#else
         this->startAdvertising();
+#endif
+        break;
+
+      case ACI_EVT_BOND_STATUS:
+#ifdef NRF_8001_DEBUG
+        Serial.println(F("Evt Bond Status"));
+        Serial.println(aciEvt->params.bond_status.status_code);
+
+        this->_aciState.bonded = aciEvt->params.bond_status.status_code;
+#endif
         break;
 
       case ACI_EVT_DATA_RECEIVED: {
@@ -888,7 +957,15 @@ void nRF8001::startAdvertising() {
   uint16_t advertisingInterval = (this->_advertisingInterval * 16) / 10;
 
   if (this->_connectable) {
+#ifdef NRF_8001_ENABLE_UNAUTHENICATED_SECURITY
+    if (ACI_BOND_STATUS_SUCCESS == this->_aciState.bonded) {
+      lib_aci_connect(0/* in seconds, 0 means forever */, advertisingInterval);
+    } else {
+      lib_aci_bond(180/* in seconds, 0 means forever */, advertisingInterval);
+    }
+#else
     lib_aci_connect(0/* in seconds, 0 means forever */, advertisingInterval);
+#endif
   } else {
     lib_aci_broadcast(0/* in seconds, 0 means forever */, advertisingInterval);
   }
