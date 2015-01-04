@@ -79,7 +79,10 @@ class nRF8001 : protected BLEDevice
     unsigned char               _numPipeInfo;
     unsigned char               _broadcastPipe;
 
+    bool                        _newBond;
     struct dynamicData*         _dynamicData;
+    unsigned char               _dynamicDataOffset;
+    unsigned char               _dynamicDataSequenceNo;
 
     unsigned short              _crcSeed;
 };

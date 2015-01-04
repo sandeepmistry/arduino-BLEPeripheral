@@ -1,5 +1,16 @@
 #ifndef NRF51
 
+// #define NRF_8001_DEBUG
+// #define NRF_8001_ENABLE_DC_DC_CONVERTER
+// #define NRF_8001_ENABLE_UNAUTHENICATED_SECURITY
+
+#define NRF_8001_RESTORE_DYNAMIC_DATA_FROM_EEPROM
+#define NRF_8001_STORE_DYNAMIC_DATA_TO_EEPROM
+#define NRF_8001_EEPROM_DYNAMIC_DATA_OFFSET 0
+
+#ifdef NRF_8001_ENABLE_UNAUTHENICATED_SECURITY
+#include <EEPROM.h>
+#endif
 #include <SPI.h>
 
 #include "BLEAttribute.h"
@@ -9,10 +20,6 @@
 #include "BLEUuid.h"
 
 #include "nRF8001.h"
-
-// #define NRF_8001_DEBUG
-// #define NRF_8001_ENABLE_DC_DC_CONVERTER
-// #define NRF_8001_ENABLE_UNAUTHENICATED_SECURITY
 
 struct setupMsgData {
   unsigned char length;
@@ -113,7 +120,10 @@ nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
   _numPipeInfo(0),
   _broadcastPipe(0),
 
+  _newBond(false),
   _dynamicData(NULL),
+  _dynamicDataOffset(0),
+  _dynamicDataSequenceNo(0),
 
   _crcSeed(0xFFFF)
 {
@@ -209,6 +219,13 @@ void nRF8001::begin(unsigned char advertisementDataType,
   this->_aciState.bonded = ACI_BOND_STATUS_FAILED;
 
   this->_dynamicData = (struct dynamicData*)malloc(sizeof(struct dynamicData));
+  memset(this->_dynamicData, 0x00, sizeof(struct dynamicData));
+
+#ifdef NRF_8001_RESTORE_DYNAMIC_DATA_FROM_EEPROM
+  for (int i = 0; i < sizeof(struct dynamicData); i++) {
+    ((unsigned char*)this->_dynamicData)[i] = EEPROM.read(NRF_8001_EEPROM_DYNAMIC_DATA_OFFSET + i);
+  }
+#endif
 #endif
 
   this->waitForSetupMode();
@@ -584,8 +601,10 @@ void nRF8001::begin(unsigned char advertisementDataType,
 void nRF8001::poll() {
   // We enter the if statement only when there is a ACI event available to be processed
   if (lib_aci_event_get(&this->_aciState, &this->_aciData)) {
-    aci_evt_t* aciEvt;
-    aciEvt = &this->_aciData.evt;
+#ifdef NRF_8001_ENABLE_UNAUTHENICATED_SECURITY
+    const unsigned char dynamicDataSeqNoLen[7] = {0, 24, 26, 26, 26, 25, 4};
+#endif
+    aci_evt_t* aciEvt = &this->_aciData.evt;
 
     switch(aciEvt->evt_opcode) {
       /**
@@ -613,7 +632,15 @@ void nRF8001::poll() {
               delay(20); //Handle the HW error event correctly.
             } else {
 #ifdef NRF_8001_ENABLE_UNAUTHENICATED_SECURITY
-              lib_aci_read_dynamic_data();
+              if (this->_dynamicData->sequence2[3] == 0x02 && this->_dynamicData->sequence5[1] == 0x3e) {
+                // kick off dynamic data restore
+                this->_dynamicDataSequenceNo = 1;
+                this->_dynamicDataOffset = 0;
+
+                lib_aci_write_dynamic_data(this->_dynamicDataSequenceNo, (uint8_t*)this->_dynamicData + this->_dynamicDataOffset, dynamicDataSeqNoLen[this->_dynamicDataSequenceNo]);
+              } else {
+                this->startAdvertising();
+              }
 #else
               this->startAdvertising();
 #endif
@@ -639,9 +666,10 @@ void nRF8001::poll() {
 #endif
         } else {
           switch (aciEvt->params.cmd_rsp.cmd_opcode) {
+#ifdef NRF_8001_ENABLE_UNAUTHENICATED_SECURITY
             case ACI_CMD_READ_DYNAMIC_DATA:
 #ifdef NRF_8001_DEBUG
-              Serial.print(F("Dynamic data sequence "));
+              Serial.print(F("Dynamic data read sequence "));
               Serial.print(aciEvt->params.cmd_rsp.params.read_dynamic_data.seq_no);
               Serial.print(F(": "));
 
@@ -655,48 +683,46 @@ void nRF8001::poll() {
               }
               Serial.println();
 #endif
-              {
-                unsigned char *dynamicDataDst = NULL;
-
-                switch (aciEvt->params.cmd_rsp.params.read_dynamic_data.seq_no) {
-                  case 1:
-                    dynamicDataDst = this->_dynamicData->sequence1;
-                    break;
-
-                  case 2:
-                    dynamicDataDst = this->_dynamicData->sequence2;
-                    break;
-
-                  case 3:
-                    dynamicDataDst = this->_dynamicData->sequence3;
-                    break;
-
-                  case 4:
-                    dynamicDataDst = this->_dynamicData->sequence4;
-                    break;
-
-                  case 5:
-                    dynamicDataDst = this->_dynamicData->sequence5;
-                    break;
-
-                  case 6:
-                    dynamicDataDst = this->_dynamicData->sequence6;
-                    break;
-                }
-
-                if (dynamicDataDst) {
-                  memcpy(dynamicDataDst, aciEvt->params.cmd_rsp.params.read_dynamic_data.dynamic_data, aciEvt->len - 4);
-                }
+              if (aciEvt->params.cmd_rsp.params.read_dynamic_data.seq_no == 1) {
+                this->_dynamicDataOffset = 0;
               }
+
+              memcpy(((unsigned char*)this->_dynamicData) + this->_dynamicDataOffset, aciEvt->params.cmd_rsp.params.read_dynamic_data.dynamic_data, aciEvt->len - 4);
+              this->_dynamicDataOffset += (aciEvt->len - 4);
 
               if (aciEvt->params.cmd_rsp.cmd_status == ACI_STATUS_TRANSACTION_CONTINUE) {
                 lib_aci_read_dynamic_data();
               } else if (aciEvt->params.cmd_rsp.cmd_status == ACI_STATUS_TRANSACTION_COMPLETE) {
                 // persist dynamic data
 
+#ifdef NRF_8001_STORE_DYNAMIC_DATA_TO_EEPROM
+                for (int i = 0; i < sizeof(struct dynamicData); i++) {
+                  EEPROM.write(NRF_8001_EEPROM_DYNAMIC_DATA_OFFSET + i, ((unsigned char*)this->_dynamicData)[i]);
+                }
+#endif
+
                 this->startAdvertising();
               }
               break;
+
+            case ACI_CMD_WRITE_DYNAMIC_DATA:
+#ifdef NRF_8001_DEBUG
+              Serial.print(F("Dynamic data write sequence "));
+              Serial.print(this->_dynamicDataSequenceNo);
+
+              Serial.println(F(" complete"));
+#endif
+              if (aciEvt->params.cmd_rsp.cmd_status == ACI_STATUS_TRANSACTION_CONTINUE) {
+
+                this->_dynamicDataOffset += dynamicDataSeqNoLen[this->_dynamicDataSequenceNo];
+                this->_dynamicDataSequenceNo++;
+
+                lib_aci_write_dynamic_data(this->_dynamicDataSequenceNo, (uint8_t*)this->_dynamicData + this->_dynamicDataOffset, dynamicDataSeqNoLen[this->_dynamicDataSequenceNo]);
+              } else if (aciEvt->params.cmd_rsp.cmd_status == ACI_STATUS_TRANSACTION_COMPLETE) {
+                this->startAdvertising();
+              }
+              break;
+#endif
 
             case ACI_CMD_GET_DEVICE_VERSION:
               break;
@@ -838,7 +864,7 @@ void nRF8001::poll() {
         }
 
 #ifdef NRF_8001_ENABLE_UNAUTHENICATED_SECURITY
-        if (ACI_BOND_STATUS_SUCCESS == this->_aciState.bonded) {
+        if (this->_newBond) {
           lib_aci_read_dynamic_data();
         } else {
           this->startAdvertising();
@@ -852,6 +878,9 @@ void nRF8001::poll() {
 #ifdef NRF_8001_DEBUG
         Serial.println(F("Evt Bond Status"));
         Serial.println(aciEvt->params.bond_status.status_code);
+
+        this->_newBond = (aciEvt->params.bond_status.status_code == ACI_BOND_STATUS_SUCCESS) &&
+                          (this->_aciState.bonded != ACI_BOND_STATUS_SUCCESS);
 
         this->_aciState.bonded = aciEvt->params.bond_status.status_code;
 #endif
