@@ -56,7 +56,7 @@ static const hal_aci_data_t baseSetupMsgs[NB_BASE_SETUP_MESSAGES] /*PROGMEM*/ =
   {0x00,\
     {\
       0x1f,0x06,0x10,0x38,0xff,0xff,0x02,0x58,0x0a,0x05,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,\
-      0x10,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x02,0x00,0x00,\
+      0x10,0x00,0x00,0x00,0x00,0x00,0x01,0x02,0x01,0x02,0x00,0x00,\
     },\
   },\
   {0x00,\
@@ -227,6 +227,8 @@ void nRF8001::begin(unsigned char advertisementDataType,
       setupMsgData->data[13] |= 0x01;
 #endif
     } else if (i == 2 && advertisementDataType && advertisementDataLength && advertisementData) {
+      setupMsgData->data[18] |= 0x40;
+
       setupMsgData->data[22] |= 0x40;
     } else if (i == 3) {
       if (advertisementDataType && advertisementDataLength && advertisementData) {
@@ -234,6 +236,8 @@ void nRF8001::begin(unsigned char advertisementDataType,
       }
 
       if (scanDataType && scanDataLength && scanData) {
+        setupMsgData->data[8] |= 0x40;
+
         setupMsgData->data[12] |= 0x40;
 
         setupMsgData->data[20] |= 0x40;
