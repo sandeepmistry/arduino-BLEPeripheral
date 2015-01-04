@@ -113,6 +113,8 @@ nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
   _numPipeInfo(0),
   _broadcastPipe(0),
 
+  _dynamicData(NULL),
+
   _crcSeed(0xFFFF)
 {
   this->_aciState.aci_pins.reqn_pin               = req;
@@ -142,6 +144,10 @@ nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
 }
 
 nRF8001::~nRF8001() {
+  if (this->_dynamicData) {
+    free(this->_dynamicData);
+  }
+
   if (this->_pipeInfo) {
     free(this->_pipeInfo);
   }
@@ -201,6 +207,8 @@ void nRF8001::begin(unsigned char advertisementDataType,
 
 #ifdef NRF_8001_ENABLE_UNAUTHENICATED_SECURITY
   this->_aciState.bonded = ACI_BOND_STATUS_FAILED;
+
+  this->_dynamicData = (struct dynamicData*)malloc(sizeof(struct dynamicData));
 #endif
 
   this->waitForSetupMode();
@@ -629,21 +637,59 @@ void nRF8001::poll() {
           switch (aciEvt->params.cmd_rsp.cmd_opcode) {
             case ACI_CMD_READ_DYNAMIC_DATA:
 #ifdef NRF_8001_DEBUG
-              Serial.print(F("Dynamic data: "));
+              Serial.print(F("Dynamic data sequence "));
+              Serial.print(aciEvt->params.cmd_rsp.params.read_dynamic_data.seq_no);
+              Serial.print(F(": "));
 
-              for (int i = 0; i < aciEvt->len - 3; i++) {
-                if ((aciEvt->params.cmd_rsp.params.padding[i] & 0xf0) == 00) {
+              for (int i = 0; i < aciEvt->len - 4; i++) {
+                if ((aciEvt->params.cmd_rsp.params.read_dynamic_data.dynamic_data[i] & 0xf0) == 00) {
                   Serial.print("0");
                 }
 
-                Serial.print(aciEvt->params.cmd_rsp.params.padding[i], HEX);
+                Serial.print(aciEvt->params.cmd_rsp.params.read_dynamic_data.dynamic_data[i], HEX);
                 Serial.print(" ");
               }
               Serial.println();
 #endif
+              {
+                unsigned char *dynamicDataDst = NULL;
+
+                switch (aciEvt->params.cmd_rsp.params.read_dynamic_data.seq_no) {
+                  case 1:
+                    dynamicDataDst = this->_dynamicData->sequence1;
+                    break;
+
+                  case 2:
+                    dynamicDataDst = this->_dynamicData->sequence2;
+                    break;
+
+                  case 3:
+                    dynamicDataDst = this->_dynamicData->sequence3;
+                    break;
+
+                  case 4:
+                    dynamicDataDst = this->_dynamicData->sequence4;
+                    break;
+
+                  case 5:
+                    dynamicDataDst = this->_dynamicData->sequence5;
+                    break;
+
+                  case 6:
+                    dynamicDataDst = this->_dynamicData->sequence6;
+                    break;
+                }
+
+                if (dynamicDataDst) {
+                  memcpy(dynamicDataDst, aciEvt->params.cmd_rsp.params.read_dynamic_data.dynamic_data, aciEvt->len - 4);
+                }
+              }
+
               if (aciEvt->params.cmd_rsp.cmd_status == ACI_STATUS_TRANSACTION_CONTINUE) {
                 lib_aci_read_dynamic_data();
               } else if (aciEvt->params.cmd_rsp.cmd_status == ACI_STATUS_TRANSACTION_COMPLETE) {
+                // persist dynamic data
+
                 this->startAdvertising();
               }
               break;
@@ -962,7 +1008,7 @@ void nRF8001::startAdvertising() {
 
   if (this->_connectable) {
 #ifdef NRF_8001_ENABLE_UNAUTHENICATED_SECURITY
-    if (ACI_BOND_STATUS_SUCCESS == this->_aciState.bonded) {
+    if (this->_dynamicData->sequence2[3] == 0x02 && this->_dynamicData->sequence5[1] == 0x3e) {
       lib_aci_connect(0/* in seconds, 0 means forever */, advertisingInterval);
     } else {
       lib_aci_bond(180/* in seconds, 0 means forever */, advertisingInterval);
