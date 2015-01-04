@@ -401,7 +401,11 @@ void nRF8001::begin(unsigned char advertisementDataType,
       }
 
 #ifdef NRF_8001_ENABLE_UNAUTHENICATED_SECURITY
-      setupMsgData->data[1] |= 0x08;
+      if (strcmp(characteristic->uuid(), "2a00") != 0 &&
+          strcmp(characteristic->uuid(), "2a01") != 0 &&
+          strcmp(characteristic->uuid(), "2a05") != 0) {
+        setupMsgData->data[1] |= 0x08;
+      }
 #endif
 
       if (characteristic->properties() & (BLEWrite | BLEWriteWithoutResponse)) {
