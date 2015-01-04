@@ -30,15 +30,6 @@ class nRF8001 : protected BLEDevice
       bool               txAckPipeOpen;
     };
 
-    struct dynamicData {
-      unsigned char sequence1[24];
-      unsigned char sequence2[26];
-      unsigned char sequence3[26];
-      unsigned char sequence4[26];
-      unsigned char sequence5[25];
-      unsigned char sequence6[4];
-    };
-
     nRF8001(unsigned char req, unsigned char rdy, unsigned char rst);
 
     virtual ~nRF8001();
@@ -80,7 +71,7 @@ class nRF8001 : protected BLEDevice
     unsigned char               _broadcastPipe;
 
     bool                        _newBond;
-    struct dynamicData*         _dynamicData;
+    unsigned char*              _dynamicData;
     unsigned char               _dynamicDataOffset;
     unsigned char               _dynamicDataSequenceNo;
 

@@ -29,6 +29,15 @@ struct setupMsgData {
   unsigned char data[28];
 };
 
+struct dynamicData {
+  unsigned char sequence1[24];
+  unsigned char sequence2[26];
+  unsigned char sequence3[26];
+  unsigned char sequence4[26];
+  unsigned char sequence5[25];
+  unsigned char sequence6[4];
+};
+
 #define NB_BASE_SETUP_MESSAGES 7
 
 #if defined (__AVR__)
@@ -218,12 +227,12 @@ void nRF8001::begin(unsigned char advertisementDataType,
 #ifdef NRF_8001_ENABLE_UNAUTHENICATED_SECURITY
   this->_aciState.bonded = ACI_BOND_STATUS_FAILED;
 
-  this->_dynamicData = (struct dynamicData*)malloc(sizeof(struct dynamicData));
+  this->_dynamicData = (unsigned char*)malloc(sizeof(struct dynamicData));
   memset(this->_dynamicData, 0x00, sizeof(struct dynamicData));
 
 #ifdef NRF_8001_RESTORE_DYNAMIC_DATA_FROM_EEPROM
   for (int i = 0; i < sizeof(struct dynamicData); i++) {
-    ((unsigned char*)this->_dynamicData)[i] = EEPROM.read(NRF_8001_EEPROM_DYNAMIC_DATA_OFFSET + i);
+    this->_dynamicData[i] = EEPROM.read(NRF_8001_EEPROM_DYNAMIC_DATA_OFFSET + i);
   }
 #endif
 #endif
@@ -632,12 +641,13 @@ void nRF8001::poll() {
               delay(20); //Handle the HW error event correctly.
             } else {
 #ifdef NRF_8001_ENABLE_UNAUTHENICATED_SECURITY
-              if (this->_dynamicData->sequence2[3] == 0x02 && this->_dynamicData->sequence5[1] == 0x3e) {
+              if (((struct dynamicData *)this->_dynamicData)->sequence2[3] == 0x02 &&
+                  ((struct dynamicData *)this->_dynamicData)->sequence5[1] == 0x3e) {
                 // kick off dynamic data restore
                 this->_dynamicDataSequenceNo = 1;
                 this->_dynamicDataOffset = 0;
 
-                lib_aci_write_dynamic_data(this->_dynamicDataSequenceNo, (uint8_t*)this->_dynamicData + this->_dynamicDataOffset, dynamicDataSeqNoLen[this->_dynamicDataSequenceNo]);
+                lib_aci_write_dynamic_data(this->_dynamicDataSequenceNo, this->_dynamicData + this->_dynamicDataOffset, dynamicDataSeqNoLen[this->_dynamicDataSequenceNo]);
               } else {
                 this->startAdvertising();
               }
@@ -687,7 +697,7 @@ void nRF8001::poll() {
                 this->_dynamicDataOffset = 0;
               }
 
-              memcpy(((unsigned char*)this->_dynamicData) + this->_dynamicDataOffset, aciEvt->params.cmd_rsp.params.read_dynamic_data.dynamic_data, aciEvt->len - 4);
+              memcpy(this->_dynamicData + this->_dynamicDataOffset, aciEvt->params.cmd_rsp.params.read_dynamic_data.dynamic_data, aciEvt->len - 4);
               this->_dynamicDataOffset += (aciEvt->len - 4);
 
               if (aciEvt->params.cmd_rsp.cmd_status == ACI_STATUS_TRANSACTION_CONTINUE) {
@@ -697,7 +707,7 @@ void nRF8001::poll() {
 
 #ifdef NRF_8001_STORE_DYNAMIC_DATA_TO_EEPROM
                 for (int i = 0; i < sizeof(struct dynamicData); i++) {
-                  EEPROM.write(NRF_8001_EEPROM_DYNAMIC_DATA_OFFSET + i, ((unsigned char*)this->_dynamicData)[i]);
+                  EEPROM.write(NRF_8001_EEPROM_DYNAMIC_DATA_OFFSET + i, this->_dynamicData[i]);
                 }
 #endif
 
@@ -717,7 +727,7 @@ void nRF8001::poll() {
                 this->_dynamicDataOffset += dynamicDataSeqNoLen[this->_dynamicDataSequenceNo];
                 this->_dynamicDataSequenceNo++;
 
-                lib_aci_write_dynamic_data(this->_dynamicDataSequenceNo, (uint8_t*)this->_dynamicData + this->_dynamicDataOffset, dynamicDataSeqNoLen[this->_dynamicDataSequenceNo]);
+                lib_aci_write_dynamic_data(this->_dynamicDataSequenceNo, this->_dynamicData + this->_dynamicDataOffset, dynamicDataSeqNoLen[this->_dynamicDataSequenceNo]);
               } else if (aciEvt->params.cmd_rsp.cmd_status == ACI_STATUS_TRANSACTION_COMPLETE) {
                 this->startAdvertising();
               }
@@ -1041,7 +1051,8 @@ void nRF8001::startAdvertising() {
 
   if (this->_connectable) {
 #ifdef NRF_8001_ENABLE_UNAUTHENICATED_SECURITY
-    if (this->_dynamicData->sequence2[3] == 0x02 && this->_dynamicData->sequence5[1] == 0x3e) {
+    if (((struct dynamicData *)this->_dynamicData)->sequence2[3] == 0x02 &&
+        ((struct dynamicData *)this->_dynamicData)->sequence5[1] == 0x3e) {
       lib_aci_connect(0/* in seconds, 0 means forever */, advertisingInterval);
     } else {
       lib_aci_bond(180/* in seconds, 0 means forever */, advertisingInterval);
