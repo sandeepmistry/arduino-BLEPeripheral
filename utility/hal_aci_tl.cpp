@@ -65,6 +65,8 @@ aci_queue_t    aci_rx_q;
 
 static aci_pins_t	 *a_pins_local_ptr;
 
+SPISettings aci_spi_settings(100000, LSBFIRST, SPI_MODE0);
+
 void m_aci_data_print(hal_aci_data_t *p_data)
 {
   const uint8_t length = p_data->buffer[0];
@@ -218,6 +220,9 @@ static bool m_aci_spi_transfer(hal_aci_data_t * data_to_send, hal_aci_data_t * r
   uint8_t byte_sent_cnt;
   uint8_t max_bytes;
 
+  //Serial.print("nRF8001 beginTransaction - ");
+  SPI.beginTransaction(aci_spi_settings);
+
   m_aci_reqn_enable();
 
   // Send length, receive header
@@ -250,7 +255,8 @@ static bool m_aci_spi_transfer(hal_aci_data_t * data_to_send, hal_aci_data_t * r
 
   // RDYN should follow the REQN line in approx 100ns
   m_aci_reqn_disable();
-
+  SPI.endTransaction();
+  //Serial.println("nRF8001 endTransaction");
   return (max_bytes > 0);
 }
 
@@ -349,18 +355,8 @@ void hal_aci_tl_init(aci_pins_t *a_pins, bool debug)
 
   The SPI library assumes that the hardware pins are used
   */
-  SPI.begin();
-  //Board dependent defines
-  #if defined (__AVR__) || defined(__SAM3X8E__) || defined(__SAMD21G18A__)
-    //For Arduino use the LSB first
-    SPI.setBitOrder(LSBFIRST);
-  #elif defined(__PIC32MX__)
-    //For ChipKit use MSBFIRST and REVERSE the bits on the SPI as LSBFIRST is not supported
-    SPI.setBitOrder(MSBFIRST);
-  #endif
-  SPI.setClockDivider(a_pins->spi_clock_divider);
-  SPI.setDataMode(SPI_MODE0);
 
+  SPI.begin();
   /* Initialize the ACI Command queue. This must be called after the delay above. */
   aci_queue_init(&aci_tx_q);
   aci_queue_init(&aci_rx_q);
@@ -393,6 +389,7 @@ void hal_aci_tl_init(aci_pins_t *a_pins, bool debug)
   {
     // We use the LOW level of the RDYN line as the atmega328 can wakeup from sleep only on LOW
     attachInterrupt(a_pins->interrupt_number, m_aci_isr, LOW);
+    SPI.usingInterrupt(a_pins->interrupt_number);
   }
 }
 
