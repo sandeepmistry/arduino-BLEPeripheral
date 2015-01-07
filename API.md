@@ -51,7 +51,7 @@ void setConnectable(bool connectable);
 ```
 void setDeviceName(const char* deviceName);
 ```
- * deviceName - device name, up to: 19 characters on nRF8001, 20 characters on nRF51822 - default value is ```"Arduino"```
+ * deviceName - device name, up to: 20 characters on nRF8001 and nRF51822 - default value is ```"Arduino"```
 
 ### Appearance
 ```
@@ -187,11 +187,11 @@ BLECharacteristic(const char* uuid, unsigned char properties, const char* value)
     * ```BLEIndicate```
 
 Choice of:
-  * valueSize - size of characteristic in bytes (max: 19 bytes on nRF8001, 20 bytes on nRF51822)
+  * valueSize - size of characteristic in bytes (max: 20 characters on nRF8001 and nRF51822)
 
 or
 
-  * value - string value (max: 19 bytes on nRF8001, 20 bytes on nRF51822)
+  * value - string value (max: 20 characters on nRF8001 and nRF51822)
 
 ## Get value
 ```
@@ -310,11 +310,11 @@ BLEDescriptor(const char* uuid, const char* value);
   * uuid - UUID of descriptor
 
 Choice of:
-  * valueSize - size of characteristic in bytes (max: 19 bytes on nRF8001, 20 bytes on nRF51822)
+  * valueSize - size of characteristic in bytes (max: 20 characters on nRF8001 and nRF51822)
 
 or
 
-  * value - string value (max: 19 bytes on nRF8001, 20 bytes on nRF51822)
+  * value - string value (max: 20 characters on nRF8001 and nRF51822)
 
 ## Get value
 ```
