@@ -295,7 +295,7 @@ void nRF8001::begin(unsigned char advertisementDataType,
   }
 
   // GATT
-  unsigned char  gattSetupMsgOffset = 0;
+  unsigned short gattSetupMsgOffset = 0;
   unsigned short handle             = 1;
   unsigned char  pipe               = 1;
   unsigned char  numPiped           = 0;
@@ -308,9 +308,6 @@ void nRF8001::begin(unsigned char advertisementDataType,
       BLEService* service = (BLEService *)attribute;
 
       setupMsgData->length  = 12 + uuid.length();
-      setupMsgData->cmd     = ACI_CMD_SETUP;
-      setupMsgData->type    = 0x20;
-      setupMsgData->offset  = gattSetupMsgOffset;
 
       setupMsgData->data[0] = 0x04;
       setupMsgData->data[1] = 0x04;
@@ -328,9 +325,7 @@ void nRF8001::begin(unsigned char advertisementDataType,
 
       memcpy(&setupMsgData->data[9], uuid.data(), uuid.length());
 
-      gattSetupMsgOffset += 9 + uuid.length();
-
-      this->sendSetupMessage(&setupMsg);
+      this->sendSetupMessage(&setupMsg, 0x2, gattSetupMsgOffset);
     } else if (attribute->type() == BLETypeCharacteristic) {
       BLECharacteristic* characteristic = (BLECharacteristic *)attribute;
 
@@ -381,9 +376,6 @@ void nRF8001::begin(unsigned char advertisementDataType,
       }
 
       setupMsgData->length   = 15 + uuid.length();
-      setupMsgData->cmd      = ACI_CMD_SETUP;
-      setupMsgData->type     = 0x20;
-      setupMsgData->offset   = gattSetupMsgOffset;
 
       setupMsgData->data[0]  = 0x04;
       setupMsgData->data[1]  = 0x04;
@@ -407,14 +399,9 @@ void nRF8001::begin(unsigned char advertisementDataType,
 
       memcpy(&setupMsgData->data[12], uuid.data(), uuid.length());
 
-      gattSetupMsgOffset += 12 + uuid.length();
-
-      this->sendSetupMessage(&setupMsg);
+      this->sendSetupMessage(&setupMsg, 0x2, gattSetupMsgOffset);
 
       setupMsgData->length   = 12 + min(characteristic->valueSize(), MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG);
-      setupMsgData->cmd      = ACI_CMD_SETUP;
-      setupMsgData->type     = 0x20;
-      setupMsgData->offset   = gattSetupMsgOffset;
 
       setupMsgData->data[0]  = 0x04;
       setupMsgData->data[1]  = 0x00;
@@ -471,15 +458,10 @@ void nRF8001::begin(unsigned char advertisementDataType,
       memset(&setupMsgData->data[9], 0x00, min(characteristic->valueSize(), MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG));
       memcpy(&setupMsgData->data[9], characteristic->value(), min(characteristic->valueLength(), MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG));
 
-      gattSetupMsgOffset += 9 + characteristic->valueSize();
-
-      this->sendSetupMessage(&setupMsg);
+      this->sendSetupMessage(&setupMsg, 0x2, gattSetupMsgOffset);
 
       if (characteristic->valueSize() > MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG) {
         setupMsgData->length   = 3 + (characteristic->valueSize() - MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG);
-        setupMsgData->cmd      = ACI_CMD_SETUP;
-        setupMsgData->type     = 0x20;
-        setupMsgData->offset   = gattSetupMsgOffset;
 
         memset(&setupMsgData->data[0], 0x00, characteristic->valueSize() - MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG);
 
@@ -487,16 +469,11 @@ void nRF8001::begin(unsigned char advertisementDataType,
           memcpy(&setupMsgData->data[0], characteristic->value() + MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG, characteristic->valueLength() - MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG);
         }
 
-        this->sendSetupMessage(&setupMsg);
-
-        gattSetupMsgOffset += (characteristic->valueSize() - MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG);
+        this->sendSetupMessage(&setupMsg, 0x2, gattSetupMsgOffset);
       }
 
       if (characteristic->properties() & (BLENotify | BLEIndicate)) {
         setupMsgData->length   = 14;
-        setupMsgData->cmd      = ACI_CMD_SETUP;
-        setupMsgData->type     = 0x20;
-        setupMsgData->offset   = gattSetupMsgOffset;
 
         setupMsgData->data[0]  = 0x46;
         setupMsgData->data[1]  = 0x14;
@@ -517,17 +494,12 @@ void nRF8001::begin(unsigned char advertisementDataType,
         setupMsgData->data[9]  = 0x00;
         setupMsgData->data[10] = 0x00;
 
-        gattSetupMsgOffset += 11;
-
-        this->sendSetupMessage(&setupMsg);
+        this->sendSetupMessage(&setupMsg, 0x2, gattSetupMsgOffset);
       }
     } else if (attribute->type() == BLETypeDescriptor) {
       BLEDescriptor* descriptor = (BLEDescriptor *)attribute;
 
       setupMsgData->length   = 12 + descriptor->valueSize();
-      setupMsgData->cmd      = ACI_CMD_SETUP;
-      setupMsgData->type     = 0x20;
-      setupMsgData->offset   = gattSetupMsgOffset;
 
       setupMsgData->data[0]  = 0x04;
       setupMsgData->data[1]  = 0x04;
@@ -546,9 +518,7 @@ void nRF8001::begin(unsigned char advertisementDataType,
 
       memcpy(&setupMsgData->data[9], descriptor->value(), descriptor->valueLength());
 
-      gattSetupMsgOffset += 9 + descriptor->valueSize();
-
-      this->sendSetupMessage(&setupMsg);
+      this->sendSetupMessage(&setupMsg, 0x2, gattSetupMsgOffset);
     }
   }
 
@@ -556,26 +526,18 @@ void nRF8001::begin(unsigned char advertisementDataType,
 
   // terminator
   setupMsgData->length   = 4;
-  setupMsgData->cmd      = ACI_CMD_SETUP;
-  setupMsgData->type     = 0x20;
-  setupMsgData->offset   = gattSetupMsgOffset;
 
   setupMsgData->data[0]  = 0x00;
 
-  gattSetupMsgOffset += 6;
-
-  this->sendSetupMessage(&setupMsg);
+  this->sendSetupMessage(&setupMsg, 0x2, gattSetupMsgOffset);
 
   // pipes
-  unsigned char pipeSetupMsgOffet  = 0;
+  unsigned short pipeSetupMsgOffset  = 0;
 
   for (int i = 0; i < numPiped; i++) {
     struct pipeInfo pipeInfo = this->_pipeInfo[i];
 
     setupMsgData->length   = 13;
-    setupMsgData->cmd      = ACI_CMD_SETUP;
-    setupMsgData->type     = 0x40;
-    setupMsgData->offset   = pipeSetupMsgOffet;
 
     setupMsgData->data[0]  = 0x00;
     setupMsgData->data[1]  = 0x00;
@@ -617,9 +579,7 @@ void nRF8001::begin(unsigned char advertisementDataType,
       setupMsgData->data[4] |= 0x80; // Set
     }
 
-    pipeSetupMsgOffet += 10;
-
-    this->sendSetupMessage(&setupMsg);
+    this->sendSetupMessage(&setupMsg, 0x4, pipeSetupMsgOffset);
   }
 
   this->sendCrc();
@@ -1171,6 +1131,18 @@ void nRF8001::sendSetupMessage(hal_aci_data_t* data)
       delay(1);
     }
   }
+}
+
+void nRF8001::sendSetupMessage(hal_aci_data_t* setupMsg, unsigned char type, unsigned short& offset) {
+  struct setupMsgData* setupMsgData = (struct setupMsgData*)(setupMsg->buffer);
+
+  setupMsgData->cmd      = ACI_CMD_SETUP;
+  setupMsgData->type     = (type << 4) | ((offset >> 8) & 0x0f);
+  setupMsgData->offset   = (offset & 0xff);
+
+  this->sendSetupMessage(setupMsg);
+
+  offset += (setupMsgData->length - 3);
 }
 
 void nRF8001::sendCrc()

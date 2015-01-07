@@ -60,6 +60,7 @@ class nRF8001 : protected BLEDevice
   private:
     void waitForSetupMode();
     void sendSetupMessage(hal_aci_data_t* data);
+    void sendSetupMessage(hal_aci_data_t* setupMsg, unsigned char type, unsigned short& offset);
     void sendCrc();
 
   private:
