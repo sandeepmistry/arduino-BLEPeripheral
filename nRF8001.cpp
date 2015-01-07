@@ -39,7 +39,7 @@ struct dynamicData {
 };
 
 #define NB_BASE_SETUP_MESSAGES                  7
-#define MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG  19
+#define MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG       19
 
 #if defined (__AVR__)
   /* Store the setup for the nRF8001 in the flash of the AVR to save on RAM */
@@ -401,7 +401,7 @@ void nRF8001::begin(unsigned char advertisementDataType,
 
       this->sendSetupMessage(&setupMsg, 0x2, gattSetupMsgOffset);
 
-      setupMsgData->length   = 12 + min(characteristic->valueSize(), MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG);
+      setupMsgData->length   = 12 + min(characteristic->valueSize(), MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG);
 
       setupMsgData->data[0]  = 0x04;
       setupMsgData->data[1]  = 0x00;
@@ -455,18 +455,18 @@ void nRF8001::begin(unsigned char advertisementDataType,
 
       setupMsgData->data[8]  = 0x01;
 
-      memset(&setupMsgData->data[9], 0x00, min(characteristic->valueSize(), MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG));
-      memcpy(&setupMsgData->data[9], characteristic->value(), min(characteristic->valueLength(), MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG));
+      memset(&setupMsgData->data[9], 0x00, min(characteristic->valueSize(), MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG));
+      memcpy(&setupMsgData->data[9], characteristic->value(), min(characteristic->valueLength(), MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG));
 
       this->sendSetupMessage(&setupMsg, 0x2, gattSetupMsgOffset);
 
-      if (characteristic->valueSize() > MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG) {
-        setupMsgData->length   = 3 + (characteristic->valueSize() - MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG);
+      if (characteristic->valueSize() > MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG) {
+        setupMsgData->length = 3 + (characteristic->valueSize() - MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG);
 
-        memset(&setupMsgData->data[0], 0x00, characteristic->valueSize() - MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG);
+        memset(&setupMsgData->data[0], 0x00, characteristic->valueSize() - MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG);
 
-        if (characteristic->valueLength() > MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG) {
-          memcpy(&setupMsgData->data[0], characteristic->value() + MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG, characteristic->valueLength() - MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG);
+        if (characteristic->valueLength() > MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG) {
+          memcpy(&setupMsgData->data[0], characteristic->value() + MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG, characteristic->valueLength() - MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG);
         }
 
         this->sendSetupMessage(&setupMsg, 0x2, gattSetupMsgOffset);
@@ -499,7 +499,7 @@ void nRF8001::begin(unsigned char advertisementDataType,
     } else if (attribute->type() == BLETypeDescriptor) {
       BLEDescriptor* descriptor = (BLEDescriptor *)attribute;
 
-      setupMsgData->length   = 12 + descriptor->valueSize();
+      setupMsgData->length   = 12 + min(descriptor->valueSize(), MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG);
 
       setupMsgData->data[0]  = 0x04;
       setupMsgData->data[1]  = 0x04;
@@ -516,9 +516,19 @@ void nRF8001::begin(unsigned char advertisementDataType,
 
       setupMsgData->data[8]  = ACI_STORE_LOCAL;
 
-      memcpy(&setupMsgData->data[9], descriptor->value(), descriptor->valueLength());
+      memcpy(&setupMsgData->data[9], descriptor->value(), min(descriptor->valueLength(), MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG));
 
       this->sendSetupMessage(&setupMsg, 0x2, gattSetupMsgOffset);
+
+      if (descriptor->valueSize() > MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG) {
+        setupMsgData->length = 3 + (descriptor->valueSize() - MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG);
+
+        if (descriptor->valueLength() > MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG) {
+          memcpy(&setupMsgData->data[0], descriptor->value() + MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG, descriptor->valueLength() - MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG);
+        }
+
+        this->sendSetupMessage(&setupMsg, 0x2, gattSetupMsgOffset);
+      }
     }
   }
 
