@@ -479,7 +479,7 @@ void nRF8001::begin(unsigned char advertisementDataType,
         setupMsgData->length   = 3 + (characteristic->valueSize() - MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG);
         setupMsgData->cmd      = ACI_CMD_SETUP;
         setupMsgData->type     = 0x20;
-        setupMsgData->offset   = gattSetupMsgOffset++;
+        setupMsgData->offset   = gattSetupMsgOffset;
 
         memset(&setupMsgData->data[0], 0x00, characteristic->valueSize() - MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG);
 
