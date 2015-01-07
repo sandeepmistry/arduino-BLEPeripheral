@@ -38,7 +38,8 @@ struct dynamicData {
   unsigned char sequence6[4];
 };
 
-#define NB_BASE_SETUP_MESSAGES 7
+#define NB_BASE_SETUP_MESSAGES                  7
+#define MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG  19
 
 #if defined (__AVR__)
   /* Store the setup for the nRF8001 in the flash of the AVR to save on RAM */
@@ -410,7 +411,7 @@ void nRF8001::begin(unsigned char advertisementDataType,
 
       this->sendSetupMessage(&setupMsg);
 
-      setupMsgData->length   = 12 + characteristic->valueSize();
+      setupMsgData->length   = 12 + min(characteristic->valueSize(), MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG);
       setupMsgData->cmd      = ACI_CMD_SETUP;
       setupMsgData->type     = 0x20;
       setupMsgData->offset   = gattSetupMsgOffset;
@@ -467,12 +468,29 @@ void nRF8001::begin(unsigned char advertisementDataType,
 
       setupMsgData->data[8]  = 0x01;
 
-      memset(&setupMsgData->data[9], 0x00, characteristic->valueSize());
-      memcpy(&setupMsgData->data[9], characteristic->value(), characteristic->valueLength());
+      memset(&setupMsgData->data[9], 0x00, min(characteristic->valueSize(), MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG));
+      memcpy(&setupMsgData->data[9], characteristic->value(), min(characteristic->valueLength(), MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG));
 
       gattSetupMsgOffset += 9 + characteristic->valueSize();
 
       this->sendSetupMessage(&setupMsg);
+
+      if (characteristic->valueSize() > MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG) {
+        setupMsgData->length   = 3 + (characteristic->valueSize() - MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG);
+        setupMsgData->cmd      = ACI_CMD_SETUP;
+        setupMsgData->type     = 0x20;
+        setupMsgData->offset   = gattSetupMsgOffset++;
+
+        memset(&setupMsgData->data[0], 0x00, characteristic->valueSize() - MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG);
+
+        if (characteristic->valueLength() > MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG) {
+          memcpy(&setupMsgData->data[0], characteristic->value() + MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG, characteristic->valueLength() - MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG);
+        }
+
+        this->sendSetupMessage(&setupMsg);
+
+        gattSetupMsgOffset += (characteristic->valueSize() - MAX_CHARACTERISTIC_VALUE_PER_SETUP_MSG);
+      }
 
       if (characteristic->properties() & (BLENotify | BLEIndicate)) {
         setupMsgData->length   = 14;
