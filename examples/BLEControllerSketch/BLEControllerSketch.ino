@@ -12,12 +12,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 /*
  *    BLEControllerSketch
- *    To use the sketch, the pins for REQN & RDYN can not be provided to user. 
+ *    To use the sketch, the pins for REQN & RDYN can not be provided to user.
  *    The Boards.h has excluded D8 and D9 to be notified to app since it treats these two pins as REQN & RDYN defaultly.
- *    So you have to set D8(D9) as REQN and set D9(D8) as RDYN in the sketch, except the Blend Micro board. 
- *    As the REQN & RDYN pins is flexible on those boards except Blend Micro.  
+ *    So you have to set D8(D9) as REQN and set D9(D8) as RDYN in the sketch, except the Blend Micro board.
+ *    As the REQN & RDYN pins is flexible on those boards except Blend Micro.
  *    Unless you modify the Boards.h to exculde the pins used as REQN & RDYN in your sketch.
- *    
+ *
  *    The sketch works with the BLEController iOS/Android App.
  *    It reports every available Arduino's pin mode and pin state to the App in real-time,
  *    Such as D3 is now acts as INPUT and its state is HIGH.
@@ -25,8 +25,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
  *    Such as D5 can be changed as PWM mode and its state is 128.
  */
 
-// Import libraries (BLEPeripheral depends on SPI)
-#include <SPI.h>
+// Import libraries (BLEPeripheral depends on SPI or BLE_API)
+#ifndef NRF51
+  #include <SPI.h>
+#else
+  #include <BLE_API.h>
+#endif
+
 #include <BLEPeripheral.h>
 #include <Servo.h>
 #include "Boards.h"
@@ -77,7 +82,7 @@ void setup()
 {
   Serial.begin(115200);
   delay(3000);  //3 seconds delay for enabling to see the start up comments on the serial board
-  
+
   /* Default all to digital input */
   for (int pin = 0; pin < TOTAL_PINS; pin++)
   {
@@ -89,25 +94,25 @@ void setup()
     pin_mode[pin] = INPUT;
     pin_state[pin] = LOW;
   }
-  
+
 /*----- BLE Utility ---------------------------------------------*/
   // set advertised local name and service UUID
   blePeripheral.setLocalName("ble-Micro");
   blePeripheral.setAdvertisedServiceUuid(uartService.uuid());
-  
+
   // add service and characteristic
   blePeripheral.addAttribute(uartService);
   blePeripheral.addAttribute(rxCharacteristic);
   blePeripheral.addAttribute(txCharacteristic);
-  
+
   // begin initialization
   blePeripheral.begin();
 /*---------------------------------------------------------------*/
-  
+
   Serial.println("BLE Arduino Slave");
 }
 
-/*   !!!!!!  ble_write_string(byte *bytes, uint8_t len)   !!!!!! 
+/*   !!!!!!  ble_write_string(byte *bytes, uint8_t len)   !!!!!!
 Every other function wants to send data will call this function at the end.
 */
 void ble_write_string(byte *bytes, uint8_t len)
@@ -116,14 +121,14 @@ void ble_write_string(byte *bytes, uint8_t len)
   {
     blePeripheral.poll();
   }
-  txCharacteristic.setValue(bytes, len); 
+  txCharacteristic.setValue(bytes, len);
 }
 
 byte reportDigitalInput()
 {
   static byte pin = 0;
   byte report = 0;
-  
+
   if (!IS_PIN_DIGITAL(pin))
   {
     pin++;
@@ -131,25 +136,25 @@ byte reportDigitalInput()
       pin = 0;
     return 0;
   }
-  
+
   if (pin_mode[pin] == INPUT)
   {
       byte current_state = digitalRead(pin);
-            
+
       if (pin_state[pin] != current_state)
       {
         pin_state[pin] = current_state;
         byte buf[] = {'G', pin, INPUT, current_state};
         ble_write_string(buf, 4);
-        
+
         report = 1;
       }
   }
-  
+
   pin++;
   if (pin >= TOTAL_PINS)
     pin = 0;
-    
+
   return report;
 }
 
@@ -157,10 +162,10 @@ void reportPinCapability(byte pin)
 {
   byte buf[] = {'P', pin, 0x00};
   byte pin_cap = 0;
-                    
+
   if (IS_PIN_DIGITAL(pin))
     pin_cap |= PIN_CAPABILITY_DIGITAL;
-            
+
   if (IS_PIN_ANALOG(pin))
     pin_cap |= PIN_CAPABILITY_ANALOG;
 
@@ -179,10 +184,10 @@ void reportPinServoData(byte pin)
 //  if (IS_PIN_SERVO(pin))
 //    servos[PIN_TO_SERVO(pin)].write(value);
 //  pin_servo[pin] = value;
-  
+
   byte value = pin_servo[pin];
   byte mode = pin_mode[pin];
-  byte buf[] = {'G', pin, mode, value};         
+  byte buf[] = {'G', pin, mode, value};
   ble_write_string(buf, 4);
 }
 
@@ -190,7 +195,7 @@ byte reportPinAnalogData()
 {
   static byte pin = 0;
   byte report = 0;
-  
+
   if (!IS_PIN_DIGITAL(pin))
   {
     pin++;
@@ -198,24 +203,24 @@ byte reportPinAnalogData()
       pin = 0;
     return 0;
   }
-  
+
   if (pin_mode[pin] == ANALOG)
   {
     uint16_t value = analogRead(pin);
     byte value_lo = value;
     byte value_hi = value>>8;
-    
+
     byte mode = pin_mode[pin];
     mode = (value_hi << 4) | mode;
-    
-    byte buf[] = {'G', pin, mode, value_lo};         
+
+    byte buf[] = {'G', pin, mode, value_lo};
     ble_write_string(buf, 4);
   }
-  
+
   pin++;
   if (pin >= TOTAL_PINS)
     pin = 0;
-    
+
   return report;
 }
 
@@ -223,7 +228,7 @@ void reportPinDigitalData(byte pin)
 {
   byte state = digitalRead(pin);
   byte mode = pin_mode[pin];
-  byte buf[] = {'G', pin, mode, state};         
+  byte buf[] = {'G', pin, mode, state};
   ble_write_string(buf, 4);
 }
 
@@ -231,7 +236,7 @@ void reportPinPWMData(byte pin)
 {
   byte value = pin_pwm[pin];
   byte mode = pin_mode[pin];
-  byte buf[] = {'G', pin, mode, value};         
+  byte buf[] = {'G', pin, mode, value};
   ble_write_string(buf, 4);
 }
 
@@ -248,27 +253,27 @@ void loop()
 {
   BLECentral central = blePeripheral.central();
 
-  if (central) 
+  if (central)
   {
-    while (central.connected()) 
+    while (central.connected())
     {
       // central still connected to peripheral
-      if (rxCharacteristic.written()) 
+      if (rxCharacteristic.written())
       {
         unsigned char len = rxCharacteristic.valueLength();
         const unsigned char *val = rxCharacteristic.value();
-        
+
         Serial.println(" ");
-        Serial.print("didCharacteristicWritten, Length: "); 
+        Serial.print("didCharacteristicWritten, Length: ");
         Serial.println(len, DEC);
-        
+
         unsigned char i = 0;
         while(i<len)
         {
           byte cmd;
           cmd = val[i++];
           Serial.write(cmd);
-          
+
           // Parse data here
           switch (cmd)
           {
@@ -278,39 +283,39 @@ void loop()
                 ble_write_string(buf, 4);
               }
               break;
-            
+
             case 'C': // query board total pin count
               {
                 byte buf[2];
                 buf[0] = 'C';
-                buf[1] = TOTAL_PINS; 
+                buf[1] = TOTAL_PINS;
                 ble_write_string(buf, 2);
-              }        
+              }
               break;
-            
+
             case 'M': // query pin mode
-              {  
+              {
                 byte pin = val[i++];
                 byte buf[] = {'M', pin, pin_mode[pin]}; // report pin mode
                 ble_write_string(buf, 3);
-              }  
+              }
               break;
-            
+
             case 'S': // set pin mode
               {
                 byte pin = val[i++];
                 byte mode = val[i++];
-                
+
                 if (IS_PIN_SERVO(pin) && mode != SERVO && servos[PIN_TO_SERVO(pin)].attached())
                   servos[PIN_TO_SERVO(pin)].detach();
-        
+
                 /* ToDo: check the mode is in its capability or not */
                 /* assume always ok */
                 if (mode != pin_mode[pin])
-                {              
+                {
                   pinMode(pin, mode);
                   pin_mode[pin] = mode;
-                
+
                   if (mode == OUTPUT)
                   {
                     digitalWrite(pin, LOW);
@@ -350,7 +355,7 @@ void loop()
                     }
                   }
                 }
-                  
+
                 //if (mode == ANALOG)
                 //  reportPinAnalogData(pin);
                 if ( (mode == INPUT) || (mode == OUTPUT) )
@@ -361,47 +366,47 @@ void loop()
                   reportPinServoData(pin);
               }
               break;
-      
+
             case 'G': // query pin data
               {
                 byte pin = val[i++];
                 reportPinDigitalData(pin);
               }
               break;
-              
+
             case 'T': // set pin digital state
               {
                 byte pin = val[i++];
                 byte state = val[i++];
-                
+
                 digitalWrite(pin, state);
                 reportPinDigitalData(pin);
               }
               break;
-            
+
             case 'N': // set PWM
               {
                 byte pin = val[i++];
                 byte value = val[i++];
-                
+
                 analogWrite(PIN_TO_PWM(pin), value);
                 pin_pwm[pin] = value;
                 reportPinPWMData(pin);
               }
               break;
-            
+
             case 'O': // set Servo
               {
                 byte pin = val[i++];
                 byte value = val[i++];
-      
+
                 if (IS_PIN_SERVO(pin))
                   servos[PIN_TO_SERVO(pin)].write(value);
                 pin_servo[pin] = value;
                 reportPinServoData(pin);
               }
               break;
-            
+
             case 'A': // query all pin status
               {
                 for (int pin = 0; pin < TOTAL_PINS; pin++)
@@ -412,21 +417,21 @@ void loop()
                   else if (pin_mode[pin] == PWM)
                     reportPinPWMData(pin);
                   else if (pin_mode[pin] == SERVO)
-                    reportPinServoData(pin);  
-                }            
-                queryDone = true; 
+                    reportPinServoData(pin);
+                }
+                queryDone = true;
                 uint8_t str[] = "ABC";
                 sendCustomData(str, 3);
               }
               break;
-                
+
             case 'P': // query pin capability
               {
                 byte pin = val[i++];
                 reportPinCapability(pin);
               }
               break;
-              
+
             case 'Z':
               {
                 byte len = val[i++];
@@ -445,30 +450,30 @@ void loop()
                 Serial.println();
               }
           }
-        } 
-      } 
+        }
+      }
       // process text data
       if (Serial.available())
       {
         byte d = 'Z';
         txCharacteristic.setValue(&d, 1);
-    
+
         delay(5);
         while(Serial.available())
         {
           d = Serial.read();
           txCharacteristic.setValue(&d, 1);
-        }    
-      }     
+        }
+      }
       if (queryDone) // only report data after the query state
-      { 
-        reportDigitalInput();        
+      {
+        reportDigitalInput();
         reportPinAnalogData();
-      }     
+      }
     }
-    
+
     queryDone = false; // reset query state
-    
+
     // central disconnected
     Serial.print(F("Disconnected from central: "));
     Serial.println(central.address());

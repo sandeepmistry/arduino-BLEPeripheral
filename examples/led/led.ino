@@ -1,5 +1,10 @@
-// Import libraries (BLEPeripheral depends on SPI)
-#include <SPI.h>
+// Import libraries (BLEPeripheral depends on SPI or BLE_API)
+#ifndef NRF51
+  #include <SPI.h>
+#else
+  #include <BLE_API.h>
+#endif
+
 #include <BLEPeripheral.h>
 
 // define pins (varies per shield/board)
