@@ -35,11 +35,28 @@ An [Arduino](http://arduino.cc) library for creating custom BLE peripherals.
 | RedBearLab nRF51822 | UNUSED | UNUSED | UNUSED |
 | BLE Nano | UNUSED | UNUSED | UNUSED |
 
+## Compatible IDE's and MCU's 
+
+ * [Arduino IDE](http://arduino.cc/en/Main/Software#toc1)
+   * AVR
+   * SAM3X8E
+   * SAMD21G18A
+ * [MPIDE](http://chipkit.net/started/install-chipkit-software/) ([ChipKit](http://chipkit.net))
+   * PIC32MX
+
 ## Usage
 
 ### Download Library
-```
+
+#### Arduino
+```sh
 cd ~/Documents/Arduino/libraries/
+git clone https://github.com/sandeepmistry/arduino-BLEPeripheral BLEPeripheral
+```
+
+#### MPIDE
+```
+cd ~/Documents/mpide/libraries/
 git clone https://github.com/sandeepmistry/arduino-BLEPeripheral BLEPeripheral
 ```
 
