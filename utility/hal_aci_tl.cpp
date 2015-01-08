@@ -45,6 +45,8 @@ The outgoing command and the incoming event needs to be converted
     //For ChipKit as the transmission has to be reversed, the next definitions have to be added
     #define REVERSE_BITS(byte) (((reverse_lookup[(byte & 0x0F)]) << 4) + reverse_lookup[((byte & 0xF0) >> 4)])
     static const uint8_t reverse_lookup[] = { 0, 8,  4, 12, 2, 10, 6, 14,1, 9, 5, 13,3, 11, 7, 15 };
+#else
+    #error "Unsupported platform"
 #endif
 
 static void m_aci_data_print(hal_aci_data_t *p_data);
@@ -357,6 +359,8 @@ void hal_aci_tl_init(aci_pins_t *a_pins, bool debug)
   #elif defined(__PIC32MX__)
     //For ChipKit use MSBFIRST and REVERSE the bits on the SPI as LSBFIRST is not supported
     SPI.setBitOrder(MSBFIRST);
+  #else
+    #error "Unsupported platform"
   #endif
   SPI.setClockDivider(a_pins->spi_clock_divider);
   SPI.setDataMode(SPI_MODE0);
@@ -436,6 +440,8 @@ static uint8_t spi_readwrite(const uint8_t aci_byte)
     uint8_t tmp_bits;
     tmp_bits = SPI.transfer(REVERSE_BITS(aci_byte));
 	return REVERSE_BITS(tmp_bits);
+#else
+    #error "Unsupported platform"
 #endif
 }
 

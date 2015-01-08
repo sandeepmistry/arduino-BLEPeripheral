@@ -71,6 +71,8 @@
 
 	//Redefine the function for reading from flash in ChipKit
 	#define memcpy_P        memcpy
+#else
+    #error "Unsupported platform"
 #endif
 
 #endif /* PLATFORM_H__ */
