@@ -6,9 +6,9 @@
 #include <utility/lib_aci.h>
 #include <utility/aci_setup.h>
 
-#include "BLEDevice.h"
+#include "BLEChip.h"
 
-class nRF8001 : protected BLEDevice
+class nRF8001 : protected BLEChip
 {
   friend class BLEPeripheral;
 

@@ -1,36 +1,36 @@
-#ifndef _BLE_DEVICE_H_
-#define _BLE_DEVICE_H_
+#ifndef _BLE_CHIP_H_
+#define _BLE_CHIP_H_
 
 #include "BLEAttribute.h"
 #include "BLECharacteristic.h"
 
-class BLEDevice;
+class BLEChip;
 
-class BLEDeviceEventListener
+class BLEChipEventListener
 {
   public:
-    virtual void BLEDeviceConnected(BLEDevice& device, const unsigned char* address) = 0;
-    virtual void BLEDeviceDisconnected(BLEDevice& device) = 0;
+    virtual void BLEChipConnected(BLEChip& chip, const unsigned char* address) = 0;
+    virtual void BLEChipDisconnected(BLEChip& chip) = 0;
 
-    virtual void BLEDeviceCharacteristicValueChanged(BLEDevice& device, BLECharacteristic& characteristic, const unsigned char* value, unsigned char valueLength) = 0;
-    virtual void BLEDeviceCharacteristicSubscribedChanged(BLEDevice& device, BLECharacteristic& characteristic, bool subscribed) = 0;
+    virtual void BLEChipCharacteristicValueChanged(BLEChip& chip, BLECharacteristic& characteristic, const unsigned char* value, unsigned char valueLength) = 0;
+    virtual void BLEChipCharacteristicSubscribedChanged(BLEChip& chip, BLECharacteristic& characteristic, bool subscribed) = 0;
 
-    virtual void BLEDeviceAddressReceived(BLEDevice& device, const unsigned char* address) = 0;
-    virtual void BLEDeviceTemperatureReceived(BLEDevice& device, float temperature) = 0;
-    virtual void BLEDeviceBatteryLevelReceived(BLEDevice& device, float batteryLevel) = 0;
+    virtual void BLEChipAddressReceived(BLEChip& chip, const unsigned char* address) = 0;
+    virtual void BLEChipTemperatureReceived(BLEChip& chip, float temperature) = 0;
+    virtual void BLEChipBatteryLevelReceived(BLEChip& chip, float batteryLevel) = 0;
 };
 
 
-class BLEDevice
+class BLEChip
 {
   friend class BLEPeripheral;
 
   protected:
-    BLEDevice();
+    BLEChip();
 
-    virtual ~BLEDevice();
+    virtual ~BLEChip();
 
-    void setEventListener(BLEDeviceEventListener* eventListener);
+    void setEventListener(BLEChipEventListener* eventListener);
 
     void setAdvertisingInterval(unsigned short advertisingInterval);
     void setConnectable(bool connectable);
@@ -61,7 +61,7 @@ class BLEDevice
   protected:
     unsigned short                _advertisingInterval;
     bool                          _connectable;
-    BLEDeviceEventListener*       _eventListener;
+    BLEChipEventListener*         _eventListener;
 };
 
 #endif

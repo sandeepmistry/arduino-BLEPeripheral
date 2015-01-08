@@ -1,28 +1,28 @@
 #include "Arduino.h"
 
-#include "BLEDevice.h"
+#include "BLEChip.h"
 
 #define DEFAULT_ADVERTISING_INTERVAL 100
 #define DEFAULT_CONNECTABLE          true
 
-BLEDevice::BLEDevice() :
+BLEChip::BLEChip() :
   _eventListener(NULL),
   _advertisingInterval(DEFAULT_ADVERTISING_INTERVAL),
   _connectable(DEFAULT_CONNECTABLE)
 {
 }
 
-BLEDevice::~BLEDevice() {
+BLEChip::~BLEChip() {
 }
 
-void BLEDevice::setEventListener(BLEDeviceEventListener* eventListener) {
+void BLEChip::setEventListener(BLEChipEventListener* eventListener) {
   this->_eventListener = eventListener;
 }
 
-void BLEDevice::setAdvertisingInterval(unsigned short advertisingInterval) {
+void BLEChip::setAdvertisingInterval(unsigned short advertisingInterval) {
   this->_advertisingInterval = advertisingInterval;
 }
 
-void BLEDevice::setConnectable(bool connectable) {
+void BLEChip::setConnectable(bool connectable) {
   this->_connectable = connectable;
 }

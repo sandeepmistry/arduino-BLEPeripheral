@@ -6,7 +6,7 @@
 #include "BLEAttribute.h"
 #include "BLECentral.h"
 #include "BLEDescriptor.h"
-#include "BLEDevice.h"
+#include "BLEChip.h"
 #include "BLEService.h"
 #include "BLETypedCharacteristics.h"
 
@@ -23,7 +23,7 @@ enum BLEPeripheralEvent {
 
 typedef void (*BLEPeripheralEventHandler)(BLECentral& central);
 
-class BLEPeripheral : public BLEDeviceEventListener, public BLECharacteristicValueChangeListener
+class BLEPeripheral : public BLEChipEventListener, public BLECharacteristicValueChangeListener
 {
   public:
     BLEPeripheral(unsigned char req, unsigned char rdy, unsigned char rst);
@@ -57,18 +57,18 @@ class BLEPeripheral : public BLEDeviceEventListener, public BLECharacteristicVal
     bool canNotifyCharacteristic(BLECharacteristic& characteristic);
     bool canIndicateCharacteristic(BLECharacteristic& characteristic);
 
-    virtual void BLEDeviceConnected(BLEDevice& device, const unsigned char* address);
-    virtual void BLEDeviceDisconnected(BLEDevice& device);
+    virtual void BLEChipConnected(BLEChip& chip, const unsigned char* address);
+    virtual void BLEChipDisconnected(BLEChip& chip);
 
-    virtual void BLEDeviceCharacteristicValueChanged(BLEDevice& device, BLECharacteristic& characteristic, const unsigned char* value, unsigned char valueLength);
-    virtual void BLEDeviceCharacteristicSubscribedChanged(BLEDevice& device, BLECharacteristic& characteristic, bool subscribed);
+    virtual void BLEChipCharacteristicValueChanged(BLEChip& chip, BLECharacteristic& characteristic, const unsigned char* value, unsigned char valueLength);
+    virtual void BLEChipCharacteristicSubscribedChanged(BLEChip& chip, BLECharacteristic& characteristic, bool subscribed);
 
-    virtual void BLEDeviceAddressReceived(BLEDevice& device, const unsigned char* address);
-    virtual void BLEDeviceTemperatureReceived(BLEDevice& device, float temperature);
-    virtual void BLEDeviceBatteryLevelReceived(BLEDevice& device, float batteryLevel);
+    virtual void BLEChipAddressReceived(BLEChip& chip, const unsigned char* address);
+    virtual void BLEChipTemperatureReceived(BLEChip& chip, float temperature);
+    virtual void BLEChipBatteryLevelReceived(BLEChip& chip, float batteryLevel);
 
   private:
-    BLEDevice*                     _device;
+    BLEChip*                       _chip;
 
 #ifdef NRF51
     nRF51822                       _nRF51822;

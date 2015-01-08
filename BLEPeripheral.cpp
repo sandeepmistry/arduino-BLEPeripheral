@@ -1,6 +1,6 @@
 #include "BLEUuid.h"
 
-#include "BLEDeviceLimits.h"
+#include "BLEChipLimits.h"
 
 #include "BLEPeripheral.h"
 
@@ -32,9 +32,9 @@ BLEPeripheral::BLEPeripheral(unsigned char req, unsigned char rdy, unsigned char
   _central(this)
 {
 #ifdef NRF51
-  this->_device = &this->_nRF51822;
+  this->_chip = &this->_nRF51822;
 #else
-  this->_device = &this->_nRF8001;
+  this->_chip = &this->_nRF8001;
 #endif
 
   memset(this->_eventHandlers, 0x00, sizeof(this->_eventHandlers));
@@ -42,7 +42,7 @@ BLEPeripheral::BLEPeripheral(unsigned char req, unsigned char rdy, unsigned char
   this->setDeviceName(DEFAULT_DEVICE_NAME);
   this->setAppearance(DEFAULT_APPEARANCE);
 
-  this->_device->setEventListener(this);
+  this->_chip->setEventListener(this);
 }
 
 BLEPeripheral::~BLEPeripheral() {
@@ -102,15 +102,15 @@ void BLEPeripheral::begin() {
     }
   }
 
-  this->_device->begin(advertisementDataType, advertisementDataLength, advertisementData,
+  this->_chip->begin(advertisementDataType, advertisementDataLength, advertisementData,
                         scanDataType, scanDataLength, scanData,
                         this->_attributes, this->_numAttributes);
 
-  this->_device->requestAddress();
+  this->_chip->requestAddress();
 }
 
 void BLEPeripheral::poll() {
-  this->_device->poll();
+  this->_chip->poll();
 }
 
 void BLEPeripheral::setAdvertisedServiceUuid(const char* advertisedServiceUuid) {
@@ -127,7 +127,7 @@ void BLEPeripheral::setLocalName(const char* localName) {
 }
 
 void BLEPeripheral::setConnectable(bool connectable) {
-  this->_device->setConnectable(connectable);
+  this->_chip->setConnectable(connectable);
 }
 
 void BLEPeripheral::setDeviceName(const char* deviceName) {
@@ -157,11 +157,11 @@ void BLEPeripheral::addAttribute(BLEAttribute& attribute) {
 }
 
 void BLEPeripheral::setAdvertisingInterval(unsigned short advertisingInterval) {
-  this->_device->setAdvertisingInterval(advertisingInterval);
+  this->_chip->setAdvertisingInterval(advertisingInterval);
 }
 
 void BLEPeripheral::disconnect() {
-  this->_device->disconnect();
+  this->_chip->disconnect();
 }
 
 BLECentral BLEPeripheral::central() {
@@ -183,22 +183,22 @@ void BLEPeripheral::setEventHandler(BLEPeripheralEvent event, BLEPeripheralEvent
 }
 
 bool BLEPeripheral::characteristicValueChanged(BLECharacteristic& characteristic) {
-  return this->_device->updateCharacteristicValue(characteristic);
+  return this->_chip->updateCharacteristicValue(characteristic);
 }
 
 bool BLEPeripheral::broadcastCharacteristic(BLECharacteristic& characteristic) {
-  return this->_device->broadcastCharacteristic(characteristic);
+  return this->_chip->broadcastCharacteristic(characteristic);
 }
 
 bool BLEPeripheral::canNotifyCharacteristic(BLECharacteristic& characteristic) {
-  return this->_device->canNotifyCharacteristic(characteristic);
+  return this->_chip->canNotifyCharacteristic(characteristic);
 }
 
 bool BLEPeripheral::canIndicateCharacteristic(BLECharacteristic& characteristic) {
-  return this->_device->canIndicateCharacteristic(characteristic);
+  return this->_chip->canIndicateCharacteristic(characteristic);
 }
 
-void BLEPeripheral::BLEDeviceConnected(BLEDevice& device, const unsigned char* address) {
+void BLEPeripheral::BLEChipConnected(BLEChip& chip, const unsigned char* address) {
   this->_central.setAddress(address);
 
 #ifdef BLE_PERIPHERAL_DEBUG
@@ -212,7 +212,7 @@ void BLEPeripheral::BLEDeviceConnected(BLEDevice& device, const unsigned char* a
   }
 }
 
-void BLEPeripheral::BLEDeviceDisconnected(BLEDevice& device) {
+void BLEPeripheral::BLEChipDisconnected(BLEChip& chip) {
 #ifdef BLE_PERIPHERAL_DEBUG
   Serial.print(F("Peripheral disconnected from central: "));
   Serial.println(this->_central.address());
@@ -226,15 +226,15 @@ void BLEPeripheral::BLEDeviceDisconnected(BLEDevice& device) {
   this->_central.clearAddress();
 }
 
-void BLEPeripheral::BLEDeviceCharacteristicValueChanged(BLEDevice& device, BLECharacteristic& characteristic, const unsigned char* value, unsigned char valueLength) {
+void BLEPeripheral::BLEChipCharacteristicValueChanged(BLEChip& chip, BLECharacteristic& characteristic, const unsigned char* value, unsigned char valueLength) {
   characteristic.setValue(this->_central, value, valueLength);
 }
 
-void BLEPeripheral::BLEDeviceCharacteristicSubscribedChanged(BLEDevice& device, BLECharacteristic& characteristic, bool subscribed) {
+void BLEPeripheral::BLEChipCharacteristicSubscribedChanged(BLEChip& chip, BLECharacteristic& characteristic, bool subscribed) {
   characteristic.setSubscribed(this->_central, subscribed);
 }
 
-void BLEPeripheral::BLEDeviceAddressReceived(BLEDevice& device, const unsigned char* address) {
+void BLEPeripheral::BLEChipAddressReceived(BLEChip& chip, const unsigned char* address) {
 #ifdef BLE_PERIPHERAL_DEBUG
   char addressStr[18];
 
@@ -251,8 +251,8 @@ void BLEPeripheral::BLEDeviceAddressReceived(BLEDevice& device, const unsigned c
 #endif
 }
 
-void BLEPeripheral::BLEDeviceTemperatureReceived(BLEDevice& device, float temperature) {
+void BLEPeripheral::BLEChipTemperatureReceived(BLEChip& chip, float temperature) {
 }
 
-void BLEPeripheral::BLEDeviceBatteryLevelReceived(BLEDevice& device, float batteryLevel) {
+void BLEPeripheral::BLEChipBatteryLevelReceived(BLEChip& chip, float batteryLevel) {
 }

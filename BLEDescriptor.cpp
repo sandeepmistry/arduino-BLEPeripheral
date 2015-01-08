@@ -1,6 +1,6 @@
 #include "Arduino.h"
 
-#include "BLEDeviceLimits.h"
+#include "BLEChipLimits.h"
 
 #include "BLEDescriptor.h"
 
