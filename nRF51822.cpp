@@ -19,8 +19,6 @@
 
 #define NRF_51822_DEBUG
 
-static uint32_t NRF_51822_EVT_BUFFER[CEIL_DIV(BLE_STACK_EVT_MSG_BUF_SIZE, sizeof(uint32_t))];
-
 nRF51822::nRF51822() :
   BLEDevice(),
 
@@ -277,10 +275,11 @@ void nRF51822::begin(unsigned char advertisementDataType,
 }
 
 void nRF51822::poll() {
-  uint16_t   evtLen = sizeof(NRF_51822_EVT_BUFFER);
-  ble_evt_t* bleEvt = (ble_evt_t*)NRF_51822_EVT_BUFFER;
+  uint32_t   evtBuf[BLE_STACK_EVT_MSG_BUF_SIZE] __attribute__ ((__aligned__(BLE_EVTS_PTR_ALIGNMENT)));
+  uint16_t   evtLen = sizeof(evtBuf);
+  ble_evt_t* bleEvt = (ble_evt_t*)evtBuf;
 
-  if (sd_ble_evt_get((uint8_t*)NRF_51822_EVT_BUFFER, &evtLen) == NRF_SUCCESS) {
+  if (sd_ble_evt_get((uint8_t*)evtBuf, &evtLen) == NRF_SUCCESS) {
     switch (bleEvt->header.evt_id) {
       case BLE_GAP_EVT_CONNECTED:
         this->_connectionHandle = bleEvt->evt.gap_evt.conn_handle;
