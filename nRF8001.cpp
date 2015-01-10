@@ -893,7 +893,7 @@ void nRF8001::poll() {
 
         for (int i = 0; i < dataLen; i++) {
           if ((aciEvt->params.data_received.rx_data.aci_data[i] & 0xf0) == 00) {
-            Serial.print("0");
+            Serial.print(F("0"));
           }
 
           Serial.print(aciEvt->params.data_received.rx_data.aci_data[i], HEX);
