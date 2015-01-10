@@ -17,7 +17,7 @@
 
 #include "nRF51822.h"
 
-#define NRF_51822_DEBUG
+// #define NRF_51822_DEBUG
 
 nRF51822::nRF51822() :
   BLEDevice(),
@@ -281,7 +281,27 @@ void nRF51822::poll() {
 
   if (sd_ble_evt_get((uint8_t*)evtBuf, &evtLen) == NRF_SUCCESS) {
     switch (bleEvt->header.evt_id) {
+      case BLE_EVT_TX_COMPLETE:
+#ifdef NRF_51822_DEBUG
+        Serial.print(F("Evt TX complete "));
+        Serial.println(bleEvt->evt.common_evt.params.tx_complete.count);
+#endif
+        break;
+
       case BLE_GAP_EVT_CONNECTED:
+#ifdef NRF_51822_DEBUG
+        char address[18];
+        sprintf(address, "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x",
+          bleEvt->evt.gap_evt.params.connected.peer_addr.addr[5],
+          bleEvt->evt.gap_evt.params.connected.peer_addr.addr[4],
+          bleEvt->evt.gap_evt.params.connected.peer_addr.addr[3],
+          bleEvt->evt.gap_evt.params.connected.peer_addr.addr[2],
+          bleEvt->evt.gap_evt.params.connected.peer_addr.addr[1],
+          bleEvt->evt.gap_evt.params.connected.peer_addr.addr);
+        Serial.print(F("Evt Connected "));
+        Serial.println(address);
+#endif
+
         this->_connectionHandle = bleEvt->evt.gap_evt.conn_handle;
 
         if (this->_eventListener) {
@@ -290,6 +310,9 @@ void nRF51822::poll() {
         break;
 
       case BLE_GAP_EVT_DISCONNECTED:
+#ifdef NRF_51822_DEBUG
+        Serial.println(F("Evt Disconnected"));
+#endif
         this->_connectionHandle = BLE_CONN_HANDLE_INVALID;
 
         for (int i = 0; i < this->_numCharacteristics; i++) {
@@ -312,7 +335,37 @@ void nRF51822::poll() {
         this->startAdvertising();
         break;
 
+      case BLE_GAP_EVT_CONN_PARAM_UPDATE:
+#ifdef NRF_51822_DEBUG
+        Serial.print(F("Evt Conn Param Update 0x"));
+        Serial.print(bleEvt->evt.gap_evt.params.conn_param_update.conn_params.min_conn_interval, HEX);
+        Serial.print(F(" 0x"));
+        Serial.print(bleEvt->evt.gap_evt.params.conn_param_update.conn_params.max_conn_interval, HEX);
+        Serial.print(F(" 0x"));
+        Serial.print(bleEvt->evt.gap_evt.params.conn_param_update.conn_params.slave_latency, HEX);
+        Serial.print(F(" 0x"));
+        Serial.print(bleEvt->evt.gap_evt.params.conn_param_update.conn_params.conn_sup_timeout, HEX);
+        Serial.println();
+#endif
+        break;
+
+
       case BLE_GATTS_EVT_WRITE: {
+#ifdef NRF_51822_DEBUG
+        Serial.print(F("Evt Write, handle = "));
+        Serial.println(bleEvt->evt.gatts_evt.params.write.handle, DEC);
+
+        for (int i = 0; i < bleEvt->evt.gatts_evt.params.write.len; i++) {
+          if ((bleEvt->evt.gatts_evt.params.write.data[i] & 0xf0) == 00) {
+            Serial.print(F("0"));
+          }
+
+          Serial.print(bleEvt->evt.gatts_evt.params.write.data[i], HEX);
+          Serial.print(F(" "));
+        }
+        Serial.println();
+#endif
+
         uint16_t handle = bleEvt->evt.gatts_evt.params.write.handle;
 
         for (int i = 0; i < this->_numCharacteristics; i++) {
@@ -342,12 +395,17 @@ void nRF51822::poll() {
       }
 
       case BLE_GATTS_EVT_SYS_ATTR_MISSING:
+#ifdef NRF_51822_DEBUG
+        Serial.print(F("Evt Sys Attr Missing "));
+        Serial.println(bleEvt->evt.gatts_evt.params.sys_attr_missing.hint);
+#endif
+
         sd_ble_gatts_sys_attr_set(this->_connectionHandle, NULL, 0);
         break;
 
       default:
 #ifdef NRF_51822_DEBUG
-        Serial.print("bleEvt->header.evt_id = 0x");
+        Serial.print(F("bleEvt->header.evt_id = 0x"));
         Serial.println(bleEvt->header.evt_id, HEX);
 #endif
         break;
