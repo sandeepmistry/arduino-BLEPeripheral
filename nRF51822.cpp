@@ -1,10 +1,11 @@
 #ifdef NRF51
 
-#include <ble_conn_params.h>
 #include <ble_gatts.h>
 #include <ble_hci.h>
+#include <ble_stack_handler_types.h>
 #include <nordic_common.h>
-#include <softdevice_handler.h>
+#include <nrf_sdm.h>
+#include <nrf_soc.h>
 
 #include "Arduino.h"
 
@@ -18,10 +19,7 @@
 
 #define NRF_51822_DEBUG
 
-void assert_nrf_callback(uint16_t line_num, const uint8_t *file_name) {
-}
-
-nRF51822* nRF51822::_instance = NULL;
+static uint32_t NRF_51822_EVT_BUFFER[CEIL_DIV(BLE_STACK_EVT_MSG_BUF_SIZE, sizeof(uint32_t))];
 
 nRF51822::nRF51822() :
   BLEDevice(),
@@ -34,21 +32,12 @@ nRF51822::nRF51822() :
   _numCharacteristics(0),
   _characteristicInfo(NULL)
 {
-  _instance = this;
 }
 
 nRF51822::~nRF51822() {
   if (this->_characteristicInfo) {
     free(this->_characteristicInfo);
   }
-}
-
-void nRF51822::eventHandler(ble_evt_t* bleEvent) {
-  _instance->handleEvent(bleEvent);
-}
-
-void nRF51822::systemEventHandler(uint32_t sysEvent) {
-
 }
 
 void nRF51822::begin(unsigned char advertisementDataType,
@@ -60,10 +49,7 @@ void nRF51822::begin(unsigned char advertisementDataType,
                       BLEAttribute** attributes,
                       unsigned char numAttributes)
 {
-  SOFTDEVICE_HANDLER_INIT(NRF_CLOCK_LFCLKSRC_XTAL_20_PPM, false);
-
-  softdevice_ble_evt_handler_set(nRF51822::eventHandler);
-  softdevice_sys_evt_handler_set(nRF51822::systemEventHandler);
+  sd_softdevice_enable(NRF_CLOCK_LFCLKSRC_XTAL_20_PPM, NULL); // sd_nvic_EnableIRQ(SWI2_IRQn);
 
   ble_gap_conn_params_t gap_conn_params = {0};
 
@@ -74,31 +60,6 @@ void nRF51822::begin(unsigned char advertisementDataType,
 
   sd_ble_gap_ppcp_set(&gap_conn_params);
   sd_ble_gap_tx_power_set(0);
-
-  /* Connection Parameters */
-  enum {
-    FIRST_UPDATE_DELAY = APP_TIMER_TICKS(5000, /*CFG_TIMER_PRESCALER*/0),
-    NEXT_UPDATE_DELAY  = APP_TIMER_TICKS(5000, /*CFG_TIMER_PRESCALER*/0),
-    MAX_UPDATE_COUNT   = 3
-  };
-
-  ble_conn_params_init_t cp_init = {0};
-
-  cp_init.p_conn_params                  = NULL;
-  cp_init.first_conn_params_update_delay = FIRST_UPDATE_DELAY;
-  cp_init.next_conn_params_update_delay  = NEXT_UPDATE_DELAY;
-  cp_init.max_conn_params_update_count   = MAX_UPDATE_COUNT;
-  cp_init.start_on_notify_cccd_handle    = BLE_GATT_HANDLE_INVALID;
-  cp_init.disconnect_on_fail             = true;
-  cp_init.evt_handler                    = NULL;
-  cp_init.error_handler                  = NULL; //error_callback;
-
-  ble_conn_params_init(&cp_init);
-
-  delay(500);
-
-  /* Wait for the radio to come back up */
-  delay(1000);
 
   unsigned char srData[31];
   unsigned char srDataLen = 0;
@@ -316,7 +277,85 @@ void nRF51822::begin(unsigned char advertisementDataType,
 }
 
 void nRF51822::poll() {
-//  sd_app_evt_wait();
+  uint16_t   evtLen = sizeof(NRF_51822_EVT_BUFFER);
+  ble_evt_t* bleEvt = (ble_evt_t*)NRF_51822_EVT_BUFFER;
+
+  if (sd_ble_evt_get((uint8_t*)NRF_51822_EVT_BUFFER, &evtLen) == NRF_SUCCESS) {
+    switch (bleEvt->header.evt_id) {
+      case BLE_GAP_EVT_CONNECTED:
+        this->_connectionHandle = bleEvt->evt.gap_evt.conn_handle;
+
+        if (this->_eventListener) {
+          this->_eventListener->BLEDeviceConnected(*this, bleEvt->evt.gap_evt.params.connected.peer_addr.addr);
+        }
+        break;
+
+      case BLE_GAP_EVT_DISCONNECTED:
+        this->_connectionHandle = BLE_CONN_HANDLE_INVALID;
+
+        for (int i = 0; i < this->_numCharacteristics; i++) {
+          struct characteristicInfo* characteristicInfo = &this->_characteristicInfo[i];
+
+          characteristicInfo->notifySubscribed = false;
+          characteristicInfo->indicateSubscribed = false;
+
+          if (characteristicInfo->characteristic->subscribed()) {
+            if (this->_eventListener) {
+              this->_eventListener->BLEDeviceCharacteristicSubscribedChanged(*this, *characteristicInfo->characteristic, false);
+            }
+          }
+        }
+
+        if (this->_eventListener) {
+          this->_eventListener->BLEDeviceDisconnected(*this);
+        }
+
+        this->startAdvertising();
+        break;
+
+      case BLE_GATTS_EVT_WRITE: {
+        uint16_t handle = bleEvt->evt.gatts_evt.params.write.handle;
+
+        for (int i = 0; i < this->_numCharacteristics; i++) {
+          struct characteristicInfo* characteristicInfo = &this->_characteristicInfo[i];
+
+          if (characteristicInfo->handles.value_handle == handle) {
+            if (this->_eventListener) {
+              this->_eventListener->BLEDeviceCharacteristicValueChanged(*this, *characteristicInfo->characteristic, bleEvt->evt.gatts_evt.params.write.data, bleEvt->evt.gatts_evt.params.write.len);
+            }
+            break;
+          } else if (characteristicInfo->handles.cccd_handle == handle) {
+            uint16_t value = bleEvt->evt.gatts_evt.params.write.data[0] | (bleEvt->evt.gatts_evt.params.write.data[1] << 8);
+
+            characteristicInfo->notifySubscribed = (value & 0x0001);
+            characteristicInfo->indicateSubscribed = (value & 0x0002);
+
+            bool subscribed = (characteristicInfo->notifySubscribed || characteristicInfo->indicateSubscribed);
+
+            if (subscribed != characteristicInfo->characteristic->subscribed()) {
+              if (this->_eventListener) {
+                this->_eventListener->BLEDeviceCharacteristicSubscribedChanged(*this, *characteristicInfo->characteristic, subscribed);
+              }
+            }
+          }
+        }
+        break;
+      }
+
+      case BLE_GATTS_EVT_SYS_ATTR_MISSING:
+        sd_ble_gatts_sys_attr_set(this->_connectionHandle, NULL, 0);
+        break;
+
+      default:
+#ifdef NRF_51822_DEBUG
+        Serial.print("bleEvt->header.evt_id = 0x");
+        Serial.println(bleEvt->header.evt_id, HEX);
+#endif
+        break;
+    }
+  }
+
+  // sd_app_evt_wait();
 }
 
 bool nRF51822::updateCharacteristicValue(BLECharacteristic& characteristic) {
@@ -452,75 +491,6 @@ void nRF51822::requestTemperature() {
 }
 
 void nRF51822::requestBatteryLevel() {
-}
-
-void nRF51822::handleEvent(ble_evt_t* bleEvent) {
-  ble_conn_params_on_ble_evt(bleEvent);
-
-  switch (bleEvent->header.evt_id) {
-    case BLE_GAP_EVT_CONNECTED:
-      this->_connectionHandle = bleEvent->evt.gap_evt.conn_handle;
-
-      if (this->_eventListener) {
-        this->_eventListener->BLEDeviceConnected(*this, bleEvent->evt.gap_evt.params.connected.peer_addr.addr);
-      }
-      break;
-
-    case BLE_GAP_EVT_DISCONNECTED:
-      this->_connectionHandle = BLE_CONN_HANDLE_INVALID;
-
-      for (int i = 0; i < this->_numCharacteristics; i++) {
-        struct characteristicInfo* characteristicInfo = &this->_characteristicInfo[i];
-
-        characteristicInfo->notifySubscribed = false;
-        characteristicInfo->indicateSubscribed = false;
-
-        if (characteristicInfo->characteristic->subscribed()) {
-          if (this->_eventListener) {
-            this->_eventListener->BLEDeviceCharacteristicSubscribedChanged(*this, *characteristicInfo->characteristic, false);
-          }
-        }
-      }
-
-      if (this->_eventListener) {
-        this->_eventListener->BLEDeviceDisconnected(*this);
-      }
-
-      this->startAdvertising();
-      break;
-
-    case BLE_GATTS_EVT_WRITE: {
-      uint16_t handle = bleEvent->evt.gatts_evt.params.write.handle;
-
-      for (int i = 0; i < this->_numCharacteristics; i++) {
-        struct characteristicInfo* characteristicInfo = &this->_characteristicInfo[i];
-
-        if (characteristicInfo->handles.value_handle == handle) {
-          if (this->_eventListener) {
-            this->_eventListener->BLEDeviceCharacteristicValueChanged(*this, *characteristicInfo->characteristic, bleEvent->evt.gatts_evt.params.write.data, bleEvent->evt.gatts_evt.params.write.len);
-          }
-          break;
-        } else if (characteristicInfo->handles.cccd_handle == handle) {
-          uint16_t value = bleEvent->evt.gatts_evt.params.write.data[0] | (bleEvent->evt.gatts_evt.params.write.data[1] << 8);
-
-          characteristicInfo->notifySubscribed = (value & 0x0001);
-          characteristicInfo->indicateSubscribed = (value & 0x0002);
-
-          bool subscribed = (characteristicInfo->notifySubscribed || characteristicInfo->indicateSubscribed);
-
-          if (subscribed != characteristicInfo->characteristic->subscribed()) {
-            if (this->_eventListener) {
-              this->_eventListener->BLEDeviceCharacteristicSubscribedChanged(*this, *characteristicInfo->characteristic, subscribed);
-            }
-          }
-        }
-      }
-      break;
-    }
-
-    default:
-      break;
-  }
 }
 
 #endif

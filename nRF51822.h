@@ -1,8 +1,7 @@
 #ifndef _NRF_51822_H_
 #define _NRF_51822_H_
 
-#include <ble.h>
-#include <ble_srv_common.h>
+#include <ble_gatts.h>
 
 #include "BLEDevice.h"
 
@@ -47,13 +46,7 @@ class nRF51822 : public BLEDevice
     virtual void requestTemperature();
     virtual void requestBatteryLevel();
 
-    void handleEvent(ble_evt_t* bleEvent);
-
-    static void eventHandler(ble_evt_t* bleEvent);
-    static void systemEventHandler(uint32_t sysEvent);
-
   private:
-    static nRF51822*             _instance;
 
     unsigned char                _advData[31];
     unsigned char                _advDataLen;
