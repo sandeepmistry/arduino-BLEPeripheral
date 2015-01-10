@@ -18,14 +18,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
  *    to the BLEController App or vice verse.
  *    Characteristics received from App will print on Serial Monitor.
  */
-
-// Import libraries (BLEPeripheral depends on SPI or BLE_API)
-#ifndef NRF51
-  #include <SPI.h>
-#else
-  #include <BLE_API.h>
-#endif
-
+ 
+// Import libraries (BLEPeripheral depends on SPI)
+#include <SPI.h>
 #include <BLEPeripheral.h>
 
 // define pins (varies per shield/board)
@@ -46,7 +41,7 @@ BLECharacteristic    rxCharacteristic = BLECharacteristic("713d0003503e4c75ba943
 /*--------------------------------------------------------------------------------------------*/
 
 void setup()
-{
+{  
   Serial.begin(115200);
 #if defined (__AVR_ATmega32U4__)
   //Wait until the serial port is available (useful only for the Leonardo)
@@ -79,20 +74,20 @@ void loop()
 {
   BLECentral central = blePeripheral.central();
 
-  if (central)
+  if (central) 
   {
     // central connected to peripheral
     Serial.print(F("Connected to central: "));
     Serial.println(central.address());
 
-    while (central.connected())
+    while (central.connected()) 
     {
       // central still connected to peripheral
-      if (rxCharacteristic.written())
+      if (rxCharacteristic.written()) 
       {
         unsigned char len = rxCharacteristic.valueLength();
         const unsigned char *val = rxCharacteristic.value();
-        Serial.print("didCharacteristicWritten, Length: ");
+        Serial.print("didCharacteristicWritten, Length: "); 
         Serial.println(len, DEC);
         unsigned char i = 0;
         while(i<len)
@@ -100,18 +95,18 @@ void loop()
           Serial.write(val[i++]);
         }
       }
-
+      
       if ( Serial.available() )
       {
         delay(5);
         unsigned char len = 0;
-        len = Serial.available();
+        len = Serial.available(); 
         char val[len];
         Serial.readBytes(val, len);
         txCharacteristic.setValue((const unsigned char *)val, len);
       }
     }
-
+    
     // central disconnected
     Serial.print(F("Disconnected from central: "));
     Serial.println(central.address());
