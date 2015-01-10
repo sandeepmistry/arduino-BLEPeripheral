@@ -3,6 +3,14 @@
 
 #include <stdlib.h>
 
+#ifndef max
+#define max(a,b) (((a) > (b)) ? (a) : (b))
+#endif
+
+#ifndef min
+#define min(a,b) (((a) < (b)) ? (a) : (b))
+#endif
+
 #ifdef NRF_51
 
 #define BLE_ADVERTISEMENT_DATA_MAX_VALUE_LENGTH    26

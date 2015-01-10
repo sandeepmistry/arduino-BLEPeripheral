@@ -124,7 +124,7 @@ uint16_t crc_16_ccitt(uint16_t crc, uint8_t * data_in, uint16_t data_len) {
 }
 
 nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
-  BLEChip(),
+  BLEDevice(),
 
   _pipeInfo(NULL),
   _numPipeInfo(0),
@@ -743,7 +743,7 @@ void nRF8001::poll() {
               Serial.println(aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_type, DEC);
 #endif
               if (this->_eventListener) {
-                this->_eventListener->BLEChipAddressReceived(*this, aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_own);
+                this->_eventListener->BLEDeviceAddressReceived(*this, aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_own);
               }
               break;
             }
@@ -755,7 +755,7 @@ void nRF8001::poll() {
               Serial.println(batteryLevel);
 #endif
               if (this->_eventListener) {
-                this->_eventListener->BLEChipBatteryLevelReceived(*this, batteryLevel);
+                this->_eventListener->BLEDeviceBatteryLevelReceived(*this, batteryLevel);
               }
               break;
             }
@@ -767,7 +767,7 @@ void nRF8001::poll() {
               Serial.println(temperature);
 #endif
               if (this->_eventListener) {
-                this->_eventListener->BLEChipTemperatureReceived(*this, temperature);
+                this->_eventListener->BLEDeviceTemperatureReceived(*this, temperature);
               }
               break;
             }
@@ -789,7 +789,7 @@ void nRF8001::poll() {
         Serial.println(address);
 #endif
         if (this->_eventListener) {
-          this->_eventListener->BLEChipConnected(*this, aciEvt->params.connected.dev_addr);
+          this->_eventListener->BLEDeviceConnected(*this, aciEvt->params.connected.dev_addr);
         }
 
         this->_aciState.data_credit_available = this->_aciState.data_credit_total;
@@ -829,7 +829,7 @@ void nRF8001::poll() {
 
           if (pipeInfo->characteristic->subscribed() != subscribed) {
             if (this->_eventListener) {
-              this->_eventListener->BLEChipCharacteristicSubscribedChanged(*this, *pipeInfo->characteristic, subscribed);
+              this->_eventListener->BLEDeviceCharacteristicSubscribedChanged(*this, *pipeInfo->characteristic, subscribed);
             }
           }
         }
@@ -852,13 +852,13 @@ void nRF8001::poll() {
 
           if (pipeInfo->characteristic->subscribed()) {
             if (this->_eventListener) {
-              this->_eventListener->BLEChipCharacteristicSubscribedChanged(*this, *pipeInfo->characteristic, false);
+              this->_eventListener->BLEDeviceCharacteristicSubscribedChanged(*this, *pipeInfo->characteristic, false);
             }
           }
         }
 
         if (this->_eventListener) {
-          this->_eventListener->BLEChipDisconnected(*this);
+          this->_eventListener->BLEDeviceDisconnected(*this);
         }
 
 #ifdef NRF_8001_ENABLE_UNAUTHENICATED_SECURITY
@@ -911,7 +911,7 @@ void nRF8001::poll() {
             }
 
             if (this->_eventListener) {
-              this->_eventListener->BLEChipCharacteristicValueChanged(*this, *pipeInfo->characteristic, aciEvt->params.data_received.rx_data.aci_data, dataLen);
+              this->_eventListener->BLEDeviceCharacteristicValueChanged(*this, *pipeInfo->characteristic, aciEvt->params.data_received.rx_data.aci_data, dataLen);
             }
             break;
           }

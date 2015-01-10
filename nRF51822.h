@@ -4,9 +4,9 @@
 #include <ble.h>
 #include <ble_srv_common.h>
 
-#include "BLEChip.h"
+#include "BLEDevice.h"
 
-class nRF51822 : public BLEChip
+class nRF51822 : public BLEDevice
 {
   friend class BLEPeripheral;
 
