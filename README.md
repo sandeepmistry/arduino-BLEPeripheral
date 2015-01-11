@@ -14,6 +14,11 @@ An [Arduino](http://arduino.cc) library for creating custom BLE peripherals.
    * [BLE Shield](http://redbearlab.com/bleshield/)
    * [Blend Micro](http://redbearlab.com/blendmicro/)
    * [Blend](http://redbearlab.com/blend/)
+ * [Olimex](https://www.olimex.com)
+   * [MOD-nRF8001](https://www.olimex.com/Products/Modules/RF/MOD-nRF8001/)
+   * [OLIMEXINO-NANO-BLE](https://www.olimex.com/Products/Duino/AVR/OLIMEXINO-NANO-BLE/)
+ * [Jaycon Systems](http://www.jayconsystems.com)
+   * [nRF8001 Bluetooth Breakout Board](http://www.jayconsystems.com/nrf8001-breakout-board.html)
 
 **Note:** Does not require use of [nRFgo Studio](http://www.nordicsemi.com/chi/node_176/2.4GHz-RF/nRFgo-Studio)!
 
@@ -35,7 +40,7 @@ An [Arduino](http://arduino.cc) library for creating custom BLE peripherals.
 | RedBearLab nRF51822 | UNUSED | UNUSED | UNUSED |
 | BLE Nano | UNUSED | UNUSED | UNUSED |
 
-## Compatible IDE's and MCU's 
+## Compatible IDE's and MCU's
 
  * [Arduino IDE](http://arduino.cc/en/Main/Software#toc1)
    * AVR
