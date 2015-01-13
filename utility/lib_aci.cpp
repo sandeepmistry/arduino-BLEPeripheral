@@ -23,7 +23,7 @@
   @brief Implementation of the ACI library.
  */
 
-#ifndef NRF51
+#if !defined(NRF51) && !defined(__RFduino__)
 
 #include "hal_platform.h"
 #include "aci.h"

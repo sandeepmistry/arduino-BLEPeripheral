@@ -23,7 +23,7 @@
 @brief Implementation of a circular queue for ACI data
 */
 
-#ifndef NRF51
+#if !defined(NRF51) && !defined(__RFduino__)
 
 #include "hal_aci_tl.h"
 #include "aci_queue.h"

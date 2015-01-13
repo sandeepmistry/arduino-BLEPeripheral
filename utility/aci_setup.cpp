@@ -19,7 +19,7 @@
  * SOFTWARE.
  */
 
-#ifndef NRF51
+#if !defined(NRF51) && !defined(__RFduino__)
 
 #include <lib_aci.h>
 #include "aci_setup.h"

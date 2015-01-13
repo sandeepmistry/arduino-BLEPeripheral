@@ -1,4 +1,4 @@
-#ifdef NRF51
+#if defined(NRF51) || defined(__RFduino__)
 
 #include <utility/nrf51822/s110/ble_gatts.h>
 #include <utility/nrf51822/s110/ble_hci.h>

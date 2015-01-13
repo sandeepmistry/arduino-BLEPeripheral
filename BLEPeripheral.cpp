@@ -10,7 +10,7 @@
 #define DEFAULT_APPEARANCE  0x0000
 
 BLEPeripheral::BLEPeripheral(unsigned char req, unsigned char rdy, unsigned char rst) :
-#ifdef NRF51
+#if defined(NRF51) || defined(__RFduino__)
   _nRF51822(),
 #else
   _nRF8001(req, rdy, rst),
@@ -31,7 +31,7 @@ BLEPeripheral::BLEPeripheral(unsigned char req, unsigned char rdy, unsigned char
 
   _central(this)
 {
-#ifdef NRF51
+#if defined(NRF51) || defined(__RFduino__)
   this->_device = &this->_nRF51822;
 #else
   this->_device = &this->_nRF8001;
