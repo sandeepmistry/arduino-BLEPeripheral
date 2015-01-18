@@ -7,6 +7,7 @@
 #######################################
 
 BLEAttribute	KEYWORD1
+BLEBondStore	KEYWORD1
 BLECentral	KEYWORD1
 BLECharacteristic	KEYWORD1
 BLEDescriptor	KEYWORD1
@@ -15,6 +16,7 @@ BLEService	KEYWORD1
 BLETypedCharacteristic	KEYWORD1
 BLEUuid	KEYWORD1
 nRF8001	KEYWORD1
+nRF51822	KEYWORD1
 
 BLECharCharacteristic	KEYWORD1
 BLEUnsignedCharCharacteristic	KEYWORD1
@@ -55,8 +57,15 @@ setManufacturerData	KEYWORD2
 setLocalName	KEYWORD2
 setDeviceName	KEYWORD2
 setAppearance	KEYWORD2
+setAdvertisingInterval	KEYWORD2
+setConnectable	KEYWORD2
+setBondStore	KEYWORD2
 addAttribute	KEYWORD2
 central	KEYWORD2
+hasData	KEYWORD2
+clearData	KEYWORD2
+storeData	KEYWORD2
+restoreData	KEYWORD2
 
 setValueLE	KEYWORD2
 valueLE	KEYWORD2

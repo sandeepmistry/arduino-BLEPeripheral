@@ -2,6 +2,7 @@
 #define _BLE_DEVICE_H_
 
 #include "BLEAttribute.h"
+#include "BLEBondStore.h"
 #include "BLECharacteristic.h"
 
 class BLEDevice;
@@ -34,6 +35,7 @@ class BLEDevice
 
     void setAdvertisingInterval(unsigned short advertisingInterval);
     void setConnectable(bool connectable);
+    void setBondStore(BLEBondStore& bondStore);
 
     virtual void begin(unsigned char advertisementDataType,
                 unsigned char advertisementDataLength,
@@ -61,6 +63,7 @@ class BLEDevice
   protected:
     unsigned short                _advertisingInterval;
     bool                          _connectable;
+    BLEBondStore*                 _bondStore;
     BLEDeviceEventListener*       _eventListener;
 };
 

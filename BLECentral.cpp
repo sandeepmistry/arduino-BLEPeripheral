@@ -3,6 +3,7 @@
 #include "BLEPeripheral.h"
 
 #include "BLECentral.h"
+#include "BLEUtil.h"
 
 BLECentral::BLECentral(BLEPeripheral* peripheral) :
   _peripheral(peripheral)
@@ -33,13 +34,7 @@ bool BLECentral::connected() {
 const char* BLECentral::address() const {
   static char address[18];
 
-  sprintf(address, "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x",
-    this->_address[5],
-    this->_address[4],
-    this->_address[3],
-    this->_address[2],
-    this->_address[1],
-    this->_address[0]);
+  BLEUtil::addressToString(this->_address, address);
 
   return address;
 }

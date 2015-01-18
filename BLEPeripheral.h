@@ -7,6 +7,7 @@
 #include "BLECentral.h"
 #include "BLEDescriptor.h"
 #include "BLEDevice.h"
+#include "BLEBondStore.h"
 #include "BLEService.h"
 #include "BLETypedCharacteristics.h"
 
@@ -23,6 +24,7 @@ enum BLEPeripheralEvent {
 
 typedef void (*BLEPeripheralEventHandler)(BLECentral& central);
 
+
 class BLEPeripheral : public BLEDeviceEventListener, public BLECharacteristicValueChangeListener
 {
   public:
@@ -38,6 +40,8 @@ class BLEPeripheral : public BLEDeviceEventListener, public BLECharacteristicVal
 
     void setAdvertisingInterval(unsigned short advertisingInterval);
     void setConnectable(bool connectable);
+    void setBondStore(BLEBondStore& bondStore);
+
 
     void setDeviceName(const char* deviceName);
     void setAppearance(unsigned short appearance);

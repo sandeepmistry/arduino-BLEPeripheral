@@ -1,6 +1,7 @@
 #include "BLEUuid.h"
 
 #include "BLEDeviceLimits.h"
+#include "BLEUtil.h"
 
 #include "BLEPeripheral.h"
 
@@ -130,6 +131,10 @@ void BLEPeripheral::setConnectable(bool connectable) {
   this->_device->setConnectable(connectable);
 }
 
+void BLEPeripheral::setBondStore(BLEBondStore& bondStore) {
+  this->_device->setBondStore(bondStore);
+}
+
 void BLEPeripheral::setDeviceName(const char* deviceName) {
   this->_deviceNameCharacteristic.setValue(deviceName);
 }
@@ -238,13 +243,7 @@ void BLEPeripheral::BLEDeviceAddressReceived(BLEDevice& device, const unsigned c
 #ifdef BLE_PERIPHERAL_DEBUG
   char addressStr[18];
 
-  sprintf(addressStr, "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x",
-    address[5],
-    address[4],
-    address[3],
-    address[2],
-    address[1],
-    address[0]);
+  BLEUtil::addressToString(address, addressStr);
 
   Serial.print(F("Peripheral address: "));
   Serial.println(addressStr);

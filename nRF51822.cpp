@@ -13,6 +13,7 @@
 #include "BLEService.h"
 #include "BLECharacteristic.h"
 #include "BLEDescriptor.h"
+#include "BLEUtil.h"
 #include "BLEUuid.h"
 
 #include "nRF51822.h"
@@ -305,13 +306,9 @@ void nRF51822::poll() {
       case BLE_GAP_EVT_CONNECTED:
 #ifdef NRF_51822_DEBUG
         char address[18];
-        sprintf(address, "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x",
-          bleEvt->evt.gap_evt.params.connected.peer_addr.addr[5],
-          bleEvt->evt.gap_evt.params.connected.peer_addr.addr[4],
-          bleEvt->evt.gap_evt.params.connected.peer_addr.addr[3],
-          bleEvt->evt.gap_evt.params.connected.peer_addr.addr[2],
-          bleEvt->evt.gap_evt.params.connected.peer_addr.addr[1],
-          bleEvt->evt.gap_evt.params.connected.peer_addr.addr);
+
+        BLEUtil::addressToString(bleEvt->evt.gap_evt.params.connected.peer_addr.addr, address);
+
         Serial.print(F("Evt Connected "));
         Serial.println(address);
 #endif

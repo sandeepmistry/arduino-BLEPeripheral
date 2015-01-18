@@ -59,9 +59,8 @@ class nRF8001 : protected BLEDevice
 
   private:
     void waitForSetupMode();
-    void sendSetupMessage(hal_aci_data_t* data);
-    void sendSetupMessage(hal_aci_data_t* setupMsg, unsigned char type, unsigned short& offset);
-    void sendCrc();
+    void sendSetupMessage(hal_aci_data_t* data, bool withCrc = false);
+    void sendSetupMessage(hal_aci_data_t* setupMsg, unsigned char type, unsigned short& offset, bool withCrc = false);
 
   private:
     struct aci_state_t          _aciState;
@@ -71,10 +70,10 @@ class nRF8001 : protected BLEDevice
     unsigned char               _numPipeInfo;
     unsigned char               _broadcastPipe;
 
-    bool                        _newBond;
     unsigned char*              _dynamicData;
     unsigned char               _dynamicDataOffset;
     unsigned char               _dynamicDataSequenceNo;
+    bool                        _storeDynamicData;
 
     unsigned short              _crcSeed;
 };

@@ -8,7 +8,8 @@
 BLEDevice::BLEDevice() :
   _eventListener(NULL),
   _advertisingInterval(DEFAULT_ADVERTISING_INTERVAL),
-  _connectable(DEFAULT_CONNECTABLE)
+  _connectable(DEFAULT_CONNECTABLE),
+  _bondStore(NULL)
 {
 }
 
@@ -25,4 +26,8 @@ void BLEDevice::setAdvertisingInterval(unsigned short advertisingInterval) {
 
 void BLEDevice::setConnectable(bool connectable) {
   this->_connectable = connectable;
+}
+
+void BLEDevice::setBondStore(BLEBondStore& bondStore) {
+  this->_bondStore = &bondStore;
 }
