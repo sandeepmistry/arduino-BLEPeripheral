@@ -42,14 +42,8 @@
 #define BLE_GATT_OP_WRITE_REQ              0x01  /**< Write Request. */
 #define BLE_GATT_OP_WRITE_CMD              0x02  /**< Write Command. */
 #define BLE_GATT_OP_SIGN_WRITE_CMD         0x03  /**< Signed Write Command. */
-#define BLE_GATT_OP_PREP_WRITE_REQ         0x04  /**< Prepare Write Request. */
-#define BLE_GATT_OP_EXEC_WRITE_REQ         0x05  /**< Execute Write Request. */
-/** @} */
-
-/** @defgroup BLE_GATT_EXEC_WRITE_FLAGS GATT Execute Write flags
- * @{ */
-#define BLE_GATT_EXEC_WRITE_FLAG_PREPARED_CANCEL 0x00
-#define BLE_GATT_EXEC_WRITE_FLAG_PREPARED_WRITE  0x01
+#define BLE_GATT_OP_PREPARE_WRITE_REQ      0x04  /**< Prepare Write Request. */
+#define BLE_GATT_OP_EXECUTE_WRITE_REQ      0x05  /**< Execute Write Request. */
 /** @} */
 
 /** @defgroup BLE_GATT_HVX_TYPES GATT Handle Value operations
@@ -137,9 +131,6 @@
 
 /** @} */
 
-/** @addtogroup BLE_GATT_STRUCTURES Structures
- * @{ */
-
 /**@brief GATT Characteristic Properties. */
 typedef struct
 {
@@ -162,8 +153,6 @@ typedef struct
 } ble_gatt_char_ext_props_t;
 
 #endif // BLE_GATT_H__
-
-/** @} */
 
 /**
   @}

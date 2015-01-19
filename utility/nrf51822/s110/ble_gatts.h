@@ -21,8 +21,6 @@
 #include "ble_gatt.h"
 #include "nrf_svc.h"
 
-/** @addtogroup BLE_GATTS_ENUMERATIONS Enumerations
- * @{ */
 
 /**
  * @brief GATTS API SVC numbers.
@@ -42,7 +40,6 @@ enum BLE_GATTS_SVCS
   SD_BLE_GATTS_SYS_ATTR_GET,                     /**< Get updated persistent system attributes after terminating a connection. */
 };
 
-/** @} */
 
 /** @addtogroup BLE_GATTS_DEFINES Defines
  * @{ */
@@ -89,9 +86,6 @@ enum BLE_GATTS_SVCS
 #define BLE_GATTS_OP_WRITE_REQ              0x01  /**< Write Request. */
 #define BLE_GATTS_OP_WRITE_CMD              0x02  /**< Write Command. */
 #define BLE_GATTS_OP_SIGN_WRITE_CMD         0x03  /**< Signed Write Command. */
-#define BLE_GATTS_OP_PREP_WRITE_REQ         0x04  /**< Prepare Write Request. */
-#define BLE_GATTS_OP_EXEC_WRITE_REQ_CANCEL  0x05  /**< Execute Write Request: Cancel all prepared writes. */
-#define BLE_GATTS_OP_EXEC_WRITE_REQ_NOW     0x06  /**< Execute Write Request: Immediately execute all prepared writes. */
 /** @} */
 
 /** @defgroup BLE_GATTS_VLOCS GATT Value Locations
@@ -109,19 +103,7 @@ enum BLE_GATTS_SVCS
 #define BLE_GATTS_AUTHORIZE_TYPE_WRITE      0x02  /**< Authorize a Write Request Operation. */
 /** @} */
 
-
 /** @} */
-
-/** @addtogroup BLE_GATTS_STRUCTURES Structures
- * @{ */
-
-/**
- * @brief BLE GATTS init options
- */
-typedef struct
-{
-  uint8_t   service_changed:1;             /**< Include the Service Changed characteristic in the local attributes. */
-} ble_gatts_enable_params_t;
 
 /**@brief Attribute metadata. */
 typedef struct
@@ -233,7 +215,6 @@ typedef struct
   } params;
 } ble_gatts_rw_authorize_reply_params_t;
 
-
 /**
  * @brief GATT Server Event IDs.
  */
@@ -311,10 +292,6 @@ typedef struct
   } params;
 } ble_gatts_evt_t;
 
-/** @} */
-
-/** @addtogroup BLE_GATTS_FUNCTIONS Functions
- * @{ */
 
 /**@brief Add a service declaration to the local server ATT table.
  *
@@ -403,7 +380,7 @@ SVCALL(SD_BLE_GATTS_DESCRIPTOR_ADD, uint32_t, sd_ble_gatts_descriptor_add(uint16
  * @param[in] handle    Attribute handle.
  * @param[in] offset    Offset in bytes to write from.
  * @param[in,out] p_len Length in bytes to be written, length in bytes written after successful return.
- * @param[in] p_value   Pointer to a buffer (at least len bytes long) containing the desired attribute value. If value is stored in user memory, only the attribute length is updated when p_value == NULL.
+ * @param[in] p_value   Pointer to a buffer (at least len bytes long) containing the desired attribute value.
  *
  * @return @ref NRF_SUCCESS Successfully set the value of the attribute.
  * @return @ref NRF_ERROR_INVALID_ADDR Invalid pointer supplied.
@@ -418,13 +395,8 @@ SVCALL(SD_BLE_GATTS_VALUE_SET, uint32_t, sd_ble_gatts_value_set(uint16_t handle,
  *
  * @param[in] handle     Attribute handle.
  * @param[in] offset     Offset in bytes to read from.
- * @param[in,out] p_len  Length in bytes to be read, total length of attribute value (in bytes, starting from offset) after successful return.
- * @param[in,out] p_data Pointer to a buffer (at least len bytes long) where to store the attribute value. Set to NULL to obtain the complete length of attribute value.
- *
- * @note                 If the attribute value is longer than the size of the supplied buffer,
- *                       p_len will return the total attribute value length (excluding offset),
- *                       and not the number of bytes actually returned in p_data.
- *                       The application may use this information to allocate a suitable buffer size.
+ * @param[in,out] p_len  Length in bytes to be read, length in bytes read after successful return.
+ * @param[in,out] p_data Pointer to a buffer (at least len bytes long) where to store the attribute value.
  * 
  * @return @ref NRF_SUCCESS Successfully retrieved the value of the attribute.
  * @return @ref NRF_ERROR_INVALID_ADDR Invalid pointer supplied.
@@ -483,6 +455,7 @@ SVCALL(SD_BLE_GATTS_HVX, uint32_t, sd_ble_gatts_hvx(uint16_t conn_handle, ble_ga
  *
  * @return @ref NRF_SUCCESS Successfully queued the Service Changed indication for transmission.
  * @return @ref BLE_ERROR_INVALID_CONN_HANDLE Invalid Connection Handle.
+ * @return @ref NRF_ERROR_INVALID_ADDR Invalid pointer supplied.
  * @return @ref NRF_ERROR_INVALID_PARAM Invalid parameter(s) supplied.
  * @return @ref BLE_ERROR_INVALID_ATTR_HANDLE Invalid attribute handle(s) supplied, handles must be in the range populated by the application.
  * @return @ref NRF_ERROR_INVALID_STATE Invalid state to perform operation, notifications or indications must be enabled in the CCCD.
@@ -557,7 +530,6 @@ SVCALL(SD_BLE_GATTS_SYS_ATTR_SET, uint32_t, sd_ble_gatts_sys_attr_set(uint16_t c
  */ 
 SVCALL(SD_BLE_GATTS_SYS_ATTR_GET, uint32_t, sd_ble_gatts_sys_attr_get(uint16_t conn_handle, uint8_t * const p_sys_attr_data, uint16_t* const p_len)); 
 
-/** @} */
 
 #endif // BLE_GATTS_H__
 

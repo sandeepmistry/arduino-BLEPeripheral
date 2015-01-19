@@ -27,7 +27,7 @@
  * @{ */
 
 /**@brief SoftDevice Manager SVC Base number. */
-#define SDM_SVC_BASE  (0x10)
+#define SDM_SVC_BASE 0x10   
 
 /** @} */
 
@@ -40,33 +40,27 @@ enum NRF_SD_SVCS
   SD_SOFTDEVICE_ENABLE = SDM_SVC_BASE, /**< ::sd_softdevice_enable */
   SD_SOFTDEVICE_DISABLE,               /**< ::sd_softdevice_disable */
   SD_SOFTDEVICE_IS_ENABLED,            /**< ::sd_softdevice_is_enabled */
-  SD_SOFTDEVICE_VECTOR_TABLE_BASE_SET, /**< ::sd_softdevice_vector_table_base_set */
+  SD_SOFTDEVICE_FORWARD_TO_APPLICATION,/**< ::sd_softdevice_forward_to_application */
   SVC_SDM_LAST                         /**< Placeholder for last SDM SVC */
 };
 
 /**@brief Possible lfclk oscillator sources. */
 enum NRF_CLOCK_LFCLKSRCS
 {
-  NRF_CLOCK_LFCLKSRC_SYNTH_250_PPM,                       /**< LFCLK Synthesized from HFCLK.                    */
-  NRF_CLOCK_LFCLKSRC_XTAL_500_PPM,                        /**< LFCLK crystal oscillator 500 PPM accuracy.       */
-  NRF_CLOCK_LFCLKSRC_XTAL_250_PPM,                        /**< LFCLK crystal oscillator 250 PPM accuracy.       */
-  NRF_CLOCK_LFCLKSRC_XTAL_150_PPM,                        /**< LFCLK crystal oscillator 150 PPM accuracy.       */
-  NRF_CLOCK_LFCLKSRC_XTAL_100_PPM,                        /**< LFCLK crystal oscillator 100 PPM accuracy.       */
-  NRF_CLOCK_LFCLKSRC_XTAL_75_PPM,                         /**< LFCLK crystal oscillator 75 PPM accuracy.        */
-  NRF_CLOCK_LFCLKSRC_XTAL_50_PPM,                         /**< LFCLK crystal oscillator 50 PPM accuracy.        */
-  NRF_CLOCK_LFCLKSRC_XTAL_30_PPM,                         /**< LFCLK crystal oscillator 30 PPM accuracy.        */
-  NRF_CLOCK_LFCLKSRC_XTAL_20_PPM,                         /**< LFCLK crystal oscillator 20 PPM accuracy.        */
-  NRF_CLOCK_LFCLKSRC_RC_250_PPM_250MS_CALIBRATION,        /**< LFCLK RC oscillator, 250ms  calibration interval.*/
-  NRF_CLOCK_LFCLKSRC_RC_250_PPM_500MS_CALIBRATION,        /**< LFCLK RC oscillator, 500ms  calibration interval.*/
-  NRF_CLOCK_LFCLKSRC_RC_250_PPM_1000MS_CALIBRATION,       /**< LFCLK RC oscillator, 1000ms calibration interval.*/
-  NRF_CLOCK_LFCLKSRC_RC_250_PPM_2000MS_CALIBRATION,       /**< LFCLK RC oscillator, 2000ms calibration interval.*/
-  NRF_CLOCK_LFCLKSRC_RC_250_PPM_4000MS_CALIBRATION,       /**< LFCLK RC oscillator, 4000ms calibration interval.*/
-  NRF_CLOCK_LFCLKSRC_RC_250_PPM_8000MS_CALIBRATION,       /**< LFCLK RC oscillator, 8000ms calibration interval.*/
-  NRF_CLOCK_LFCLKSRC_RC_250_PPM_TEMP_1000MS_CALIBRATION,  /**< LFCLK RC oscillator. Temperature checked every 1000ms, if changed above a threshold, a calibration is done.*/
-  NRF_CLOCK_LFCLKSRC_RC_250_PPM_TEMP_2000MS_CALIBRATION,  /**< LFCLK RC oscillator. Temperature checked every 2000ms, if changed above a threshold, a calibration is done.*/
-  NRF_CLOCK_LFCLKSRC_RC_250_PPM_TEMP_4000MS_CALIBRATION,  /**< LFCLK RC oscillator. Temperature checked every 4000ms, if changed above a threshold, a calibration is done.*/
-  NRF_CLOCK_LFCLKSRC_RC_250_PPM_TEMP_8000MS_CALIBRATION,  /**< LFCLK RC oscillator. Temperature checked every 8000ms, if changed above a threshold, a calibration is done.*/
-  NRF_CLOCK_LFCLKSRC_RC_250_PPM_TEMP_16000MS_CALIBRATION, /**< LFCLK RC oscillator. Temperature checked every 16000ms, if changed above a threshold, a calibration is done.*/
+  NRF_CLOCK_LFCLKSRC_RC_250_PPM_500MS_CALIBRATION,  /**< LFCLK RC oscillator, 500ms  calibration interval.*/
+  NRF_CLOCK_LFCLKSRC_RC_250_PPM_1000MS_CALIBRATION, /**< LFCLK RC oscillator, 1000ms calibration interval.*/
+  NRF_CLOCK_LFCLKSRC_RC_250_PPM_2000MS_CALIBRATION, /**< LFCLK RC oscillator, 2000ms calibration interval.*/
+  NRF_CLOCK_LFCLKSRC_RC_250_PPM_4000MS_CALIBRATION, /**< LFCLK RC oscillator, 4000ms calibration interval.*/
+  NRF_CLOCK_LFCLKSRC_RC_250_PPM_8000MS_CALIBRATION, /**< LFCLK RC oscillator, 8000ms calibration interval.*/
+  NRF_CLOCK_LFCLKSRC_SYNTH_250_PPM,                 /**< LFCLK Synthesized from HFCLK.                    */
+  NRF_CLOCK_LFCLKSRC_XTAL_500_PPM,                  /**< LFCLK crystal oscillator 500 PPM accuracy.       */
+  NRF_CLOCK_LFCLKSRC_XTAL_250_PPM,                  /**< LFCLK crystal oscillator 250 PPM accuracy.       */
+  NRF_CLOCK_LFCLKSRC_XTAL_150_PPM,                  /**< LFCLK crystal oscillator 150 PPM accuracy.       */
+  NRF_CLOCK_LFCLKSRC_XTAL_100_PPM,                  /**< LFCLK crystal oscillator 100 PPM accuracy.       */
+  NRF_CLOCK_LFCLKSRC_XTAL_75_PPM,                   /**< LFCLK crystal oscillator 75 PPM accuracy.        */
+  NRF_CLOCK_LFCLKSRC_XTAL_50_PPM,                   /**< LFCLK crystal oscillator 50 PPM accuracy.        */
+  NRF_CLOCK_LFCLKSRC_XTAL_30_PPM,                   /**< LFCLK crystal oscillator 30 PPM accuracy.        */
+  NRF_CLOCK_LFCLKSRC_XTAL_20_PPM,                   /**< LFCLK crystal oscillator 20 PPM accuracy.        */
 };
 
 /** @} */
@@ -148,15 +142,16 @@ SVCALL(SD_SOFTDEVICE_DISABLE, uint32_t, sd_softdevice_disable(void));
  */
 SVCALL(SD_SOFTDEVICE_IS_ENABLED, uint32_t, sd_softdevice_is_enabled(uint8_t * p_softdevice_enabled));
 
-/**@brief Sets the base address of the interrupt vector table for interrupts forwarded from the SoftDevice
+/**@brief Start forwarding interrupts to application.
  * 
- * This function is only intended to be called when a bootloader is enabled.
+ * This function is only intended to be called when a bootloader is enabled is used.
+ * The bootloader should call this right before it starts the application. 
+ * It is recommended that all interrupt sources are off when this is called, 
+ * or you could end up having interrupts in the application being executed before main() of the application.
  *
- * @param[in] address The base address of the interrupt vector table for forwarded interrupts.
- 
  * @retval ::NRF_SUCCESS
  */
-SVCALL(SD_SOFTDEVICE_VECTOR_TABLE_BASE_SET, uint32_t, sd_softdevice_vector_table_base_set(uint32_t address)); 
+SVCALL(SD_SOFTDEVICE_FORWARD_TO_APPLICATION, uint32_t, sd_softdevice_forward_to_application(void)); 
 
 /** @} */
 
