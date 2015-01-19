@@ -1,11 +1,20 @@
 #if defined(NRF51) || defined(__RFduino__)
 
-#include <utility/nrf51822/s110/ble_gatts.h>
-#include <utility/nrf51822/s110/ble_hci.h>
-#include <utility/nrf51822/sd_common/ble_stack_handler_types.h>
-#include <utility/nrf51822/nordic_common.h>
-#include <utility/nrf51822/s110/nrf_sdm.h>
-#include <utility/nrf51822/s110/nrf_soc.h>
+#ifdef __RFduino__
+  #include <utility/nrf51822/s110/ble_gatts.h>
+  #include <utility/nrf51822/s110/ble_hci.h>
+  #include <utility/nrf51822/sd_common/ble_stack_handler_types.h>
+  #include <utility/nrf51822/nordic_common.h>
+  #include <utility/nrf51822/s110/nrf_sdm.h>
+  #include <utility/nrf51822/s110/nrf_soc.h>
+#else
+  #include <s110/ble_gatts.h>
+  #include <s110/ble_hci.h>
+  #include <sd_common/ble_stack_handler_types.h>
+  #include <nordic_common.h>
+  #include <s110/nrf_sdm.h>
+  #include <s110/nrf_soc.h>
+#endif
 
 #include "Arduino.h"
 
@@ -50,7 +59,26 @@ void nRF51822::begin(unsigned char advertisementDataType,
                       BLEAttribute** attributes,
                       unsigned char numAttributes)
 {
+
+#ifdef __RFduino__
+  sd_softdevice_enable(NRF_CLOCK_LFCLKSRC_SYNTH_250_PPM, NULL);
+#else
   sd_softdevice_enable(NRF_CLOCK_LFCLKSRC_XTAL_20_PPM, NULL); // sd_nvic_EnableIRQ(SWI2_IRQn);
+#endif
+
+#ifdef NRF_51822_DEBUG
+  ble_version_t version;
+
+  sd_ble_version_get(&version);
+
+  Serial.print(F("version = "));
+  Serial.print(version.version_number);
+  Serial.print(F("  "));
+  Serial.print(version.company_id);
+  Serial.print(F("  "));
+  Serial.print(version.subversion_number);
+  Serial.println();
+#endif
 
   ble_gap_conn_params_t gap_conn_params = {0};
 
@@ -495,6 +523,9 @@ void nRF51822::poll() {
 #ifdef NRF_51822_DEBUG
         Serial.print(F("bleEvt->header.evt_id = 0x"));
         Serial.println(bleEvt->header.evt_id, HEX);
+        Serial.print(bleEvt->header.evt_id, HEX);
+        Serial.print(F(" "));
+        Serial.println(bleEvt->header.evt_len, HEX);
 #endif
         break;
     }
@@ -624,6 +655,7 @@ void nRF51822::requestAddress() {
 }
 
 void nRF51822::requestTemperature() {
+#ifndef __RFduino__
   int32_t rawTemperature = 0;
 
   sd_temp_get(&rawTemperature);
@@ -633,6 +665,7 @@ void nRF51822::requestTemperature() {
   if (this->_eventListener) {
     this->_eventListener->BLEDeviceTemperatureReceived(*this, temperature);
   }
+#endif
 }
 
 void nRF51822::requestBatteryLevel() {
