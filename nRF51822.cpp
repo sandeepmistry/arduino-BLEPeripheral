@@ -28,12 +28,12 @@
 #include "nRF51822.h"
 
 // #define NRF_51822_DEBUG
-// #define NRF_51822_ENABLE_UNAUTHENICATED_SECURITY
 
 nRF51822::nRF51822() :
   BLEDevice(),
 
   _connectionHandle(BLE_CONN_HANDLE_INVALID),
+  _storeAuthStatus(false),
 
   _advDataLen(0),
   _broadcastCharacteristic(NULL),
@@ -73,9 +73,9 @@ void nRF51822::begin(unsigned char advertisementDataType,
 
   Serial.print(F("version = "));
   Serial.print(version.version_number);
-  Serial.print(F("  "));
+  Serial.print(F(" "));
   Serial.print(version.company_id);
-  Serial.print(F("  "));
+  Serial.print(F(" "));
   Serial.print(version.subversion_number);
   Serial.println();
 #endif
@@ -218,19 +218,19 @@ void nRF51822::begin(unsigned char advertisementDataType,
         memset(&characteristicValueAttributeMetaData, 0, sizeof(characteristicValueAttributeMetaData));
 
         if (properties & (BLERead | BLENotify | BLEIndicate)) {
-#ifdef NRF_51822_ENABLE_UNAUTHENICATED_SECURITY
-          BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&characteristicValueAttributeMetaData.read_perm);
-#else
-          BLE_GAP_CONN_SEC_MODE_SET_OPEN(&characteristicValueAttributeMetaData.read_perm);
-#endif
+          if (this->_bondStore) {
+            BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&characteristicValueAttributeMetaData.read_perm);
+          } else {
+            BLE_GAP_CONN_SEC_MODE_SET_OPEN(&characteristicValueAttributeMetaData.read_perm);
+          }
         }
 
         if (properties & (BLEWriteWithoutResponse | BLEWrite)) {
-#ifdef NRF_51822_ENABLE_UNAUTHENICATED_SECURITY
-          BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&characteristicValueAttributeMetaData.write_perm);
-#else
-          BLE_GAP_CONN_SEC_MODE_SET_OPEN(&characteristicValueAttributeMetaData.write_perm);
-#endif
+          if (this->_bondStore) {
+            BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&characteristicValueAttributeMetaData.write_perm);
+          } else {
+            BLE_GAP_CONN_SEC_MODE_SET_OPEN(&characteristicValueAttributeMetaData.write_perm);
+          }
         }
 
         characteristicValueAttributeMetaData.vloc       = BLE_GATTS_VLOC_STACK;
@@ -294,11 +294,11 @@ void nRF51822::begin(unsigned char advertisementDataType,
       descriptorMetaData.vloc = BLE_GATTS_VLOC_STACK;
       descriptorMetaData.vlen = (valueLength == descriptor->valueSize()) ? 0 : 1;
 
-#ifdef NRF_51822_ENABLE_UNAUTHENICATED_SECURITY
-      BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&descriptorMetaData.read_perm);
-#else
-      BLE_GAP_CONN_SEC_MODE_SET_OPEN(&descriptorMetaData.read_perm);
-#endif
+      if (this->_bondStore) {
+        BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&descriptorMetaData.read_perm);
+      } else {
+        BLE_GAP_CONN_SEC_MODE_SET_OPEN(&descriptorMetaData.read_perm);
+      }
 
       descriptorAttribute.p_uuid    = &nordicUUID;
       descriptorAttribute.p_attr_md = &descriptorMetaData;
@@ -342,6 +342,7 @@ void nRF51822::poll() {
 #endif
 
         this->_connectionHandle = bleEvt->evt.gap_evt.conn_handle;
+        this->_storeAuthStatus = false;
 
         if (this->_eventListener) {
           this->_eventListener->BLEDeviceConnected(*this, bleEvt->evt.gap_evt.params.connected.peer_addr.addr);
@@ -369,6 +370,12 @@ void nRF51822::poll() {
 
         if (this->_eventListener) {
           this->_eventListener->BLEDeviceDisconnected(*this);
+        }
+
+        if (this->_bondStore && this->_storeAuthStatus) {
+          this->_bondStore->storeData((const unsigned char*)&this->_authStatus, sizeof(this->_authStatus));
+
+          this->_storeAuthStatus = false;
         }
 
         this->startAdvertising();
@@ -407,23 +414,23 @@ void nRF51822::poll() {
         Serial.println();
 #endif
 
-#ifdef NRF_51822_ENABLE_UNAUTHENICATED_SECURITY
-        ble_gap_sec_params_t gapSecParams;
+        if (this->_bondStore && !this->_bondStore->hasData()) {
+          // only allow bonding if bond store exists and there is no data
 
-        gapSecParams.timeout      = 30; // must be 30s
-        gapSecParams.bond         = true;
-        gapSecParams.mitm         = false;
-        gapSecParams.io_caps      = BLE_GAP_IO_CAPS_NONE;
-        gapSecParams.oob          = false;
-        gapSecParams.min_key_size = 7;
-        gapSecParams.max_key_size = 16;
+          ble_gap_sec_params_t gapSecParams;
 
-        sd_ble_gap_sec_params_reply(this->_connectionHandle, BLE_GAP_SEC_STATUS_SUCCESS, &gapSecParams);
+          gapSecParams.timeout      = 30; // must be 30s
+          gapSecParams.bond         = true;
+          gapSecParams.mitm         = false;
+          gapSecParams.io_caps      = BLE_GAP_IO_CAPS_NONE;
+          gapSecParams.oob          = false;
+          gapSecParams.min_key_size = 7;
+          gapSecParams.max_key_size = 16;
 
-        // sd_ble_gatts_sys_attr_set(this->_connectionHandle, NULL, 0);
-#else
-        sd_ble_gap_sec_params_reply(this->_connectionHandle, BLE_GAP_SEC_STATUS_PAIRING_NOT_SUPP, NULL);
-#endif
+          sd_ble_gap_sec_params_reply(this->_connectionHandle, BLE_GAP_SEC_STATUS_SUCCESS, &gapSecParams);
+        } else {
+          sd_ble_gap_sec_params_reply(this->_connectionHandle, BLE_GAP_SEC_STATUS_PAIRING_NOT_SUPP, NULL);
+        }
         break;
 
       case BLE_GAP_EVT_SEC_INFO_REQUEST:
@@ -451,6 +458,7 @@ void nRF51822::poll() {
 #ifdef NRF_51822_DEBUG
         Serial.println(F("Evt Auth Status"));
 #endif
+        this->_storeAuthStatus = true;
         this->_authStatus = bleEvt->evt.gap_evt.params.auth_status;
         break;
 
@@ -522,10 +530,9 @@ void nRF51822::poll() {
       default:
 #ifdef NRF_51822_DEBUG
         Serial.print(F("bleEvt->header.evt_id = 0x"));
-        Serial.println(bleEvt->header.evt_id, HEX);
         Serial.print(bleEvt->header.evt_id, HEX);
         Serial.print(F(" "));
-        Serial.println(bleEvt->header.evt_len, HEX);
+        Serial.println(bleEvt->header.evt_len);
 #endif
         break;
     }

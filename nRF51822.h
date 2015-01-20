@@ -57,6 +57,7 @@ class nRF51822 : public BLEDevice
     BLECharacteristic*           _broadcastCharacteristic;
 
     uint16_t                     _connectionHandle;
+    bool                         _storeAuthStatus;
     ble_gap_evt_auth_status_t    _authStatus;
 
     unsigned char                _numCharacteristics;
