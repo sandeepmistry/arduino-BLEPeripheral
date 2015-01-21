@@ -1082,6 +1082,7 @@ void nRF8001::sendSetupMessage(hal_aci_data_t* data, bool withCrc)
               Serial.println(F("Evt Cmd Rsp: Transaction Continue"));
 #endif
               setupMsgSent = true;
+              break;
 
             case ACI_STATUS_TRANSACTION_COMPLETE:
 #ifdef NRF_8001_DEBUG
