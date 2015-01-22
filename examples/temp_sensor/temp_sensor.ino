@@ -33,19 +33,16 @@ float lastHumidityReading;
 void setup() {
   Serial.begin(115200);
 #if defined (__AVR_ATmega32U4__)
-  //Wait until the serial port is available (useful only for the Leonardo)
-  //As the Leonardo board is not reseted every time you open the Serial Monitor
-  while(!Serial) {}
   delay(5000);  //5 seconds delay for enabling to see the start up comments on the serial board
 #endif
 
   blePeripheral.setLocalName("Temperature");
-  
+
   blePeripheral.setAdvertisedServiceUuid(tempService.uuid());
   blePeripheral.addAttribute(tempService);
   blePeripheral.addAttribute(tempCharacteristic);
   blePeripheral.addAttribute(tempDescriptor);
-  
+
   blePeripheral.setAdvertisedServiceUuid(humidityService.uuid());
   blePeripheral.addAttribute(humidityService);
   blePeripheral.addAttribute(humidityCharacteristic);
@@ -55,16 +52,16 @@ void setup() {
   blePeripheral.setEventHandler(BLEDisconnected, blePeripheralDisconnectHandler);
 
   blePeripheral.begin();
-  
+
   Timer1.initialize(2 * 1000000); // in milliseconds
   Timer1.attachInterrupt(timerHandler);
-  
+
   Serial.println(F("BLE Temperature Sensor Peripheral"));
 }
 
 void loop() {
   blePeripheral.poll();
-  
+
   if (readFromSensor) {
     setTempCharacteristicValue();
     setHumidityCharacteristicValue();
@@ -79,12 +76,12 @@ void timerHandler() {
 void setTempCharacteristicValue() {
   float reading = dht.readTemperature();
 //  float reading = random(100);
-  
+
   if (!isnan(reading) && significantChange(lastTempReading, reading, 0.5)) {
     tempCharacteristic.setValue(reading);
-    
+
     Serial.print(F("Temperature: ")); Serial.print(reading); Serial.println(F("C"));
-    
+
     lastTempReading = reading;
   }
 }
@@ -95,9 +92,9 @@ void setHumidityCharacteristicValue() {
 
   if (!isnan(reading) && significantChange(lastHumidityReading, reading, 1.0)) {
     humidityCharacteristic.setValue(reading);
-    
+
     Serial.print(F("Humidity: ")); Serial.print(reading); Serial.println(F("%"));
-    
+
     lastHumidityReading = reading;
   }
 }

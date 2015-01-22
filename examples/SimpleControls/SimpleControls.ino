@@ -30,7 +30,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 // Import libraries (BLEPeripheral depends on SPI)
 #include <SPI.h>
 #include <BLEPeripheral.h>
-#include <Servo.h> 
+#include <Servo.h>
 
 // define pins (varies per shield/board)
 #define BLE_REQ   6
@@ -57,23 +57,20 @@ BLECharacteristic    txCharacteristic = BLECharacteristic("713d0002503e4c75ba943
 BLECharacteristic    rxCharacteristic = BLECharacteristic("713d0003503e4c75ba943148f18d941e", BLEWriteWithoutResponse, 20);
 /*--------------------------------------------------------------------------------------------*/
 
-void setup() 
+void setup()
 {
   Serial.begin(115200);
 #if defined (__AVR_ATmega32U4__)
-  //Wait until the serial port is available (useful only for the Leonardo)
-  //As the Leonardo board is not reseted every time you open the Serial Monitor
-  while(!Serial) {}
   delay(3000);  //5 seconds delay for enabling to see the start up comments on the serial board
 #endif
 
   pinMode(DIGITAL_OUT_PIN, OUTPUT);
   pinMode(DIGITAL_IN_PIN, INPUT);
-  
+
   // Default to internally pull high, change it if you need
   digitalWrite(DIGITAL_IN_PIN, HIGH);
   //digitalWrite(DIGITAL_IN_PIN, LOW);
-  
+
   myservo.attach(SERVO_PIN);
 
 /*----- BLE Utility ---------------------------------------------*/
@@ -93,41 +90,41 @@ void setup()
   Serial.println(F("BLE UART Peripheral"));
 }
 
-void loop() 
+void loop()
 {
   static boolean analog_enabled = false;
   static byte old_state = LOW;
-  
+
   BLECentral central = blePeripheral.central();
 
-  if (central) 
+  if (central)
   {
     // central connected to peripheral
     Serial.print(F("Connected to central: "));
     Serial.println(central.address());
 
-    while (central.connected()) 
+    while (central.connected())
     {
       // central still connected to peripheral
-      if (rxCharacteristic.written()) 
+      if (rxCharacteristic.written())
       {
         unsigned char len = rxCharacteristic.valueLength();
         const unsigned char *val = rxCharacteristic.value();
-        
-        Serial.print("didCharacteristicWritten, Length: "); 
+
+        Serial.print("didCharacteristicWritten, Length: ");
         Serial.println(len, DEC);
-        
+
         unsigned char i = 0;
         while(i<len)
         {
           unsigned char data0 = val[i++];
           unsigned char data1 = val[i++];
-          unsigned char data2 = val[i++]; 
-          
+          unsigned char data2 = val[i++];
+
           Serial.println(data0, HEX);
           Serial.println(data1, HEX);
           Serial.println(data2, HEX);
-          
+
           if (data0 == 0x01)  // Command is to control digital out pin
           {
             if (data1 == 0x01)
@@ -157,29 +154,29 @@ void loop()
             analogWrite(PWM_PIN, 0);
             digitalWrite(DIGITAL_OUT_PIN, LOW);
           }
-        } 
+        }
       }
-      
+
       if (analog_enabled)  // if analog reading enabled
       {
         Serial.println("didNotifyAnalogIn");
         // Read and send out
-        uint16_t value = analogRead(ANALOG_IN_PIN); 
-        
+        uint16_t value = analogRead(ANALOG_IN_PIN);
+
         const unsigned char val[3] = {0x0B, value >> 8, value};
         txCharacteristic.setValue(val, 3);
       }
-      
+
       // If digital in changes, report the state
       if (digitalRead(DIGITAL_IN_PIN) != old_state)
       {
         old_state = digitalRead(DIGITAL_IN_PIN);
-        
+
         if (digitalRead(DIGITAL_IN_PIN) == HIGH)
         {
             Serial.println("didNotifyDigitalIn: From LOW to HIGH");
             const unsigned char val[3] = {0x0A, 0x01, 0x00};
-            txCharacteristic.setValue(val, 3);   
+            txCharacteristic.setValue(val, 3);
         }
         else
         {
@@ -192,7 +189,7 @@ void loop()
 
     analog_enabled = false;
     digitalWrite(DIGITAL_OUT_PIN, LOW);
-    
+
     // central disconnected
     Serial.print(F("Disconnected from central: "));
     Serial.println(central.address());
