@@ -13,8 +13,11 @@ class BLEBondStore
     void restoreData(unsigned char* data, unsigned char length);
 
   private:
+#ifdef __AVR__
     int             _offset;
-#ifndef __AVR__
+#elif defined(NRF51) || defined(__RFduino__)
+    uint32_t*       _flashPageStartAddress;
+#else
     unsigned char   _dataLength;
     unsigned char*  _data;
 #endif

@@ -41,7 +41,8 @@ nRF51822::nRF51822() :
   _numCharacteristics(0),
   _characteristicInfo(NULL)
 {
-  memset(&this->_authStatus, 0, sizeof(this->_authStatus));
+  this->_authStatus = (ble_gap_evt_auth_status_t*)&this->_authStatusBuffer;
+  memset(&this->_authStatusBuffer, 0, sizeof(this->_authStatusBuffer));
 }
 
 nRF51822::~nRF51822() {
@@ -314,6 +315,13 @@ void nRF51822::begin(unsigned char advertisementDataType,
     }
   }
 
+  if (this->_bondStore && this->_bondStore->hasData()) {
+#ifdef NRF_51822_DEBUG
+    Serial.println(F("Restoring bond data"));
+#endif
+    this->_bondStore->restoreData(this->_authStatusBuffer, sizeof(this->_authStatusBuffer));
+  }
+
   this->startAdvertising();
 }
 
@@ -373,7 +381,10 @@ void nRF51822::poll() {
         }
 
         if (this->_bondStore && this->_storeAuthStatus) {
-          this->_bondStore->storeData((const unsigned char*)&this->_authStatus, sizeof(this->_authStatus));
+#ifdef NRF_51822_DEBUG
+          Serial.println(F("Storing bond data"));
+#endif
+          this->_bondStore->storeData(this->_authStatusBuffer, sizeof(this->_authStatusBuffer));
 
           this->_storeAuthStatus = false;
         }
@@ -447,8 +458,8 @@ void nRF51822::poll() {
         Serial.print(bleEvt->evt.gap_evt.params.sec_info_request.sign_info);
         Serial.println();
 #endif
-        if (this->_authStatus.periph_keys.enc_info.div == bleEvt->evt.gap_evt.params.sec_info_request.div) {
-          sd_ble_gap_sec_info_reply(this->_connectionHandle, &this->_authStatus.periph_keys.enc_info, NULL);
+        if (this->_authStatus->periph_keys.enc_info.div == bleEvt->evt.gap_evt.params.sec_info_request.div) {
+          sd_ble_gap_sec_info_reply(this->_connectionHandle, &this->_authStatus->periph_keys.enc_info, NULL);
         } else {
           sd_ble_gap_sec_info_reply(this->_connectionHandle, NULL, NULL);
         }
@@ -459,7 +470,7 @@ void nRF51822::poll() {
         Serial.println(F("Evt Auth Status"));
 #endif
         this->_storeAuthStatus = true;
-        this->_authStatus = bleEvt->evt.gap_evt.params.auth_status;
+        *this->_authStatus = bleEvt->evt.gap_evt.params.auth_status;
         break;
 
       case BLE_GAP_EVT_CONN_SEC_UPDATE:
@@ -635,6 +646,10 @@ bool nRF51822::canIndicateCharacteristic(BLECharacteristic& characteristic) {
 }
 
 void nRF51822::startAdvertising() {
+#ifdef NRF_51822_DEBUG
+  Serial.println(F("Start advertisement"));
+#endif
+
   ble_gap_adv_params_t advertisingParameters = {0};
 
   advertisingParameters.type        = this->_connectable ? BLE_GAP_ADV_TYPE_ADV_IND : BLE_GAP_ADV_TYPE_ADV_NONCONN_IND;
