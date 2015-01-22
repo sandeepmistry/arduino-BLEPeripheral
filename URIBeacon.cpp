@@ -1,6 +1,6 @@
 #include "URIBeacon.h"
 
-#ifdef NRF51
+#ifdef defined(NRF51) || defined(__RFduino__)
   #define MAX_SERVICE_DATA_SIZE 18
 #else
   #define MAX_SERVICE_DATA_SIZE 15 // only 15 bytes (instead of 18), because flags (3 bytes) are in advertisement data
