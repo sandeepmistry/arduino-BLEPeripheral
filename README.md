@@ -14,6 +14,8 @@ An [Arduino](http://arduino.cc) library for creating custom BLE peripherals.
    * [BLE Shield](http://redbearlab.com/bleshield/)
    * [Blend Micro](http://redbearlab.com/blendmicro/)
    * [Blend](http://redbearlab.com/blend/)
+ * [Femtoduino](http://www.femtoduino.com)
+   * [IMUduino BTLE](http://www.femtoduino.com/spex/imuduino-btle)
  * [Olimex](https://www.olimex.com)
    * [MOD-nRF8001](https://www.olimex.com/Products/Modules/RF/MOD-nRF8001/)
    * [OLIMEXINO-NANO-BLE](https://www.olimex.com/Products/Duino/AVR/OLIMEXINO-NANO-BLE/)
@@ -24,21 +26,26 @@ An [Arduino](http://arduino.cc) library for creating custom BLE peripherals.
 
 ### [Nordic Semiconductor nRF51822](http://www.nordicsemi.com/eng/Products/Bluetooth-R-low-energy/nRF51822)
 
- * [RedBearLab](http://redbearlab.com)
+ * [RedBearLab](http://redbearlab.com) with [Arduino Add-on](https://github.com/RedBearLab/nRF51822-Arduino)
    * [nRF51822](http://redbearlab.com/redbearlab-nrf51822)
    * [BLE Nano](http://redbearlab.com/blenano/)
+ * [RFduino](http://www.rfduino.com) with [Arduino Add-on](https://github.com/RFduino/RFduino)
 
 #### Pinouts
 
-| Shield/Board | REQ Pin | RDY Pin | RST Pin |
-| ------------ | ------- | ------- | ------- |
-| Bluefruit LE | 10 | 2 | 9 |
-| BLE Shield 1.x | 9 | 8 | UNUSED |
-| BLE Shield 2.x | 9 | 8 | UNUSED or 4/7 via jumper|
-| Blend | 9 | 8 | UNUSED or 5/6 via jumper |
-| Blend Micro | 6 | 7 | UNUSED or 4 |
-| RedBearLab nRF51822 | UNUSED | UNUSED | UNUSED |
-| BLE Nano | UNUSED | UNUSED | UNUSED |
+| Chip | Shield/Board | REQ Pin | RDY Pin | RST Pin |
+| ---- | ------------ | ------- | ------- | ------- |
+| nRF8001|
+| | Bluefruit LE | 10 | 2 | 9 |
+| | BLE Shield 1.x | 9 | 8 | UNUSED |
+| | BLE Shield 2.x | 9 | 8 | UNUSED or 4/7 via jumper|
+| | Blend | 9 | 8 | UNUSED or 5/6 via jumper |
+| | Blend Micro | 6 | 7 | UNUSED or 4 |
+| | IMUduino BTLE | 10 | 7 | 9 |
+| nRF51822 |
+| | RedBearLab nRF51822 | UNUSED | UNUSED | UNUSED |
+| | BLE Nano | UNUSED | UNUSED | UNUSED |
+| | RFduino | UNUSED | UNUSED | UNUSED |
 
 ## Compatible IDE's and MCU's
 
