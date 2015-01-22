@@ -1,7 +1,7 @@
 # BLEPeripheral
 
 ## Constructor
-```
+```c
 BLEPeripheral(unsigned char req, unsigned char rdy, unsigned char rst);
 ```
  * req - REQ pin
@@ -11,19 +11,19 @@ BLEPeripheral(unsigned char req, unsigned char rdy, unsigned char rst);
 ## Advertising
 
 ### Local name
-```
+```c
 void setLocalName(const char *localName);
 ```
  * localName - local name to advertise (up to: 20 characters on nRF8001, 29 characters on nRF51822)
 
 ### Service UUID
-```
+```c
 void setAdvertisedServiceUuid(const char* advertisedServiceUuid);
 ```
 * advertisedServiceUuid - service UUID to advertise
 
 ### Manufacturer Data
-```
+```c
 void setManufacturerData(const unsigned char manufacturerData[], unsigned char manufacturerDataLength);
 ```
  * manufacturerData - array of bytes
@@ -31,7 +31,7 @@ void setManufacturerData(const unsigned char manufacturerData[], unsigned char m
 
 ## Set Advertising Interval
 
-```
+```c
 void setAdvertisingInterval(unsigned short advertisingInterval);
 ```
 
@@ -39,40 +39,48 @@ void setAdvertisingInterval(unsigned short advertisingInterval);
 
 ## Connectable
 
-```
+```c
 void setConnectable(bool connectable);
 ```
 
  * make peripheral connectable (**default**) or non-connectable (broadcast only)
 
+## Bond Store
+
+```c
+void setBondStore(BLEBondStore& bondStore);
+```
+
+ * enable unauthenticated security (pairing), use the bond store to persist bonding data.
+
 ## Built-in characteristics
 
 ### Device name
-```
+```c
 void setDeviceName(const char* deviceName);
 ```
  * deviceName - device name, up to: 20 characters on nRF8001 and nRF51822 - default value is ```"Arduino"```
 
 ### Appearance
-```
+```c
 void setAppearance(unsigned short appearance);
 ```
  * appearance - appearance, default value is ```0x0000```
 
 ## Attributes
-```
+```c
 void addAttribute(BLEAttribute& attribute);
 ```
  * attribute - attribute to add, can be ```BLEService```, ```BLECharacteristic```, or ```BLEDescriptor```
 
 ## Sketch life cycle
 Call from ```setup```.
-```
+```c
 void begin();
 ```
 
 Call from ```loop```.
-```
+```c
 void poll();
 ```
 
@@ -81,20 +89,20 @@ void poll();
 ### Connection state
 Is the peripheral connected to a central?
 
-```
+```c
 bool connected();
 ```
 
 ### Central
 Central the peripheral is connected to. Bool value evaluates to ```false``` if not connected.
 
-```
+```c
 BLECentral central()
 ```
 
 
 ### Set event handler callbacks
-```
+```c
 void setEventHandler(BLEPeripheralEvent event, BLEPeripheralEventHandler eventHandler);
 
 // callback signature
@@ -108,7 +116,7 @@ void blePeripheralEventHandler(BLECentral& central) {
 ## Actions
 
 ### Disconnect
-```
+```c
 void disconnect();
 ```
 Disconnect connected central.
@@ -120,7 +128,7 @@ Disconnect connected central.
 ### Valid
 Is this a valid central?
 
-```
+```c
 BLECentral central;
 
 // ...
@@ -135,28 +143,28 @@ if (central) {
 ### Connection state
 Is the central connected?
 
-```
+```c
 bool connected();
 ```
 
 ### Address
 Bluetooth address of central as string.
 
-```
+```c
 const char* address();
 ```
 
 ## Actions
 
 ### Disconnect
-```
+```c
 void disconnect();
 ```
 Disconnect central if connected.
 
 ## Sketch life cycle
 Call from ```loop```, while connected.
-```
+```c
 void poll();
 ```
 
@@ -164,7 +172,7 @@ void poll();
 # BLEService
 
 ## Constructor
-```
+```c
 BLEService(const char* uuid);
 ```
  * uuid - UUID of service
@@ -172,7 +180,7 @@ BLEService(const char* uuid);
 # BLECharacteristic
 
 ## Contructor
-```
+```c
 BLECharacteristic(const char* uuid, unsigned char properties, unsigned char valueSize);
 
 BLECharacteristic(const char* uuid, unsigned char properties, const char* value);
@@ -194,7 +202,7 @@ or
   * value - string value (max: 20 characters on nRF8001 and nRF51822)
 
 ## Get value
-```
+```c
 const unsigned char* value();
 unsigned char valueLength();
 ```
@@ -203,7 +211,7 @@ unsigned char valueLength();
 
 Will automatically notify/indicate central, if characteristic has notify/indicate property and central is subscribed and update broadcasted value if broadcasting.
 
-```
+```c
 bool setValue(const unsigned char value[], unsigned char length);
 ```
  * value - value bytes
@@ -211,7 +219,7 @@ bool setValue(const unsigned char value[], unsigned char length);
 
 Returns true on success (central notified/indicated, if applicable), false on failure (cannot be notified/indicated, if applicable)
 
-```
+```c
 bool setValue(const char* value);
 ```
  * value - new value as string
@@ -222,7 +230,7 @@ Returns true on success (central notified/indicated, if applicable), false on fa
 
 Broadcast characteristic value in advertisement data.
 
-```
+```c
 bool broadcast();
 ```
 
@@ -230,25 +238,25 @@ Returns true on success, false on failure
 
 ## Writes
 Has the central written a new value since the last call to this method? (only for write or write without response characteristics)
-```
+```c
 bool written();
 ```
 
 ## Subscription status
 Is the central subscribed (via notify or indicate) to the characteristic? (only for notify/indicate characteristics)
-```
+```c
 bool subscribed();
 ```
 
 ## Notify/indicate status
 Can the central be notified/indicated of when the value is set. Only applies to characateristics with notify and/or indicate properties when a central is connected and subscribed
-```
+```c
 bool canNotify();
 bool canIndicate();
 ```
 
 ## Set event handler callbacks
-```
+```c
 void setEventHandler(BLECharacteristicEvent event, BLECharacteristicEventHandler eventHandler);
 
 // callback signature
@@ -277,13 +285,13 @@ void bleCharacteristicEventHandler(BLECentral& central, BLECharacteristic& chara
 
 
 ## Contructor
-```
+```c
 BLE<Data Type>Characteristic(const char* uuid, unsigned char properties);
 ```
 See ```BLECharacteritic```
 
 ## Get value
-```
+```c
 <Data Type> value();
 <Data Type> valueLE(); // little endian
 <Data Type> valueBE(); // big endian
@@ -291,7 +299,7 @@ See ```BLECharacteritic```
 
 ## Set value
 
-```
+```c
 bool setValue(<Data Type> value);
 bool setValueLE(<Data Type> value); // little endian
 bool setValueBE(<Data Type> value); // big endian
@@ -302,7 +310,7 @@ Returns true on success (central notified/indicated, if applicable), false on fa
 # BLEDescriptor
 
 ## Constructor
-```
+```c
 BLEDescriptor(const char* uuid, unsigned char valueSize);
 
 BLEDescriptor(const char* uuid, const char* value);
@@ -317,20 +325,37 @@ or
   * value - string value (max: 20 characters on nRF8001 and nRF51822)
 
 ## Get value
-```
+```c
 const unsigned char* value();
 unsigned char valueLength();
 ```
 
 ## Set value
 
-```
+```c
 void setValue(const unsigned char value[], unsigned char length);
 ```
  * value - value bytes
  * length - value length (upto value size)
 
-```
+```c
 void setValue(const char* value);
 ```
  * value - new value as string
+
+# BLEBondStore
+
+## Constructor
+```c
+BLEBondStore(int offset = 0);
+```
+ * offset - offset in persistent storage (AVR: EEPROM, NRF51: Flash, others RAM)
+
+## Clear Data
+
+```c
+void clearData();
+```
+
+Clear bond data from store, must be called before ```blePeripheral.begin()```
+
