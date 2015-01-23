@@ -234,6 +234,9 @@ void nRF8001::begin(unsigned char advertisementDataType,
 
   setupMsg.status_byte = 0;
 
+  bool hasAdvertisementData = advertisementDataType && advertisementDataLength && advertisementData;
+  bool hasScanData          = scanDataType && scanDataLength && scanData;
+
   for (int i = 0; i < NB_BASE_SETUP_MESSAGES; i++) {
     int setupMsgSize = pgm_read_byte_near(&baseSetupMsgs[i].buffer[0]) + 2;
 
@@ -250,16 +253,16 @@ void nRF8001::begin(unsigned char advertisementDataType,
 #ifdef NRF_8001_ENABLE_DC_DC_CONVERTER
       setupMsgData->data[13] |= 0x01;
 #endif
-    } else if (i == 2 && advertisementDataType && advertisementDataLength && advertisementData) {
+    } else if (i == 2 && hasAdvertisementData) {
       setupMsgData->data[18] |= 0x40;
 
       setupMsgData->data[22] |= 0x40;
     } else if (i == 3) {
-      if (advertisementDataType && advertisementDataLength && advertisementData) {
+      if (hasAdvertisementData) {
         setupMsgData->data[16] |= 0x40;
       }
 
-      if (scanDataType && scanDataLength && scanData) {
+      if (hasScanData) {
         setupMsgData->data[8] |= 0x40;
 
         setupMsgData->data[12] |= 0x40;
@@ -270,11 +273,11 @@ void nRF8001::begin(unsigned char advertisementDataType,
       if (this->_bondStore) {
         setupMsgData->data[0] |= 0x01;
       }
-    } else if (i == 5 && advertisementDataType && advertisementDataLength && advertisementData) {
+    } else if (i == 5 && hasAdvertisementData) {
       setupMsgData->data[0] = advertisementDataType;
       setupMsgData->data[1] = advertisementDataLength;
       memcpy(&setupMsgData->data[2], advertisementData, advertisementDataLength);
-    } else if (i == 6 && scanDataType && scanDataLength && scanData) {
+    } else if (i == 6 && hasScanData) {
       setupMsgData->data[0] = scanDataType;
       setupMsgData->data[1] = scanDataLength;
       memcpy(&setupMsgData->data[2], scanData, scanDataLength);
