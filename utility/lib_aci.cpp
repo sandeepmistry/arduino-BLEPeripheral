@@ -177,7 +177,7 @@ void lib_aci_board_init(aci_state_t *aci_stat)
 }
 
 
-void lib_aci_init(aci_state_t *aci_stat, bool debug)
+void lib_aci_init(aci_state_t *aci_stat)
 {
   uint8_t i;
 
@@ -210,7 +210,7 @@ void lib_aci_init(aci_state_t *aci_stat, bool debug)
   p_setup_msgs             = aci_stat->aci_setup_info.setup_msgs;
 
 
-  hal_aci_tl_init(&aci_stat->aci_pins, debug);
+  hal_aci_tl_init(&aci_stat->aci_pins);
 
   lib_aci_board_init(aci_stat);
 }
@@ -298,13 +298,6 @@ bool lib_aci_device_version()
 bool lib_aci_set_local_data(aci_state_t *aci_stat, uint8_t pipe, uint8_t *p_value, uint8_t size)
 {
   aci_cmd_params_set_local_data_t aci_cmd_params_set_local_data;
-
-  // if ((p_services_pipe_type_map[pipe-1].location != ACI_STORE_LOCAL)
-  //     ||
-  //     (size > ACI_PIPE_TX_DATA_MAX_LEN))
-  // {
-  //   return false;
-  // }
 
   aci_cmd_params_set_local_data.tx_data.pipe_number = pipe;
   memcpy(&(aci_cmd_params_set_local_data.tx_data.aci_data[0]), p_value, size);
@@ -398,13 +391,6 @@ bool lib_aci_send_data(uint8_t pipe, uint8_t *p_value, uint8_t size)
 {
   bool ret_val = false;
   aci_cmd_params_send_data_t aci_cmd_params_send_data;
-
-
-  // if(!((p_services_pipe_type_map[pipe-1].pipe_type == ACI_TX) ||
-  //     (p_services_pipe_type_map[pipe-1].pipe_type == ACI_TX_ACK)))
-  // {
-  //   return false;
-  // }
 
   if (size > ACI_PIPE_TX_DATA_MAX_LEN)
   {
@@ -728,12 +714,6 @@ bool lib_aci_dtm_command(uint8_t dtm_command_msbyte, uint8_t dtm_command_lsbyte)
 void lib_aci_flush(void)
 {
   hal_aci_tl_q_flush();
-}
-
-void lib_aci_debug_print(bool enable)
-{
-  hal_aci_tl_debug_print(enable);
-
 }
 
 void lib_aci_pin_reset(void)

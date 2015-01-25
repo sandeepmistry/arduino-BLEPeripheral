@@ -1,6 +1,6 @@
 #if !defined(NRF51) && !defined(__RFduino__)
 
-#define NRF_8001_DEBUG
+// #define NRF_8001_DEBUG
 // #define NRF_8001_ENABLE_DC_DC_CONVERTER
 
 #include <SPI.h>
@@ -146,9 +146,6 @@ nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
   this->_aciState.aci_pins.reset_pin              = rst;
   this->_aciState.aci_pins.active_pin             = UNUSED;
   this->_aciState.aci_pins.optional_chip_sel_pin  = UNUSED;
-
-  this->_aciState.aci_pins.interface_is_interrupt = false;
-  this->_aciState.aci_pins.interrupt_number       = 1;
 }
 
 nRF8001::~nRF8001() {
@@ -212,7 +209,7 @@ void nRF8001::begin(unsigned char advertisementDataType,
 
   this->_pipeInfo = (struct pipeInfo*)malloc(sizeof(struct pipeInfo) * numPipedCharacteristics);
 
-  lib_aci_init(&this->_aciState, false);
+  lib_aci_init(&this->_aciState);
 
   if (this->_bondStore) {
     this->_aciState.bonded = ACI_BOND_STATUS_FAILED;
