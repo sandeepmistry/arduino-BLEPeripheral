@@ -250,7 +250,7 @@ void nRF51822::begin(unsigned char advertisementDataType,
 
           if (strcmp(descriptor->uuid(), "2901") == 0) {
             characteristicMetaData.p_char_user_desc        = (uint8_t*)descriptor->value();
-            characteristicMetaData.char_user_desc_max_size = descriptor->valueSize();
+            characteristicMetaData.char_user_desc_max_size = descriptor->valueLength();
             characteristicMetaData.char_user_desc_size     = descriptor->valueLength();
           } else if (strcmp(descriptor->uuid(), "2904") == 0) {
             characteristicMetaData.p_char_pf = (ble_gatts_char_pf_t *)descriptor->value();
@@ -293,7 +293,7 @@ void nRF51822::begin(unsigned char advertisementDataType,
       memset(&descriptorMetaData, 0, sizeof(descriptorMetaData));
 
       descriptorMetaData.vloc = BLE_GATTS_VLOC_STACK;
-      descriptorMetaData.vlen = (valueLength == descriptor->valueSize()) ? 0 : 1;
+      descriptorMetaData.vlen = (valueLength == descriptor->valueLength()) ? 0 : 1;
 
       if (this->_bondStore) {
         BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&descriptorMetaData.read_perm);
@@ -304,7 +304,7 @@ void nRF51822::begin(unsigned char advertisementDataType,
       descriptorAttribute.p_uuid    = &nordicUUID;
       descriptorAttribute.p_attr_md = &descriptorMetaData;
       descriptorAttribute.init_len  = valueLength;
-      descriptorAttribute.max_len   = descriptor->valueSize();
+      descriptorAttribute.max_len   = descriptor->valueLength();
       descriptorAttribute.p_value   = NULL;
 
       sd_ble_gatts_descriptor_add(BLE_GATT_HANDLE_INVALID, &descriptorAttribute, &handle);

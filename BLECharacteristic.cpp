@@ -4,34 +4,36 @@
 
 #include "BLECharacteristic.h"
 
-BLECharacteristic::BLECharacteristic(const char* uuid, unsigned char properties, unsigned char valueSize, bool fixedLength) :
+BLECharacteristic::BLECharacteristic(const char* uuid, unsigned char properties, unsigned char valueSize) :
   BLEAttribute(uuid, BLETypeCharacteristic),
   _properties(properties),
   _valueSize(min(valueSize, BLE_ATTRIBUTE_MAX_VALUE_LENGTH)),
+  _value(NULL),
   _valueLength(0),
-  _fixedLength(fixedLength),
   _written(false),
   _subscribed(false),
   _listener(NULL)
 {
   memset(this->_eventHandlers, 0x00, sizeof(this->_eventHandlers));
 
-  _value = (unsigned char*)malloc(this->_valueSize);
+  if (valueSize) {
+    this->_value = (unsigned char*)malloc(this->_valueSize);
+  }
 }
 
-BLECharacteristic::BLECharacteristic(const char* uuid, unsigned char properties, const char* value, bool fixedLength) :
+BLECharacteristic::BLECharacteristic(const char* uuid, unsigned char properties, const char* value) :
   BLEAttribute(uuid, BLETypeCharacteristic),
   _properties(properties),
   _valueSize(min(strlen(value), BLE_ATTRIBUTE_MAX_VALUE_LENGTH)),
+  _value(NULL),
   _valueLength(0),
-  _fixedLength(fixedLength),
   _written(false),
   _subscribed(false),
   _listener(NULL)
 {
   memset(this->_eventHandlers, 0x00, sizeof(this->_eventHandlers));
 
-  _value = (unsigned char*)malloc(this->_valueSize);
+  this->_value = (unsigned char*)malloc(this->_valueSize);
   this->setValue(value);
 }
 
@@ -58,7 +60,11 @@ unsigned char BLECharacteristic::valueLength() const {
 }
 
 bool BLECharacteristic::fixedLength() const {
-  return this->_fixedLength;
+  return false;
+}
+
+bool BLECharacteristic::constantValue() const {
+  return false;
 }
 
 bool BLECharacteristic::setValue(const unsigned char value[], unsigned char length) {

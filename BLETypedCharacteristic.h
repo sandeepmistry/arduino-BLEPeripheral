@@ -3,9 +3,9 @@
 
 #include "Arduino.h"
 
-#include "BLECharacteristic.h"
+#include "BLEFixedLengthCharacteristic.h"
 
-template<typename T> class BLETypedCharacteristic : public BLECharacteristic
+template<typename T> class BLETypedCharacteristic : public BLEFixedLengthCharacteristic
 {
   public:
     BLETypedCharacteristic(const char* uuid, unsigned char properties);
@@ -24,7 +24,7 @@ template<typename T> class BLETypedCharacteristic : public BLECharacteristic
 };
 
 template<typename T> BLETypedCharacteristic<T>::BLETypedCharacteristic(const char* uuid, unsigned char properties) :
-  BLECharacteristic(uuid, properties, sizeof(T), true)
+  BLEFixedLengthCharacteristic(uuid, properties, sizeof(T))
 {
   T value;
   memset(&value, 0x00, sizeof(value));

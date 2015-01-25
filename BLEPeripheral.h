@@ -4,10 +4,12 @@
 #include "Arduino.h"
 
 #include "BLEAttribute.h"
+#include "BLEBondStore.h"
 #include "BLECentral.h"
+#include "BLEConstantCharacteristic.h"
 #include "BLEDescriptor.h"
 #include "BLEDevice.h"
-#include "BLEBondStore.h"
+#include "BLEFixedLengthCharacteristic.h"
 #include "BLEService.h"
 #include "BLETypedCharacteristics.h"
 

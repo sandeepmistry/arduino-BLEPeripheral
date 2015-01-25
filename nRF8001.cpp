@@ -23,7 +23,7 @@ struct setupMsgData {
 };
 
 #define NB_BASE_SETUP_MESSAGES                  7
-#define MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG       19
+#define MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG       28
 
 #define DYNAMIC_DATA_MIN_CHUNK_SIZE             4
 #define DYNAMIC_DATA_MAX_CHUNK_SIZE             26
@@ -384,7 +384,7 @@ void nRF8001::begin(unsigned char advertisementDataType,
       setupMsgData->data[7]  = characteristic->type() & 0xff;
 
       setupMsgData->data[8]  = ACI_STORE_LOCAL;
-      setupMsgData->data[9]  = characteristic->properties() & 0xfe;
+      setupMsgData->data[9]  = properties & 0xfe;
 
       setupMsgData->data[10] = handle & 0xff;
       setupMsgData->data[11] = (handle >> 8) & 0xff;
@@ -395,7 +395,7 @@ void nRF8001::begin(unsigned char advertisementDataType,
 
       this->sendSetupMessage(&setupMsg, 0x2, gattSetupMsgOffset);
 
-      setupMsgData->length   = 12 + min(characteristic->valueSize(), MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG);
+      setupMsgData->length   = 12;
 
       setupMsgData->data[0]  = 0x04;
       setupMsgData->data[1]  = 0x00;
@@ -407,7 +407,6 @@ void nRF8001::begin(unsigned char advertisementDataType,
       if (properties & BLERead) {
         setupMsgData->data[1] |= 0x04;
       }
-
 
       if (this->_bondStore &&
           strcmp(characteristicUuid, "2a00") != 0 &&
@@ -429,12 +428,15 @@ void nRF8001::begin(unsigned char advertisementDataType,
         setupMsgData->data[0] |= 0x20;
       }
 
-      setupMsgData->data[2]  = characteristic->valueSize();
+      unsigned char valueSize = characteristic->valueSize();
+      unsigned char valueLength = characteristic->valueLength();
+
+      setupMsgData->data[2]  = valueSize;
       if (characteristic->fixedLength()) {
         setupMsgData->data[2]++;
       }
 
-      setupMsgData->data[3]  = characteristic->valueLength();
+      setupMsgData->data[3]  = valueLength;
 
       setupMsgData->data[4]  = (pipeInfo->valueHandle >> 8) & 0xff;
       setupMsgData->data[5]  = pipeInfo->valueHandle & 0xff;
@@ -447,23 +449,27 @@ void nRF8001::begin(unsigned char advertisementDataType,
         setupMsgData->data[7]  = 0x00;
       }
 
-      setupMsgData->data[8]  = 0x01;
-
-      memset(&setupMsgData->data[9], 0x00, min(characteristic->valueSize(), MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG));
-      memcpy(&setupMsgData->data[9], characteristic->value(), min(characteristic->valueLength(), MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG));
+      setupMsgData->data[8]  = ACI_STORE_LOCAL;
 
       this->sendSetupMessage(&setupMsg, 0x2, gattSetupMsgOffset);
 
-      if (characteristic->valueSize() > MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG) {
-        setupMsgData->length = 3 + (characteristic->valueSize() - MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG);
+      int valueOffset = 0;
 
-        memset(&setupMsgData->data[0], 0x00, characteristic->valueSize() - MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG);
+      while(valueOffset < valueSize) {
+        int chunkSize = min(valueSize - valueOffset, MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG);
+        int valueCopySize = min(valueLength - valueOffset, chunkSize);
 
-        if (characteristic->valueLength() > MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG) {
-          memcpy(&setupMsgData->data[0], characteristic->value() + MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG, characteristic->valueLength() - MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG);
+        setupMsgData->length = 3 + chunkSize;
+
+        memset(setupMsgData->data, 0x00, chunkSize);
+
+        if (valueCopySize > 0) {
+          memcpy(setupMsgData->data, characteristic->value() + valueOffset, valueCopySize);
         }
 
         this->sendSetupMessage(&setupMsg, 0x2, gattSetupMsgOffset);
+
+        valueOffset += chunkSize;
       }
 
       if (properties & (BLENotify | BLEIndicate)) {
@@ -493,13 +499,15 @@ void nRF8001::begin(unsigned char advertisementDataType,
     } else if (attribute->type() == BLETypeDescriptor) {
       BLEDescriptor* descriptor = (BLEDescriptor *)attribute;
 
-      setupMsgData->length   = 12 + min(descriptor->valueSize(), MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG);
+      setupMsgData->length   = 12;
 
       setupMsgData->data[0]  = 0x04;
       setupMsgData->data[1]  = 0x04;
 
-      setupMsgData->data[2]  = descriptor->valueSize();
-      setupMsgData->data[3]  = descriptor->valueLength();
+      unsigned char valueLength = descriptor->valueLength();
+
+      setupMsgData->data[2]  = valueLength;
+      setupMsgData->data[3]  = valueLength;
 
       setupMsgData->data[4]  = (handle >> 8) & 0xff;
       setupMsgData->data[5]  = handle & 0xff;
@@ -510,18 +518,20 @@ void nRF8001::begin(unsigned char advertisementDataType,
 
       setupMsgData->data[8]  = ACI_STORE_LOCAL;
 
-      memcpy(&setupMsgData->data[9], descriptor->value(), min(descriptor->valueLength(), MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG));
-
       this->sendSetupMessage(&setupMsg, 0x2, gattSetupMsgOffset);
 
-      if (descriptor->valueSize() > MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG) {
-        setupMsgData->length = 3 + (descriptor->valueSize() - MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG);
+      int valueOffset = 0;
 
-        if (descriptor->valueLength() > MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG) {
-          memcpy(&setupMsgData->data[0], descriptor->value() + MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG, descriptor->valueLength() - MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG);
-        }
+      while(valueOffset < valueLength) {
+        int chunkSize = min(valueLength - valueOffset, MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG);
+
+        setupMsgData->length = 3 + chunkSize;
+
+        memcpy(setupMsgData->data, descriptor->value() + valueOffset, chunkSize);
 
         this->sendSetupMessage(&setupMsg, 0x2, gattSetupMsgOffset);
+
+        valueOffset += chunkSize;
       }
     }
   }

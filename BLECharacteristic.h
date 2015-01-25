@@ -37,8 +37,8 @@ class BLECharacteristic : public BLEAttribute
   friend class BLEPeripheral;
 
   public:
-    BLECharacteristic(const char* uuid, unsigned char properties, unsigned char valueSize, bool fixedLength = false);
-    BLECharacteristic(const char* uuid, unsigned char properties, const char* value, bool fixedLength = false);
+    BLECharacteristic(const char* uuid, unsigned char properties, unsigned char valueSize);
+    BLECharacteristic(const char* uuid, unsigned char properties, const char* value);
 
     virtual ~BLECharacteristic();
 
@@ -47,10 +47,12 @@ class BLECharacteristic : public BLEAttribute
     unsigned char valueSize() const;
     const unsigned char* value() const;
     unsigned char valueLength() const;
-    bool fixedLength() const;
 
-    bool setValue(const unsigned char value[], unsigned char length);
-    bool setValue(const char* value);
+    virtual bool fixedLength() const;
+    virtual bool constantValue() const;
+
+    virtual bool setValue(const unsigned char value[], unsigned char length);
+    virtual bool setValue(const char* value);
 
     bool broadcast();
 
@@ -62,17 +64,17 @@ class BLECharacteristic : public BLEAttribute
     void setEventHandler(BLECharacteristicEvent event, BLECharacteristicEventHandler eventHandler);
 
   protected:
-    void setValue(BLECentral& central, const unsigned char value[], unsigned char length);
+    virtual void setValue(BLECentral& central, const unsigned char value[], unsigned char length);
     void setSubscribed(BLECentral& central, bool written);
 
     void setValueChangeListener(BLECharacteristicValueChangeListener& listener);
 
-  private:
-    unsigned char                         _properties;
     unsigned char                         _valueSize;
     unsigned char*                        _value;
     unsigned char                         _valueLength;
-    bool                                  _fixedLength;
+
+  private:
+    unsigned char                         _properties;
 
     bool                                  _written;
     bool                                  _subscribed;

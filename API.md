@@ -307,15 +307,23 @@ bool setValueBE(<Data Type> value); // big endian
 
 Returns true on success (central notified/indicated, if applicable), false on failure (cannot be notified/indicated, if applicable)
 
-# BLEDescriptor
+# BLEFixedLengthCharacteristic
+
+ * Subclass of ```BLECharacteristic```, value is a fixed length
 
 ## Constructor
 ```c
-BLEDescriptor(const char* uuid, unsigned char valueSize);
-
-BLEDescriptor(const char* uuid, const char* value);
+BLEFixedLengthCharacteristic(const char* uuid, unsigned char properties, unsigned char valueSize);
+BLEFixedLengthCharacteristic(const char* uuid, unsigned char properties, const char* value);
 ```
-  * uuid - UUID of descriptor
+  * uuid - UUID of characteristic
+  * properties - combination of (|'ed):
+    * ```BLEBroadcast```
+    * ```BLERead```
+    * ```BLEWriteWithoutResponse ```
+    * ```BLEWrite```
+    * ```BLENotify```
+    * ```BLEIndicate```
 
 Choice of:
   * valueSize - size of characteristic in bytes (max: 20 characters on nRF8001 and nRF51822)
@@ -324,24 +332,49 @@ or
 
   * value - string value (max: 20 characters on nRF8001 and nRF51822)
 
+# BLEConstantCharacteristic
+
+ * Subclass of ```BLEFixedLengthCharacteristic```, value is constant and a fixed length. Is read only and, ```setValue``` API does nothing.
+
+## Constructor
+```c
+BLEConstantCharacteristic(const char* uuid, const unsigned char value[], unsigned char length);
+BLEConstantCharacteristic(const char* uuid, const char* value);
+```
+  * uuid - UUID of characteristic
+
+Choice of:
+  * value - value of characteristic
+  * length - size of characteristic in bytes
+
+or
+
+  * value - string value (max: 20 characters on nRF8001 and nRF51822)
+
+# BLEDescriptor
+
+## Constructor
+```c
+BLEDescriptor(const char* uuid, const unsigned char value[], unsigned char valueSize);
+
+BLEDescriptor(const char* uuid, const char* value);
+```
+  * uuid - UUID of descriptor
+
+Choice of:
+  * value - value data
+  * valueLength - length of value data in bytes
+
+or
+
+  * value - string value
+
 ## Get value
 ```c
 const unsigned char* value();
 unsigned char valueLength();
 ```
 
-## Set value
-
-```c
-void setValue(const unsigned char value[], unsigned char length);
-```
- * value - value bytes
- * length - value length (upto value size)
-
-```c
-void setValue(const char* value);
-```
- * value - new value as string
 
 # BLEBondStore
 
