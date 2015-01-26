@@ -1,6 +1,6 @@
 #if !defined(NRF51) && !defined(__RFduino__)
 
-#define NRF_8001_DEBUG
+// #define NRF_8001_DEBUG
 // #define NRF_8001_ENABLE_DC_DC_CONVERTER
 
 #include <SPI.h>
