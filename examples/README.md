@@ -15,9 +15,9 @@
 
 The following examples work with the [RedBearLab](http://redbearlab.com) BLE Controller [iOS](https://itunes.apple.com/us/app/ble-controller/id855062200?mt=8)/[Android](https://play.google.com/store/apps/details?id=com.redbear.redbearbleclient&hl=en) app and were provided by [RedBearLab](http://redbearlab.com).
 
-  * [RedBearLab/BLEControllerSketch](BLEControllerSketch)
+  * [BLEControllerSketch](RedBearLab/BLEControllerSketch)
     * reports Arduino's pin mode and pin state
-  * [RedBearLab/SimpleChat](SimpleChat)
+  * [SimpleChat](RedBearLab/SimpleChat)
     * Two way chat example from Arduino serial monitor to/from app
-  * [RedBearLab/SimpleControls](SimpleControls)
+  * [SimpleControls](RedBearLab/SimpleControls)
     * Use app to configure and control Arduino pins as: DIGITAL_IN, DIGITAL_OUT, PWM, SERVO, ANALOG_IN
