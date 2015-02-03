@@ -1,8 +1,10 @@
 # Arduino BLEPeripheral
 
-[![Analytics](https://ga-beacon.appspot.com/UA-56089547-1/sandeepmistry/arduino-BLEPeripheral?pixel)](https://github.com/igrigorik/ga-beacon)
+An [Arduino](http://arduino.cc) library for creating custom BLE peripherals using the [Nordic Semiconductor](http://www.nordicsemi.com)'s [nRF8001](http://www.nordicsemi.com/eng/Products/Bluetooth-R-low-energy/nRF8001) or [nR51822](http://www.nordicsemi.com/eng/Products/Bluetooth-R-low-energy/nRF51822).
 
-An [Arduino](http://arduino.cc) library for creating custom BLE peripherals.
+Enables you to create more customized BLE Peripheral's compared to the basic UART most other Arduino BLE libraries provide.
+
+[nRFgo Studio](http://www.nordicsemi.com/chi/node_176/2.4GHz-RF/nRFgo-Studio) (and Windows) is not required when using the [nRF8001](http://www.nordicsemi.com/eng/Products/Bluetooth-R-low-energy/nRF8001).
 
 ## Compatible Hardware
 
@@ -22,7 +24,7 @@ An [Arduino](http://arduino.cc) library for creating custom BLE peripherals.
  * [Jaycon Systems](http://www.jayconsystems.com)
    * [nRF8001 Bluetooth Breakout Board](http://www.jayconsystems.com/nrf8001-breakout-board.html)
 
-**Note:** Does not require use of [nRFgo Studio](http://www.nordicsemi.com/chi/node_176/2.4GHz-RF/nRFgo-Studio)!
+**Note:** Does not require use of [nRFgo Studio](http://www.nordicsemi.com/chi/node_176/2.4GHz-RF/nRFgo-Studio)! However, uses more code space.
 
 ### [Nordic Semiconductor nRF51822](http://www.nordicsemi.com/eng/Products/Bluetooth-R-low-energy/nRF51822)
 
@@ -90,5 +92,5 @@ See [examples](examples) folder.
    * nRF8001 support for Arduino
 
 
-
+[![Analytics](https://ga-beacon.appspot.com/UA-56089547-1/sandeepmistry/arduino-BLEPeripheral?pixel)](https://github.com/igrigorik/ga-beacon)
 
