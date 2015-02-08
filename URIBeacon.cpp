@@ -1,6 +1,6 @@
 #include "URIBeacon.h"
 
-#ifdef defined(NRF51) || defined(__RFduino__)
+#if defined(NRF51) || defined(__RFduino__)
   #define MAX_SERVICE_DATA_SIZE 18
 #else
   #define MAX_SERVICE_DATA_SIZE 15 // only 15 bytes (instead of 18), because flags (3 bytes) are in advertisement data
@@ -65,7 +65,7 @@ unsigned char URIBeacon::compressURI(const char* uri, char *compressedUri, unsig
   String uriString = uri;
 
   // replace prefixes
-  for (int i = 0; i < (sizeof(URI_BEACON_PREFIX_SUBSTITUTIONS) / sizeof(char *)); i++) {
+  for (unsigned int i = 0; i < (sizeof(URI_BEACON_PREFIX_SUBSTITUTIONS) / sizeof(char *)); i++) {
     String replacement = " ";
     replacement[0] = (char)(i | 0x80); // set high bit, String.replace does not like '\0' replacement
 
@@ -73,7 +73,7 @@ unsigned char URIBeacon::compressURI(const char* uri, char *compressedUri, unsig
   }
 
   // replace suffixes
-  for (int i = 0; i < (sizeof(URI_BEACON_SUFFIX_SUBSTITUTIONS) / sizeof(char *)); i++) {
+  for (unsigned int i = 0; i < (sizeof(URI_BEACON_SUFFIX_SUBSTITUTIONS) / sizeof(char *)); i++) {
     String replacement = " ";
     replacement[0] = (char)(i | 0x80); // set high bit, String.replace does not like '\0' replacement
 
