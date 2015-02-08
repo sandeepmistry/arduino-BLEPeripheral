@@ -15,6 +15,15 @@ enum BLEAttributeType {
   BLETypeDescriptor     = 0x2900
 };
 
+enum BLEProperty {
+  BLEBroadcast            = 0x01,
+  BLERead                 = 0x02,
+  BLEWriteWithoutResponse = 0x04,
+  BLEWrite                = 0x08,
+  BLENotify               = 0x10,
+  BLEIndicate             = 0x20
+};
+
 class BLEAttribute
 {
   public:
@@ -23,12 +32,7 @@ class BLEAttribute
 
     enum BLEAttributeType type() const;
 
-  protected:
-    static unsigned char numAttributes();
-
   private:
-    static unsigned char _numAttributes;
-
     const char*                 _uuid;
     enum BLEAttributeType       _type;
 };

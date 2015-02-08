@@ -5,14 +5,14 @@
 #include "BLEDescriptor.h"
 
 BLEDescriptor::BLEDescriptor(const char* uuid, const unsigned char value[], unsigned char valueLength) :
-  BLEAttribute(uuid, BLETypeDescriptor),
+  BLELocalAttribute(uuid, BLETypeDescriptor),
   _value(value),
   _valueLength(valueLength)
 {
 }
 
 BLEDescriptor::BLEDescriptor(const char* uuid, const char* value) :
-  BLEAttribute(uuid, BLETypeDescriptor),
+  BLELocalAttribute(uuid, BLETypeDescriptor),
   _value((const unsigned char*)value),
   _valueLength(strlen(value))
 {

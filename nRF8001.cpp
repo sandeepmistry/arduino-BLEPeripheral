@@ -5,10 +5,11 @@
 
 #include <SPI.h>
 
-#include "BLEAttribute.h"
-#include "BLEService.h"
 #include "BLECharacteristic.h"
 #include "BLEDescriptor.h"
+#include "BLERemoteService.h"
+#include "BLERemoteCharacteristic.h"
+#include "BLEService.h"
 #include "BLEUtil.h"
 #include "BLEUuid.h"
 
@@ -114,9 +115,12 @@ uint16_t crc_16_ccitt(uint16_t crc, uint8_t * data_in, uint16_t data_len) {
 nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
   BLEDevice(),
 
-  _pipeInfo(NULL),
-  _numPipeInfo(0),
+  _localPipeInfo(NULL),
+  _numLocalPipeInfo(0),
   _broadcastPipe(0),
+
+  _remotePipeInfo(NULL),
+  _numRemotePipeInfo(0),
 
   _dynamicData(NULL),
   _dynamicDataOffset(0),
@@ -156,8 +160,12 @@ nRF8001::~nRF8001() {
     free(this->_dynamicData);
   }
 
-  if (this->_pipeInfo) {
-    free(this->_pipeInfo);
+  if (this->_localPipeInfo) {
+    free(this->_localPipeInfo);
+  }
+
+  if (this->_remotePipeInfo) {
+    free(this->_remotePipeInfo);
   }
 }
 
@@ -167,50 +175,100 @@ void nRF8001::begin(unsigned char advertisementDataType,
                       unsigned char scanDataType,
                       unsigned char scanDataLength,
                       const unsigned char* scanData,
-                      BLEAttribute** attributes,
-                      unsigned char numAttributes)
+                      BLELocalAttribute** localAttributes,
+                      unsigned char numLocalAttributes,
+                      BLERemoteAttribute** remoteAttributes,
+                      unsigned char numRemoteAttributes)
 {
-  unsigned char numPipedCharacteristics = 0;
-  unsigned char numPipes = 0;
+  unsigned char numLocalPipedCharacteristics = 0;
+  unsigned char numLocalPipes = 0;
 
-  for (int i = 0; i < numAttributes; i++) {
-    BLEAttribute* attribute = attributes[i];
+  for (int i = 0; i < numLocalAttributes; i++) {
+    BLELocalAttribute* localAttribute = localAttributes[i];
 
-    if (attribute->type() == BLETypeCharacteristic) {
-      BLECharacteristic* characteristic = (BLECharacteristic *)attribute;
+    if (localAttribute->type() == BLETypeCharacteristic) {
+      BLECharacteristic* characteristic = (BLECharacteristic *)localAttribute;
       unsigned char properties = characteristic->properties();
 
       if (properties) {
-        numPipedCharacteristics++;
+        numLocalPipedCharacteristics++;
 
         if (properties & BLEBroadcast) {
-          numPipes++;
+          numLocalPipes++;
         }
 
         if (properties & BLENotify) {
-          numPipes++;
+          numLocalPipes++;
         }
 
         if (properties & BLEIndicate) {
-          numPipes++;
+          numLocalPipes++;
         }
 
         if (properties & BLEWriteWithoutResponse) {
-          numPipes++;
+          numLocalPipes++;
         }
 
         if (properties & BLEWrite) {
-          numPipes++;
+          numLocalPipes++;
         }
 
         if (properties & BLERead) {
-          numPipes++;
+          numLocalPipes++;
         }
       }
     }
   }
 
-  this->_pipeInfo = (struct pipeInfo*)malloc(sizeof(struct pipeInfo) * numPipedCharacteristics);
+  this->_localPipeInfo = (struct localPipeInfo*)malloc(sizeof(struct localPipeInfo) * numLocalPipedCharacteristics);
+
+  unsigned char numRemoteServices = 0;
+  unsigned char numRemotePipedCharacteristics = 0;
+  unsigned char numRemotePipes = 0;
+  unsigned char numCustomUuids = 0;
+
+  for (int i = 0; i < numRemoteAttributes; i++) {
+    BLERemoteAttribute* remoteAttribute = remoteAttributes[i];
+    unsigned short remoteAttributeType = remoteAttribute->type();
+    BLEUuid uuid = BLEUuid(remoteAttribute->uuid());
+
+    if (uuid.length() > 2) {
+      numCustomUuids++;
+    }
+
+    if (remoteAttributeType == BLETypeService) {
+      numRemoteServices++;
+    } else if (remoteAttributeType == BLETypeCharacteristic) {
+      BLERemoteCharacteristic* characteristic = (BLERemoteCharacteristic *)remoteAttribute;
+      unsigned char properties = characteristic->properties();
+
+      if (properties) {
+        numRemotePipedCharacteristics++;
+
+        if (properties & BLENotify) {
+          numRemotePipes++;
+        }
+
+        if (properties & BLEIndicate) {
+          numRemotePipes++;
+        }
+
+        if (properties & BLEWriteWithoutResponse) {
+          numRemotePipes++;
+        }
+
+        if (properties & BLEWrite) {
+          numRemotePipes++;
+        }
+
+        if (properties & BLERead) {
+          numRemotePipes++;
+        }
+      }
+    }
+  }
+
+  this->_remotePipeInfo = (struct remotePipeInfo*)malloc(sizeof(struct remotePipeInfo) * numRemotePipedCharacteristics);
 
   lib_aci_init(&this->_aciState, false);
 
@@ -243,8 +301,10 @@ void nRF8001::begin(unsigned char advertisementDataType,
     memcpy_P(&setupMsg, &baseSetupMsgs[i], setupMsgSize);
 
     if (i == 1) {
-      setupMsgData->data[6] = numPipedCharacteristics;
-      setupMsgData->data[8] = numPipes;
+      setupMsgData->data[5] = numRemoteServices;
+      setupMsgData->data[6] = numLocalPipedCharacteristics;
+      setupMsgData->data[7] = numRemotePipedCharacteristics;
+      setupMsgData->data[8] = (numLocalPipes + numRemotePipes);
 
       if (this->_bondStore) {
         setupMsgData->data[4] |= 0x02;
@@ -257,6 +317,8 @@ void nRF8001::begin(unsigned char advertisementDataType,
       setupMsgData->data[18] |= 0x40;
 
       setupMsgData->data[22] |= 0x40;
+
+      setupMsgData->data[26] = numCustomUuids;
     } else if (i == 3) {
       if (hasAdvertisementData) {
         setupMsgData->data[16] |= 0x40;
@@ -290,108 +352,112 @@ void nRF8001::begin(unsigned char advertisementDataType,
   unsigned short gattSetupMsgOffset = 0;
   unsigned short handle             = 1;
   unsigned char  pipe               = 1;
-  unsigned char  numPiped           = 0;
+  unsigned char  numLocalPiped      = 0;
+  unsigned char  numRemotePiped     = 0;
 
-  for (int i = 0; i < numAttributes; i++) {
-    BLEAttribute* attribute = attributes[i];
-    BLEUuid uuid = BLEUuid(attribute->uuid());
+  for (int i = 0; i < numLocalAttributes; i++) {
+    BLELocalAttribute* localAttribute = localAttributes[i];
+    unsigned short localAttributeType = localAttribute->type();
+    BLEUuid uuid = BLEUuid(localAttribute->uuid());
+    const unsigned char* uuidData = uuid.data();
+    unsigned char uuidLength = uuid.length();
 
-    if (attribute->type() == BLETypeService) {
-      BLEService* service = (BLEService *)attribute;
+    if (localAttributeType == BLETypeService) {
+      BLEService* service = (BLEService *)localAttribute;
 
-      setupMsgData->length  = 12 + uuid.length();
+      setupMsgData->length  = 12 + uuidLength;
 
       setupMsgData->data[0] = 0x04;
       setupMsgData->data[1] = 0x04;
-      setupMsgData->data[2] = uuid.length();
-      setupMsgData->data[3] = uuid.length();
+      setupMsgData->data[2] = uuidLength;
+      setupMsgData->data[3] = uuidLength;
 
       setupMsgData->data[4] = (handle >> 8) & 0xff;
       setupMsgData->data[5] = handle & 0xff;
       handle++;
 
-      setupMsgData->data[6] = (service->type() >> 8) & 0xff;
-      setupMsgData->data[7] = service->type() & 0xff;
+      setupMsgData->data[6] = (localAttributeType >> 8) & 0xff;
+      setupMsgData->data[7] = localAttributeType & 0xff;
 
       setupMsgData->data[8] = ACI_STORE_LOCAL;
 
-      memcpy(&setupMsgData->data[9], uuid.data(), uuid.length());
+      memcpy(&setupMsgData->data[9], uuidData, uuidLength);
 
       this->sendSetupMessage(&setupMsg, 0x2, gattSetupMsgOffset);
-    } else if (attribute->type() == BLETypeCharacteristic) {
-      BLECharacteristic* characteristic = (BLECharacteristic *)attribute;
+    } else if (localAttributeType == BLETypeCharacteristic) {
+      BLECharacteristic* characteristic = (BLECharacteristic *)localAttribute;
       unsigned char properties = characteristic->properties();
       const char* characteristicUuid = characteristic->uuid();
 
-      struct pipeInfo* pipeInfo = &this->_pipeInfo[numPiped];
+      struct localPipeInfo* localPipeInfo = &this->_localPipeInfo[numLocalPiped];
 
-      memset(pipeInfo, 0, sizeof(struct pipeInfo));
+      memset(localPipeInfo, 0, sizeof(struct localPipeInfo));
 
-      pipeInfo->characteristic = characteristic;
+      localPipeInfo->characteristic = characteristic;
 
       if (properties) {
-        numPiped++;
+        numLocalPiped++;
 
         if (properties & BLEBroadcast) {
-          pipeInfo->advPipe = pipe;
+          localPipeInfo->advPipe = pipe;
 
           pipe++;
         }
 
         if (properties & BLENotify) {
-          pipeInfo->txPipe = pipe;
+          localPipeInfo->txPipe = pipe;
 
           pipe++;
         }
 
         if (properties & BLEIndicate) {
-          pipeInfo->txAckPipe = pipe;
+          localPipeInfo->txAckPipe = pipe;
 
           pipe++;
         }
 
         if (properties & BLEWriteWithoutResponse) {
-          pipeInfo->rxPipe = pipe;
+          localPipeInfo->rxPipe = pipe;
 
           pipe++;
         }
 
         if (properties & BLEWrite) {
-          pipeInfo->rxAckPipe = pipe;
+          localPipeInfo->rxAckPipe = pipe;
 
           pipe++;
         }
 
         if (properties & BLERead) {
-          pipeInfo->setPipe = pipe;
+          localPipeInfo->setPipe = pipe;
 
           pipe++;
         }
       }
 
-      setupMsgData->length   = 15 + uuid.length();
+      setupMsgData->length   = 15 + uuidLength;
 
       setupMsgData->data[0]  = 0x04;
       setupMsgData->data[1]  = 0x04;
-      setupMsgData->data[2]  = 3 + uuid.length();
-      setupMsgData->data[3]  = 3 + uuid.length();
+      setupMsgData->data[2]  = 3 + uuidLength;
+      setupMsgData->data[3]  = 3 + uuidLength;
 
       setupMsgData->data[4]  = (handle >> 8) & 0xff;
       setupMsgData->data[5]  = handle & 0xff;
       handle++;
 
-      setupMsgData->data[6]  = (characteristic->type() >> 8) & 0xff;
-      setupMsgData->data[7]  = characteristic->type() & 0xff;
+      setupMsgData->data[6]  = (localAttributeType >> 8) & 0xff;
+      setupMsgData->data[7]  = localAttributeType & 0xff;
 
       setupMsgData->data[8]  = ACI_STORE_LOCAL;
       setupMsgData->data[9]  = properties & 0xfe;
 
       setupMsgData->data[10] = handle & 0xff;
       setupMsgData->data[11] = (handle >> 8) & 0xff;
-      pipeInfo->valueHandle = handle;
+      localPipeInfo->valueHandle = handle;
       handle++;
 
-      memcpy(&setupMsgData->data[12], uuid.data(), uuid.length());
+      memcpy(&setupMsgData->data[12], uuidData, uuidLength);
 
       this->sendSetupMessage(&setupMsg, 0x2, gattSetupMsgOffset);
 
@@ -438,12 +504,12 @@ void nRF8001::begin(unsigned char advertisementDataType,
 
       setupMsgData->data[3]  = valueLength;
 
-      setupMsgData->data[4]  = (pipeInfo->valueHandle >> 8) & 0xff;
-      setupMsgData->data[5]  = pipeInfo->valueHandle & 0xff;
+      setupMsgData->data[4]  = (localPipeInfo->valueHandle >> 8) & 0xff;
+      setupMsgData->data[5]  = localPipeInfo->valueHandle & 0xff;
 
-      if (uuid.length() == 2) {
-        setupMsgData->data[6]  = uuid.data()[1];
-        setupMsgData->data[7]  = uuid.data()[0];
+      if (uuidLength == 2) {
+        setupMsgData->data[6]  = uuidData[1];
+        setupMsgData->data[7]  = uuidData[0];
       } else {
         setupMsgData->data[6]  = 0x00;
         setupMsgData->data[7]  = 0x00;
@@ -483,7 +549,7 @@ void nRF8001::begin(unsigned char advertisementDataType,
 
         setupMsgData->data[4]  = (handle >> 8) & 0xff;
         setupMsgData->data[5]  = handle & 0xff;
-        pipeInfo->configHandle = handle;
+        localPipeInfo->configHandle = handle;
         handle++;
 
         setupMsgData->data[6]  = 0x29;
@@ -496,8 +562,8 @@ void nRF8001::begin(unsigned char advertisementDataType,
 
         this->sendSetupMessage(&setupMsg, 0x2, gattSetupMsgOffset);
       }
-    } else if (attribute->type() == BLETypeDescriptor) {
-      BLEDescriptor* descriptor = (BLEDescriptor *)attribute;
+    } else if (localAttributeType == BLETypeDescriptor) {
+      BLEDescriptor* descriptor = (BLEDescriptor *)localAttribute;
 
       setupMsgData->length   = 12;
 
@@ -513,8 +579,8 @@ void nRF8001::begin(unsigned char advertisementDataType,
       setupMsgData->data[5]  = handle & 0xff;
       handle++;
 
-      setupMsgData->data[6]  = uuid.data()[1];
-      setupMsgData->data[7]  = uuid.data()[0];
+      setupMsgData->data[6]  = uuidData[1];
+      setupMsgData->data[7]  = uuidData[0];
 
       setupMsgData->data[8]  = ACI_STORE_LOCAL;
 
@@ -536,7 +602,7 @@ void nRF8001::begin(unsigned char advertisementDataType,
     }
   }
 
-  this->_numPipeInfo = numPiped;
+  this->_numLocalPipeInfo = numLocalPiped;
 
   // terminator
   setupMsgData->length   = 4;
@@ -545,11 +611,97 @@ void nRF8001::begin(unsigned char advertisementDataType,
 
   this->sendSetupMessage(&setupMsg, 0x2, gattSetupMsgOffset);
 
+  unsigned short remoteServiceSetupMsgOffset  = 0;
+  unsigned char  customUuidIndex = 2;
+
+  for (int i = 0; i < numRemoteAttributes; i++) {
+    BLERemoteAttribute* remoteAttribute = remoteAttributes[i];
+    BLEUuid uuid = BLEUuid(remoteAttribute->uuid());
+    const unsigned char* uuidData = uuid.data();
+    unsigned char uuidLength = uuid.length();
+
+    if (remoteAttribute->type() == BLETypeService) {
+      BLERemoteService *remoteService = (BLERemoteService*)remoteAttributes[i];
+
+      unsigned char numRemoteCharacteristics = 0;
+      setupMsgData->data[3]    = (pipe - 1);
+
+      for (int j = (i + 1); j < numRemoteAttributes; j++) {
+        if (remoteAttributes[j]->type() == BLETypeCharacteristic) {
+          BLERemoteCharacteristic* remoteCharateristic = (BLERemoteCharacteristic*)remoteAttributes[j];
+
+          struct remotePipeInfo* remotePipeInfo = &this->_remotePipeInfo[numRemotePiped];
+          memset(remotePipeInfo, 0, sizeof(struct remotePipeInfo));
+
+          unsigned char properties = remoteCharateristic->properties();
+
+          remotePipeInfo->characteristic = remoteCharateristic;
+
+          if (properties & BLEWriteWithoutResponse) {
+            remotePipeInfo->txPipe = pipe;
+
+            pipe++;
+          }
+
+          if (properties & BLEWrite) {
+            remotePipeInfo->txAckPipe = pipe;
+
+            pipe++;
+          }
+
+          if (properties & BLERead) {
+            remotePipeInfo->rxReqPipe = pipe;
+
+            pipe++;
+          }
+
+          if (properties & BLENotify) {
+            remotePipeInfo->rxPipe = pipe;
+
+            pipe++;
+          }
+
+          if (properties & BLEIndicate) {
+            remotePipeInfo->rxAckPipe = pipe;
+
+            pipe++;
+          }
+
+          numRemoteCharacteristics++;
+
+          numRemotePiped++;
+        } else {
+          break;
+        }
+      }
+
+      setupMsgData->length = 8;
+
+      if (uuidLength == 2) {
+        setupMsgData->data[0]  = uuidData[1];
+        setupMsgData->data[1]  = uuidData[0];
+        setupMsgData->data[2]  = 0x01;
+      } else {
+        setupMsgData->data[0]  = uuidData[13];
+        setupMsgData->data[1]  = uuidData[12];
+        setupMsgData->data[2]  = customUuidIndex;
+
+        customUuidIndex++;
+      }
+
+      setupMsgData->data[4]    = numRemoteCharacteristics;
+
+      this->sendSetupMessage(&setupMsg, 0x3, remoteServiceSetupMsgOffset);
+    }
+  }
+
+  this->_numRemotePipeInfo = numRemotePiped;
+
   // pipes
   unsigned short pipeSetupMsgOffset  = 0;
 
-  for (int i = 0; i < numPiped; i++) {
-    struct pipeInfo pipeInfo = this->_pipeInfo[i];
+  for (int i = 0; i < numLocalPiped; i++) {
+    struct localPipeInfo localPipeInfo = this->_localPipeInfo[i];
 
     setupMsgData->length   = 13;
 
@@ -563,13 +715,13 @@ void nRF8001::begin(unsigned char advertisementDataType,
 
     setupMsgData->data[5]  = 0x04;
 
-    setupMsgData->data[6]  = (pipeInfo.valueHandle >> 8) & 0xff;
-    setupMsgData->data[7]  = pipeInfo.valueHandle & 0xff;
+    setupMsgData->data[6]  = (localPipeInfo.valueHandle >> 8) & 0xff;
+    setupMsgData->data[7]  = localPipeInfo.valueHandle & 0xff;
 
-    setupMsgData->data[8]  = (pipeInfo.configHandle >> 8) & 0xff;
-    setupMsgData->data[9]  = pipeInfo.configHandle & 0xff;
+    setupMsgData->data[8]  = (localPipeInfo.configHandle >> 8) & 0xff;
+    setupMsgData->data[9]  = localPipeInfo.configHandle & 0xff;
 
-    unsigned char properties = pipeInfo.characteristic->properties();
+    unsigned char properties = localPipeInfo.characteristic->properties();
 
     if (properties & BLEBroadcast) {
       setupMsgData->data[4] |= 0x01; // Adv
@@ -596,6 +748,82 @@ void nRF8001::begin(unsigned char advertisementDataType,
     }
 
     this->sendSetupMessage(&setupMsg, 0x4, pipeSetupMsgOffset);
+  }
+
+  for (int i = 0; i < numRemotePiped; i++) {
+    struct remotePipeInfo remotePipeInfo = this->_remotePipeInfo[i];
+
+    BLERemoteCharacteristic *remoteCharacteristic = remotePipeInfo.characteristic;
+    BLEUuid uuid = BLEUuid(remoteCharacteristic->uuid());
+    const unsigned char* uuidData = uuid.data();
+    unsigned char uuidLength = uuid.length();
+
+    setupMsgData->length   = 13;
+
+    if (uuidLength== 2) {
+      setupMsgData->data[0]  = uuidData[1];
+      setupMsgData->data[1]  = uuidData[0];
+      setupMsgData->data[2]  = 0x01;
+    } else {
+      setupMsgData->data[0]  = uuidData[13];
+      setupMsgData->data[1]  = uuidData[12];
+      setupMsgData->data[2]  = customUuidIndex;
+
+      customUuidIndex++;
+    }
+
+    setupMsgData->data[3]  = 0x00; // pipe properties
+    setupMsgData->data[4]  = 0x00; // pipe properties
+
+    setupMsgData->data[5]  = 0x04;
+
+    setupMsgData->data[6]  = 0x00;
+    setupMsgData->data[7]  = 0x00;
+
+    setupMsgData->data[8]  = 0x00;
+    setupMsgData->data[9]  = 0x00;
+
+    unsigned char properties = remoteCharacteristic->properties();
+
+    if (properties & BLERead) {
+      setupMsgData->data[4] |= 0x40; // ACI_RX_REQ
+    }
+
+    if (properties & BLEWriteWithoutResponse) {
+      setupMsgData->data[4] |= 0x02; // ACI_TX
+    }
+
+    if (properties & BLEWrite) {
+      setupMsgData->data[4] |= 0x04; // ACI_TX_ACK
+    }
+
+    if (properties & BLENotify) {
+      setupMsgData->data[4] |= 0x08; // ACI_RX
+    }
+
+    if (properties & BLEIndicate) {
+      setupMsgData->data[4] |= 0x10; // ACI_RX_ACK
+    }
+
+    this->sendSetupMessage(&setupMsg, 0x4, pipeSetupMsgOffset);
+  }
+
+  // custom uuid's (remote only for now)
+  unsigned short customUuidSetupMsgOffset = 0;
+
+  for (int i = 0; i < numRemoteAttributes; i++) {
+    BLERemoteAttribute* remoteAttribute = remoteAttributes[i];
+    BLEUuid uuid = BLEUuid(remoteAttribute->uuid());
+    const unsigned char* uuidData = uuid.data();
+    unsigned char uuidLength = uuid.length();
+
+    setupMsgData->length = 3 + uuidLength;
+    memcpy(&setupMsgData->data, uuidData, uuidLength);
+
+    setupMsgData->data[12]  = 0;
+    setupMsgData->data[13]  = 0;
+
+    this->sendSetupMessage(&setupMsg, 0x5, customUuidSetupMsgOffset);
   }
 
   // crc
@@ -793,22 +1021,39 @@ void nRF8001::poll() {
         Serial.println((unsigned long)closedPipes, HEX);
 #endif
 
-        for (int i = 0; i < this->_numPipeInfo; i++) {
-          struct pipeInfo* pipeInfo = &this->_pipeInfo[i];
+        for (int i = 0; i < this->_numLocalPipeInfo; i++) {
+          struct localPipeInfo* localPipeInfo = &this->_localPipeInfo[i];
 
-          if (pipeInfo->txPipe) {
-            pipeInfo->txPipeOpen = lib_aci_is_pipe_available(&this->_aciState, pipeInfo->txPipe);
+          if (localPipeInfo->txPipe) {
+            localPipeInfo->txPipeOpen = lib_aci_is_pipe_available(&this->_aciState, localPipeInfo->txPipe);
           }
 
-          if (pipeInfo->txAckPipe) {
-            pipeInfo->txAckPipeOpen = lib_aci_is_pipe_available(&this->_aciState, pipeInfo->txAckPipe);
+          if (localPipeInfo->txAckPipe) {
+            localPipeInfo->txAckPipeOpen = lib_aci_is_pipe_available(&this->_aciState, localPipeInfo->txAckPipe);
           }
 
-          bool subscribed = (pipeInfo->txPipeOpen || pipeInfo->txAckPipeOpen);
+          bool subscribed = (localPipeInfo->txPipeOpen || localPipeInfo->txAckPipeOpen);
 
-          if (pipeInfo->characteristic->subscribed() != subscribed) {
+          if (localPipeInfo->characteristic->subscribed() != subscribed) {
             if (this->_eventListener) {
-              this->_eventListener->BLEDeviceCharacteristicSubscribedChanged(*this, *pipeInfo->characteristic, subscribed);
+              this->_eventListener->BLEDeviceCharacteristicSubscribedChanged(*this, *localPipeInfo->characteristic, subscribed);
+            }
+          }
+        }
+
+        if (lib_aci_is_discovery_finished(&this->_aciState)) {
+          // attempt to open all RX and RX ACK remote pipes (for now)
+          for (int i = 0; i < this->_numRemotePipeInfo; i++) {
+            struct remotePipeInfo* remotePipeInfo = &this->_remotePipeInfo[i];
+
+            unsigned char rxPipe = remotePipeInfo->rxPipe;
+            if (rxPipe && lib_aci_is_pipe_closed(&this->_aciState, rxPipe)) {
+              lib_aci_open_remote_pipe(&this->_aciState, rxPipe);
+            }
+
+            unsigned char rxAckPipe = remotePipeInfo->rxAckPipe;
+            if (rxAckPipe && lib_aci_is_pipe_closed(&this->_aciState, rxAckPipe)) {
+              lib_aci_open_remote_pipe(&this->_aciState, rxAckPipe);
             }
           }
         }
@@ -826,12 +1071,12 @@ void nRF8001::poll() {
         Serial.println(F("Evt Disconnected/Advertising timed out"));
 #endif
         // all characteristics unsubscribed on disconnect
-        for (int i = 0; i < this->_numPipeInfo; i++) {
-          struct pipeInfo* pipeInfo = &this->_pipeInfo[i];
+        for (int i = 0; i < this->_numLocalPipeInfo; i++) {
+          struct localPipeInfo* localPipeInfo = &this->_localPipeInfo[i];
 
-          if (pipeInfo->characteristic->subscribed()) {
+          if (localPipeInfo->characteristic->subscribed()) {
             if (this->_eventListener) {
-              this->_eventListener->BLEDeviceCharacteristicSubscribedChanged(*this, *pipeInfo->characteristic, false);
+              this->_eventListener->BLEDeviceCharacteristicSubscribedChanged(*this, *localPipeInfo->characteristic, false);
             }
           }
         }
@@ -871,22 +1116,37 @@ void nRF8001::poll() {
         BLEUtil::printBuffer(aciEvt->params.data_received.rx_data.aci_data, dataLen);
 #endif
 
-        for (int i = 0; i < this->_numPipeInfo; i++) {
-          struct pipeInfo* pipeInfo = &this->_pipeInfo[i];
+        for (int i = 0; i < this->_numLocalPipeInfo; i++) {
+          struct localPipeInfo* localPipeInfo = &this->_localPipeInfo[i];
 
-          if (pipeInfo->rxAckPipe == pipe || pipeInfo->rxPipe == pipe) {
-            if (pipeInfo->rxAckPipe == pipe) {
-              lib_aci_send_ack(&this->_aciState, pipeInfo->rxAckPipe);
+          if (localPipeInfo->rxAckPipe == pipe || localPipeInfo->rxPipe == pipe) {
+            if (localPipeInfo->rxAckPipe == pipe) {
+              lib_aci_send_ack(&this->_aciState, localPipeInfo->rxAckPipe);
             }
 
             if (this->_eventListener) {
-              this->_eventListener->BLEDeviceCharacteristicValueChanged(*this, *pipeInfo->characteristic, aciEvt->params.data_received.rx_data.aci_data, dataLen);
+              this->_eventListener->BLEDeviceCharacteristicValueChanged(*this, *localPipeInfo->characteristic, aciEvt->params.data_received.rx_data.aci_data, dataLen);
             }
             break;
           }
         }
-      }
+
+        for (int i = 0; i < this->_numRemotePipeInfo; i++) {
+          struct remotePipeInfo* remotePipeInfo = &this->_remotePipeInfo[i];
+
+          if (remotePipeInfo->rxPipe == pipe || remotePipeInfo->rxAckPipe == pipe || remotePipeInfo->rxReqPipe) {
+            if (remotePipeInfo->rxAckPipe == pipe) {
+             lib_aci_send_ack(&this->_aciState, remotePipeInfo->rxAckPipe);
+            }
+
+            if (this->_eventListener) {
+              this->_eventListener->BLEDeviceRemoteCharacteristicValueChanged(*this, *remotePipeInfo->characteristic, aciEvt->params.data_received.rx_data.aci_data, dataLen);
+            }
+            break;
+          }
+        }
         break;
+      }
 
       case ACI_EVT_DATA_CREDIT:
         this->_aciState.data_credit_available = this->_aciState.data_credit_available + aciEvt->params.data_credit.credit;
@@ -933,31 +1193,31 @@ void nRF8001::poll() {
 bool nRF8001::updateCharacteristicValue(BLECharacteristic& characteristic) {
   bool success = true;
 
-  for (int i = 0; i < this->_numPipeInfo; i++) {
-    struct pipeInfo* pipeInfo = &this->_pipeInfo[i];
+  for (int i = 0; i < this->_numLocalPipeInfo; i++) {
+    struct localPipeInfo* localPipeInfo = &this->_localPipeInfo[i];
 
-    if (pipeInfo->characteristic == &characteristic) {
-      if (pipeInfo->advPipe && (this->_broadcastPipe == pipeInfo->advPipe)) {
-        success &= lib_aci_set_local_data(&this->_aciState, pipeInfo->advPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
+    if (localPipeInfo->characteristic == &characteristic) {
+      if (localPipeInfo->advPipe && (this->_broadcastPipe == localPipeInfo->advPipe)) {
+        success &= lib_aci_set_local_data(&this->_aciState, localPipeInfo->advPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
       }
 
-      if (pipeInfo->setPipe) {
-        success &= lib_aci_set_local_data(&this->_aciState, pipeInfo->setPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
+      if (localPipeInfo->setPipe) {
+        success &= lib_aci_set_local_data(&this->_aciState, localPipeInfo->setPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
       }
 
-      if (pipeInfo->txPipe && pipeInfo->txPipeOpen) {
+      if (localPipeInfo->txPipe && localPipeInfo->txPipeOpen) {
         if (this->canNotifyCharacteristic(characteristic)) {
           this->_aciState.data_credit_available--;
-          success &= lib_aci_send_data(pipeInfo->txPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
+          success &= lib_aci_send_data(localPipeInfo->txPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
         } else {
           success = false;
         }
       }
 
-      if (pipeInfo->txAckPipe && pipeInfo->txAckPipeOpen) {
+      if (localPipeInfo->txAckPipe && localPipeInfo->txAckPipeOpen) {
         if (this->canIndicateCharacteristic(characteristic)) {
           this->_aciState.data_credit_available--;
-          success &= lib_aci_send_data(pipeInfo->txAckPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
+          success &= lib_aci_send_data(localPipeInfo->txAckPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
         } else {
           success = false;
         }
@@ -973,18 +1233,18 @@ bool nRF8001::updateCharacteristicValue(BLECharacteristic& characteristic) {
 bool nRF8001::broadcastCharacteristic(BLECharacteristic& characteristic) {
   bool success = false;
 
-  for (int i = 0; i < this->_numPipeInfo; i++) {
-    struct pipeInfo* pipeInfo = &this->_pipeInfo[i];
+  for (int i = 0; i < this->_numLocalPipeInfo; i++) {
+    struct localPipeInfo* localPipeInfo = &this->_localPipeInfo[i];
 
-    if (pipeInfo->characteristic == &characteristic) {
-      if (pipeInfo->advPipe) {
-        uint64_t advPipes = ((uint64_t)1) << (pipeInfo->advPipe);
+    if (localPipeInfo->characteristic == &characteristic) {
+      if (localPipeInfo->advPipe) {
+        uint64_t advPipes = ((uint64_t)1) << (localPipeInfo->advPipe);
 
         success = lib_aci_open_adv_pipes((uint8_t*)&advPipes) &&
-                    lib_aci_set_local_data(&this->_aciState, pipeInfo->advPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
+                    lib_aci_set_local_data(&this->_aciState, localPipeInfo->advPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
 
         if (success) {
-          this->_broadcastPipe = pipeInfo->advPipe;
+          this->_broadcastPipe = localPipeInfo->advPipe;
         }
       }
 
@@ -1001,6 +1261,88 @@ bool nRF8001::canNotifyCharacteristic(BLECharacteristic& characteristic) {
 
 bool nRF8001::canIndicateCharacteristic(BLECharacteristic& characteristic) {
   return (lib_aci_get_nb_available_credits(&this->_aciState) > 0);
+}
+
+bool nRF8001::canReadRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
+  bool success = false;
+
+  for (int i = 0; i < this->_numRemotePipeInfo; i++) {
+    struct remotePipeInfo* remotePipeInfo = &this->_remotePipeInfo[i];
+
+    if (remotePipeInfo->characteristic == &characteristic) {
+      unsigned char rxReqPipe = remotePipeInfo->rxReqPipe;
+
+      if (rxReqPipe) {
+        success = lib_aci_is_pipe_available(&this->_aciState, rxReqPipe);
+      }
+
+      break;
+    }
+  }
+
+  return success;
+}
+
+bool nRF8001::readRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
+  bool success = false;
+
+  for (int i = 0; i < this->_numRemotePipeInfo; i++) {
+    struct remotePipeInfo* remotePipeInfo = &this->_remotePipeInfo[i];
+
+    if (remotePipeInfo->characteristic == &characteristic) {
+      unsigned char rxReqPipe = remotePipeInfo->rxReqPipe;
+
+      if (rxReqPipe) {
+        success = lib_aci_is_pipe_available(&this->_aciState, rxReqPipe) &&
+                  lib_aci_request_data(&this->_aciState, rxReqPipe);
+      }
+
+      break;
+    }
+  }
+
+  return success;
+}
+
+bool nRF8001::canWriteRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
+  bool success = false;
+
+  for (int i = 0; i < this->_numRemotePipeInfo; i++) {
+    struct remotePipeInfo* remotePipeInfo = &this->_remotePipeInfo[i];
+
+    if (remotePipeInfo->characteristic == &characteristic) {
+      unsigned char pipe = remotePipeInfo->txAckPipe ? remotePipeInfo->txAckPipe : remotePipeInfo->txPipe;
+
+      if (pipe) {
+        success = lib_aci_is_pipe_available(&this->_aciState, pipe);
+      }
+
+      break;
+    }
+  }
+
+  return success;
+}
+
+bool nRF8001::writeRemoteCharacteristic(BLERemoteCharacteristic& characteristic, const unsigned char value[], unsigned char length) {
+  bool success = false;
+
+  for (int i = 0; i < this->_numRemotePipeInfo; i++) {
+    struct remotePipeInfo* remotePipeInfo = &this->_remotePipeInfo[i];
+
+    if (remotePipeInfo->characteristic == &characteristic) {
+      unsigned char pipe = remotePipeInfo->txAckPipe ? remotePipeInfo->txAckPipe : remotePipeInfo->txPipe;
+
+      if (pipe) {
+        success = lib_aci_is_pipe_available(&this->_aciState, pipe) &&
+                  lib_aci_send_data(pipe, (uint8_t*)value, length);
+      }
+
+      break;
+    }
+  }
+
+  return success;
 }
 
 void nRF8001::startAdvertising() {

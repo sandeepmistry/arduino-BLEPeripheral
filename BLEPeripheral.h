@@ -3,13 +3,16 @@
 
 #include "Arduino.h"
 
-#include "BLEAttribute.h"
 #include "BLEBondStore.h"
 #include "BLECentral.h"
 #include "BLEConstantCharacteristic.h"
 #include "BLEDescriptor.h"
 #include "BLEDevice.h"
 #include "BLEFixedLengthCharacteristic.h"
+#include "BLELocalAttribute.h"
+#include "BLERemoteAttribute.h"
+#include "BLERemoteCharacteristic.h"
+#include "BLERemoteService.h"
 #include "BLEService.h"
 #include "BLETypedCharacteristics.h"
 
@@ -27,7 +30,9 @@ enum BLEPeripheralEvent {
 typedef void (*BLEPeripheralEventHandler)(BLECentral& central);
 
 
-class BLEPeripheral : public BLEDeviceEventListener, public BLECharacteristicValueChangeListener
+class BLEPeripheral : public BLEDeviceEventListener,
+                        public BLECharacteristicValueChangeListener,
+                        public BLERemoteCharacteristicValueChangeListener
 {
   public:
     BLEPeripheral(unsigned char req, unsigned char rdy, unsigned char rst);
@@ -48,7 +53,9 @@ class BLEPeripheral : public BLEDeviceEventListener, public BLECharacteristicVal
     void setDeviceName(const char* deviceName);
     void setAppearance(unsigned short appearance);
 
-    void addAttribute(BLEAttribute& attribute);
+    void addAttribute(BLELocalAttribute& attribute);
+    void addLocalAttribute(BLELocalAttribute& localAttribute);
+    void addRemoteAttribute(BLERemoteAttribute& remoteAttribute);
 
     void disconnect();
 
@@ -63,11 +70,19 @@ class BLEPeripheral : public BLEDeviceEventListener, public BLECharacteristicVal
     bool canNotifyCharacteristic(BLECharacteristic& characteristic);
     bool canIndicateCharacteristic(BLECharacteristic& characteristic);
 
+    bool canReadRemoteCharacteristic(BLERemoteCharacteristic& characteristic);
+    bool readRemoteCharacteristic(BLERemoteCharacteristic& characteristic);
+    bool canWriteRemoteCharacteristic(BLERemoteCharacteristic& characteristic);
+    bool writeRemoteCharacteristic(BLERemoteCharacteristic& characteristic, const unsigned char value[], unsigned char length);
+
+
     virtual void BLEDeviceConnected(BLEDevice& device, const unsigned char* address);
     virtual void BLEDeviceDisconnected(BLEDevice& device);
 
     virtual void BLEDeviceCharacteristicValueChanged(BLEDevice& device, BLECharacteristic& characteristic, const unsigned char* value, unsigned char valueLength);
     virtual void BLEDeviceCharacteristicSubscribedChanged(BLEDevice& device, BLECharacteristic& characteristic, bool subscribed);
+
+    virtual void BLEDeviceRemoteCharacteristicValueChanged(BLEDevice& device, BLERemoteCharacteristic& remoteCharacteristic, const unsigned char* value, unsigned char valueLength);
 
     virtual void BLEDeviceAddressReceived(BLEDevice& device, const unsigned char* address);
     virtual void BLEDeviceTemperatureReceived(BLEDevice& device, float temperature);
@@ -87,14 +102,19 @@ class BLEPeripheral : public BLEDeviceEventListener, public BLECharacteristicVal
     unsigned char                  _manufacturerDataLength;
     const char*                    _localName;
 
-    BLEAttribute**                 _attributes;
-    unsigned char                  _numAttributes;
+    BLELocalAttribute**            _localAttributes;
+    unsigned char                  _numLocalAttributes;
+    BLERemoteAttribute**           _remoteAttributes;
+    unsigned char                  _numRemoteAttributes;
 
     BLEService                     _genericAccessService;
     BLECharacteristic              _deviceNameCharacteristic;
     BLECharacteristic              _appearanceCharacteristic;
     BLEService                     _genericAttributeService;
     BLECharacteristic              _servicesChangedCharacteristic;
+
+    BLERemoteService               _remoteGenericAttributeService;
+    BLERemoteCharacteristic        _remoteServicesChangedCharacteristic;
 
     BLECentral                     _central;
     BLEPeripheralEventHandler      _eventHandlers[2];

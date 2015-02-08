@@ -1,16 +1,7 @@
 #ifndef _BLE_CHARACTERISTIC_H_
 #define _BLE_CHARACTERISTIC_H_
 
-#include "BLEAttribute.h"
-
-enum BLEProperty {
-  BLEBroadcast            = 0x01,
-  BLERead                 = 0x02,
-  BLEWriteWithoutResponse = 0x04,
-  BLEWrite                = 0x08,
-  BLENotify               = 0x10,
-  BLEIndicate             = 0x20
-};
+#include "BLELocalAttribute.h"
 
 enum BLECharacteristicEvent {
   BLEWritten = 0,
@@ -32,7 +23,7 @@ class BLECharacteristicValueChangeListener
     virtual bool canIndicateCharacteristic(BLECharacteristic& characteristic) = 0;
 };
 
-class BLECharacteristic : public BLEAttribute
+class BLECharacteristic : public BLELocalAttribute
 {
   friend class BLEPeripheral;
 

@@ -13,7 +13,7 @@ class nRF8001 : protected BLEDevice
   friend class BLEPeripheral;
 
   protected:
-    struct pipeInfo {
+    struct localPipeInfo {
       BLECharacteristic* characteristic;
 
       unsigned short     valueHandle;
@@ -30,6 +30,16 @@ class nRF8001 : protected BLEDevice
       bool               txAckPipeOpen;
     };
 
+    struct remotePipeInfo {
+      BLERemoteCharacteristic*  characteristic;
+
+      unsigned char             txPipe;
+      unsigned char             txAckPipe;
+      unsigned char             rxPipe;
+      unsigned char             rxAckPipe;
+      unsigned char             rxReqPipe;
+    };
+
     nRF8001(unsigned char req, unsigned char rdy, unsigned char rst);
 
     virtual ~nRF8001();
@@ -40,8 +50,10 @@ class nRF8001 : protected BLEDevice
                 unsigned char scanDataType,
                 unsigned char scanDataLength,
                 const unsigned char* scanData,
-                BLEAttribute** attributes,
-                unsigned char numAttributes);
+                BLELocalAttribute** localAttributes,
+                unsigned char numLocalAttributes,
+                BLERemoteAttribute** remoteAttributes,
+                unsigned char numRemoteAttributes);
 
     virtual void poll();
 
@@ -52,6 +64,12 @@ class nRF8001 : protected BLEDevice
     virtual bool broadcastCharacteristic(BLECharacteristic& characteristic);
     virtual bool canNotifyCharacteristic(BLECharacteristic& characteristic);
     virtual bool canIndicateCharacteristic(BLECharacteristic& characteristic);
+
+    virtual bool canReadRemoteCharacteristic(BLERemoteCharacteristic& characteristic);
+    virtual bool readRemoteCharacteristic(BLERemoteCharacteristic& characteristic);
+    virtual bool canWriteRemoteCharacteristic(BLERemoteCharacteristic& characteristic);
+    virtual bool writeRemoteCharacteristic(BLERemoteCharacteristic& characteristic, const unsigned char value[], unsigned char length);
+
 
     virtual void requestAddress();
     virtual void requestTemperature();
@@ -66,9 +84,12 @@ class nRF8001 : protected BLEDevice
     struct aci_state_t          _aciState;
     hal_aci_evt_t               _aciData;
 
-    struct pipeInfo*            _pipeInfo;
-    unsigned char               _numPipeInfo;
+    struct localPipeInfo*       _localPipeInfo;
+    unsigned char               _numLocalPipeInfo;
     unsigned char               _broadcastPipe;
+
+    struct remotePipeInfo*      _remotePipeInfo;
+    unsigned char               _numRemotePipeInfo;
 
     unsigned char*              _dynamicData;
     unsigned char               _dynamicDataOffset;

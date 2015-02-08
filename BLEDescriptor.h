@@ -1,9 +1,9 @@
 #ifndef _BLE_DESCRIPTOR_H_
 #define _BLE_DESCRIPTOR_H_
 
-#include "BLEAttribute.h"
+#include "BLELocalAttribute.h"
 
-class BLEDescriptor : public BLEAttribute
+class BLEDescriptor : public BLELocalAttribute
 {
   public:
     BLEDescriptor(const char* uuid, const unsigned char value[], unsigned char valueLength);
