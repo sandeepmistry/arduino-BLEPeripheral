@@ -33,8 +33,10 @@ class nRF51822 : public BLEDevice
                 unsigned char scanDataType,
                 unsigned char scanDataLength,
                 const unsigned char* scanData,
-                BLEAttribute** attributes,
-                unsigned char numAttributes);
+                BLELocalAttribute** localAttributes,
+                unsigned char numLocalAttributes,
+                BLERemoteAttribute** remoteAttributes,
+                unsigned char numRemoteAttributes);
 
     virtual void poll();
 
@@ -45,6 +47,11 @@ class nRF51822 : public BLEDevice
     virtual bool broadcastCharacteristic(BLECharacteristic& characteristic);
     virtual bool canNotifyCharacteristic(BLECharacteristic& characteristic);
     virtual bool canIndicateCharacteristic(BLECharacteristic& characteristic);
+
+    virtual bool canReadRemoteCharacteristic(BLERemoteCharacteristic& characteristic);
+    virtual bool readRemoteCharacteristic(BLERemoteCharacteristic& characteristic);
+    virtual bool canWriteRemoteCharacteristic(BLERemoteCharacteristic& characteristic);
+    virtual bool writeRemoteCharacteristic(BLERemoteCharacteristic& characteristic, const unsigned char value[], unsigned char length);
 
     virtual void requestAddress();
     virtual void requestTemperature();

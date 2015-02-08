@@ -57,8 +57,10 @@ void nRF51822::begin(unsigned char advertisementDataType,
                       unsigned char scanDataType,
                       unsigned char scanDataLength,
                       const unsigned char* scanData,
-                      BLEAttribute** attributes,
-                      unsigned char numAttributes)
+                      BLELocalAttribute** localAttributes,
+                      unsigned char numLocalAttributes,
+                      BLERemoteAttribute** remoteAttributes,
+                      unsigned char numRemoteAttributes)
 {
 
 #ifdef __RFduino__
@@ -125,10 +127,10 @@ void nRF51822::begin(unsigned char advertisementDataType,
   sd_ble_gap_adv_data_set(this->_advData, this->_advDataLen, srData, srDataLen);
   sd_ble_gap_appearance_set(0);
 
-  for (int i = 0; i < numAttributes; i++) {
-    BLEAttribute *attribute = attributes[i];
+  for (int i = 0; i < numLocalAttributes; i++) {
+    BLELocalAttribute *localAttribute = localAttributes[i];
 
-    if (attribute->type() == BLETypeCharacteristic) {
+    if (localAttribute->type() == BLETypeCharacteristic) {
       this->_numCharacteristics++;
     }
   }
@@ -142,9 +144,9 @@ void nRF51822::begin(unsigned char advertisementDataType,
   uint16_t handle = 0;
   BLEService *lastService = NULL;
 
-  for (int i = 0; i < numAttributes; i++) {
-    BLEAttribute *attribute = attributes[i];
-    BLEUuid uuid = BLEUuid(attribute->uuid());
+  for (int i = 0; i < numLocalAttributes; i++) {
+    BLELocalAttribute *localAttribute = localAttributes[i];
+    BLEUuid uuid = BLEUuid(localAttribute->uuid());
     const unsigned char* uuidData = uuid.data();
 
     ble_uuid_t nordicUUID;
@@ -157,8 +159,8 @@ void nRF51822::begin(unsigned char advertisementDataType,
       sd_ble_uuid_vs_add((ble_uuid128_t*)&uuidData, &nordicUUID.type);
     }
 
-    if (attribute->type() == BLETypeService) {
-      BLEService *service = (BLEService *)attribute;
+    if (localAttribute->type() == BLETypeService) {
+      BLEService *service = (BLEService *)localAttribute;
 
       if (strcmp(service->uuid(), "1800") == 0 || strcmp(service->uuid(), "1801") == 0) {
         continue; // skip
@@ -167,8 +169,8 @@ void nRF51822::begin(unsigned char advertisementDataType,
       sd_ble_gatts_service_add(BLE_GATTS_SRVC_TYPE_PRIMARY, &nordicUUID, &handle);
 
       lastService = service;
-    } else if (attribute->type() == BLETypeCharacteristic) {
-      BLECharacteristic *characteristic = (BLECharacteristic *)attribute;
+    } else if (localAttribute->type() == BLETypeCharacteristic) {
+      BLECharacteristic *characteristic = (BLECharacteristic *)localAttribute;
 
       if (strcmp(characteristic->uuid(), "2a00") == 0) {
         ble_gap_conn_sec_mode_t secMode;
@@ -239,14 +241,14 @@ void nRF51822::begin(unsigned char advertisementDataType,
         characteristicValueAttributeMetaData.wr_auth    = 0;
         characteristicValueAttributeMetaData.vlen       = 0;
 
-        for (int j = (i + 1); j < numAttributes; j++) {
-          attribute = attributes[j];
+        for (int j = (i + 1); j < numLocalAttributes; j++) {
+          localAttribute = localAttributes[j];
 
-          if (attribute->type() != BLETypeDescriptor) {
+          if (localAttribute->type() != BLETypeDescriptor) {
             break;
           }
 
-          BLEDescriptor *descriptor = (BLEDescriptor *)attribute;
+          BLEDescriptor *descriptor = (BLEDescriptor *)localAttribute;
 
           if (strcmp(descriptor->uuid(), "2901") == 0) {
             characteristicMetaData.p_char_user_desc        = (uint8_t*)descriptor->value();
@@ -274,8 +276,8 @@ void nRF51822::begin(unsigned char advertisementDataType,
 
         characteristicIndex++;
       }
-    } else if (attribute->type() == BLETypeDescriptor) {
-      BLEDescriptor *descriptor = (BLEDescriptor *)attribute;
+    } else if (localAttribute->type() == BLETypeDescriptor) {
+      BLEDescriptor *descriptor = (BLEDescriptor *)localAttribute;
 
       if (strcmp(descriptor->uuid(), "2901") == 0 ||
           strcmp(descriptor->uuid(), "2902") == 0 ||
@@ -643,6 +645,38 @@ bool nRF51822::canIndicateCharacteristic(BLECharacteristic& characteristic) {
   sd_ble_tx_buffer_count_get(&count);
 
   return (count > 0);
+}
+
+bool nRF51822::canReadRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
+  bool success = false;
+
+  // TODO
+
+  return success;
+}
+
+bool nRF51822::readRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
+  bool success = false;
+
+  // TODO
+
+  return success;
+}
+
+bool nRF51822::canWriteRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
+  bool success = false;
+
+  // TODO
+
+  return success;
+}
+
+bool nRF51822::writeRemoteCharacteristic(BLERemoteCharacteristic& characteristic, const unsigned char value[], unsigned char length) {
+  bool success = false;
+
+  // TODO
+
+  return success;
 }
 
 void nRF51822::startAdvertising() {
