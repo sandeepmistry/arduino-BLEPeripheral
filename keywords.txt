@@ -117,3 +117,7 @@ BLEUnsubscribed	LITERAL1
 
 BLEConnected	LITERAL1
 BLEDisconnected	LITERAL1
+BLERemoteServicesDiscovered	LITERAL1
+
+BLEValueUpdated	LITERAL1
+

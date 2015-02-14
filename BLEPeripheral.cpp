@@ -103,6 +103,10 @@ void BLEPeripheral::begin() {
     memcpy(scanData, this->_localName, scanDataLength);
   }
 
+  if (this->_localAttributes == NULL) {
+    this->initLocalAttributes();
+  }
+
   for (int i = 0; i < this->_numLocalAttributes; i++) {
     BLELocalAttribute* localAttribute = this->_localAttributes[i];
     if (localAttribute->type() == BLETypeCharacteristic) {
@@ -173,16 +177,7 @@ void BLEPeripheral::addAttribute(BLELocalAttribute& attribute) {
 
 void BLEPeripheral::addLocalAttribute(BLELocalAttribute& localAttribute) {
   if (this->_localAttributes == NULL) {
-    this->_localAttributes = (BLELocalAttribute**)malloc(BLELocalAttribute::numAttributes() * sizeof(BLELocalAttribute*));
-
-    this->_localAttributes[0] = &this->_genericAccessService;
-    this->_localAttributes[1] = &this->_deviceNameCharacteristic;
-    this->_localAttributes[2] = &this->_appearanceCharacteristic;
-
-    this->_localAttributes[3] = &this->_genericAttributeService;
-    this->_localAttributes[4] = &this->_servicesChangedCharacteristic;
-
-    this->_numLocalAttributes = 5;
+    this->initLocalAttributes();
   }
 
   this->_localAttributes[this->_numLocalAttributes] = &localAttribute;
@@ -284,6 +279,18 @@ void BLEPeripheral::BLEDeviceDisconnected(BLEDevice& device) {
   this->_central.clearAddress();
 }
 
+void BLEPeripheral::BLEDeviceRemoteServicesDiscovered(BLEDevice& device) {
+#ifdef BLE_PERIPHERAL_DEBUG
+  Serial.print(F("Peripheral discovered central remote services: "));
+  Serial.println(this->_central.address());
+#endif
+
+  BLEPeripheralEventHandler eventHandler = this->_eventHandlers[BLERemoteServicesDiscovered];
+  if (eventHandler) {
+    eventHandler(this->_central);
+  }
+}
+
 void BLEPeripheral::BLEDeviceCharacteristicValueChanged(BLEDevice& device, BLECharacteristic& characteristic, const unsigned char* value, unsigned char valueLength) {
   characteristic.setValue(this->_central, value, valueLength);
 }
@@ -311,4 +318,17 @@ void BLEPeripheral::BLEDeviceTemperatureReceived(BLEDevice& device, float temper
 }
 
 void BLEPeripheral::BLEDeviceBatteryLevelReceived(BLEDevice& device, float batteryLevel) {
+}
+
+void BLEPeripheral::initLocalAttributes() {
+  this->_localAttributes = (BLELocalAttribute**)malloc(BLELocalAttribute::numAttributes() * sizeof(BLELocalAttribute*));
+
+  this->_localAttributes[0] = &this->_genericAccessService;
+  this->_localAttributes[1] = &this->_deviceNameCharacteristic;
+  this->_localAttributes[2] = &this->_appearanceCharacteristic;
+
+  this->_localAttributes[3] = &this->_genericAttributeService;
+  this->_localAttributes[4] = &this->_servicesChangedCharacteristic;
+
+  this->_numLocalAttributes = 5;
 }

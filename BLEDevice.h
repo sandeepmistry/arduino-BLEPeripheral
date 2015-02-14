@@ -14,6 +14,7 @@ class BLEDeviceEventListener
   public:
     virtual void BLEDeviceConnected(BLEDevice& device, const unsigned char* address) = 0;
     virtual void BLEDeviceDisconnected(BLEDevice& device) = 0;
+    virtual void BLEDeviceRemoteServicesDiscovered(BLEDevice& device) = 0;
 
     virtual void BLEDeviceCharacteristicValueChanged(BLEDevice& device, BLECharacteristic& characteristic, const unsigned char* value, unsigned char valueLength) = 0;
     virtual void BLEDeviceCharacteristicSubscribedChanged(BLEDevice& device, BLECharacteristic& characteristic, bool subscribed) = 0;

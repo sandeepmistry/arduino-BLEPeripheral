@@ -119,6 +119,7 @@ nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
   _numLocalPipeInfo(0),
   _broadcastPipe(0),
 
+  _remoteServicesDiscovered(false),
   _remotePipeInfo(NULL),
   _numRemotePipeInfo(0),
 
@@ -1000,6 +1001,8 @@ void nRF8001::poll() {
         Serial.print(F("Evt Connected "));
         Serial.println(address);
 #endif
+        this->_remoteServicesDiscovered = false;
+
         if (this->_eventListener) {
           this->_eventListener->BLEDeviceConnected(*this, aciEvt->params.connected.dev_addr);
         }
@@ -1041,7 +1044,7 @@ void nRF8001::poll() {
           }
         }
 
-        if (lib_aci_is_discovery_finished(&this->_aciState)) {
+        if (lib_aci_is_discovery_finished(&this->_aciState) && !this->_remoteServicesDiscovered) {
           // attempt to open all RX and RX ACK remote pipes (for now)
           for (int i = 0; i < this->_numRemotePipeInfo; i++) {
             struct remotePipeInfo* remotePipeInfo = &this->_remotePipeInfo[i];
@@ -1055,6 +1058,12 @@ void nRF8001::poll() {
             if (rxAckPipe && lib_aci_is_pipe_closed(&this->_aciState, rxAckPipe)) {
               lib_aci_open_remote_pipe(&this->_aciState, rxAckPipe);
             }
+          }
+
+          this->_remoteServicesDiscovered = true;
+
+          if (this->_eventListener) {
+            this->_eventListener->BLEDeviceRemoteServicesDiscovered(*this);
           }
         }
         break;
