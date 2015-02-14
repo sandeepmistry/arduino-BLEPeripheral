@@ -55,7 +55,7 @@ class BLERemoteCharacteristic : public BLERemoteAttribute
     unsigned char                                     _properties;
 
     unsigned char                                     _valueLength;
-    unsigned char                                     _value[BLE_ATTRIBUTE_MAX_VALUE_LENGTH];
+    unsigned char                                     _value[BLE_REMOTE_ATTRIBUTE_MAX_VALUE_LENGTH];
 
     bool                                              _valueUpdated;
 
