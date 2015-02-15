@@ -69,7 +69,10 @@ class nRF8001 : protected BLEDevice
     virtual bool readRemoteCharacteristic(BLERemoteCharacteristic& characteristic);
     virtual bool canWriteRemoteCharacteristic(BLERemoteCharacteristic& characteristic);
     virtual bool writeRemoteCharacteristic(BLERemoteCharacteristic& characteristic, const unsigned char value[], unsigned char length);
-
+    virtual bool canSubscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic);
+    virtual bool subscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic);
+    virtual bool canUnsubscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic);
+    virtual bool unsubcribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic);
 
     virtual void requestAddress();
     virtual void requestTemperature();
@@ -83,6 +86,8 @@ class nRF8001 : protected BLEDevice
   private:
     struct aci_state_t          _aciState;
     hal_aci_evt_t               _aciData;
+
+    uint64_t                    _openPipes;
 
     struct localPipeInfo*       _localPipeInfo;
     unsigned char               _numLocalPipeInfo;

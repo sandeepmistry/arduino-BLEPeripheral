@@ -115,6 +115,8 @@ uint16_t crc_16_ccitt(uint16_t crc, uint8_t * data_in, uint16_t data_len) {
 nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
   BLEDevice(),
 
+  _openPipes(0),
+
   _localPipeInfo(NULL),
   _numLocalPipeInfo(0),
   _broadcastPipe(0),
@@ -865,8 +867,7 @@ void nRF8001::poll() {
             if (aciEvt->params.device_started.hw_error) {
               delay(20); //Handle the HW error event correctly.
             } else if (this->_bondStore &&
-                  (this->_dynamicData[24] & 0x02) &&
-                  (this->_dynamicData[106] & 0x08)) {
+                  (this->_dynamicData[24] & 0x82)) {
 
               this->_dynamicDataSequenceNo = 1;
               this->_dynamicDataOffset = 0;
@@ -1023,47 +1024,35 @@ void nRF8001::poll() {
         Serial.println((unsigned long)openPipes, HEX);
         Serial.println((unsigned long)closedPipes, HEX);
 #endif
+        if (memcmp(&this->_openPipes, aciEvt->params.pipe_status.pipes_open_bitmap, sizeof(this->_openPipes)) != 0) {
+          memcpy(&this->_openPipes, aciEvt->params.pipe_status.pipes_open_bitmap, sizeof(this->_openPipes));
 
-        for (int i = 0; i < this->_numLocalPipeInfo; i++) {
-          struct localPipeInfo* localPipeInfo = &this->_localPipeInfo[i];
+          for (int i = 0; i < this->_numLocalPipeInfo; i++) {
+            struct localPipeInfo* localPipeInfo = &this->_localPipeInfo[i];
 
-          if (localPipeInfo->txPipe) {
-            localPipeInfo->txPipeOpen = lib_aci_is_pipe_available(&this->_aciState, localPipeInfo->txPipe);
-          }
-
-          if (localPipeInfo->txAckPipe) {
-            localPipeInfo->txAckPipeOpen = lib_aci_is_pipe_available(&this->_aciState, localPipeInfo->txAckPipe);
-          }
-
-          bool subscribed = (localPipeInfo->txPipeOpen || localPipeInfo->txAckPipeOpen);
-
-          if (localPipeInfo->characteristic->subscribed() != subscribed) {
-            if (this->_eventListener) {
-              this->_eventListener->BLEDeviceCharacteristicSubscribedChanged(*this, *localPipeInfo->characteristic, subscribed);
-            }
-          }
-        }
-
-        if (lib_aci_is_discovery_finished(&this->_aciState) && !this->_remoteServicesDiscovered) {
-          // attempt to open all RX and RX ACK remote pipes (for now)
-          for (int i = 0; i < this->_numRemotePipeInfo; i++) {
-            struct remotePipeInfo* remotePipeInfo = &this->_remotePipeInfo[i];
-
-            unsigned char rxPipe = remotePipeInfo->rxPipe;
-            if (rxPipe && lib_aci_is_pipe_closed(&this->_aciState, rxPipe)) {
-              lib_aci_open_remote_pipe(&this->_aciState, rxPipe);
+            if (localPipeInfo->txPipe) {
+              localPipeInfo->txPipeOpen = lib_aci_is_pipe_available(&this->_aciState, localPipeInfo->txPipe);
             }
 
-            unsigned char rxAckPipe = remotePipeInfo->rxAckPipe;
-            if (rxAckPipe && lib_aci_is_pipe_closed(&this->_aciState, rxAckPipe)) {
-              lib_aci_open_remote_pipe(&this->_aciState, rxAckPipe);
+            if (localPipeInfo->txAckPipe) {
+              localPipeInfo->txAckPipeOpen = lib_aci_is_pipe_available(&this->_aciState, localPipeInfo->txAckPipe);
+            }
+
+            bool subscribed = (localPipeInfo->txPipeOpen || localPipeInfo->txAckPipeOpen);
+
+            if (localPipeInfo->characteristic->subscribed() != subscribed) {
+              if (this->_eventListener) {
+                this->_eventListener->BLEDeviceCharacteristicSubscribedChanged(*this, *localPipeInfo->characteristic, subscribed);
+              }
             }
           }
 
-          this->_remoteServicesDiscovered = true;
+          if (lib_aci_is_discovery_finished(&this->_aciState) && !this->_remoteServicesDiscovered) {
+            if (!this->_remoteServicesDiscovered && this->_eventListener) {
+              this->_remoteServicesDiscovered = true;
 
-          if (this->_eventListener) {
-            this->_eventListener->BLEDeviceRemoteServicesDiscovered(*this);
+              this->_eventListener->BLEDeviceRemoteServicesDiscovered(*this);
+            }
           }
         }
         break;
@@ -1107,12 +1096,16 @@ void nRF8001::poll() {
 #ifdef NRF_8001_DEBUG
         Serial.println(F("Evt Bond Status"));
         Serial.println(aciEvt->params.bond_status.status_code);
-
+#endif
         this->_storeDynamicData = (aciEvt->params.bond_status.status_code == ACI_BOND_STATUS_SUCCESS) &&
                                     (this->_aciState.bonded != ACI_BOND_STATUS_SUCCESS);
 
         this->_aciState.bonded = aciEvt->params.bond_status.status_code;
-#endif
+
+        if (aciEvt->params.bond_status.status_code == ACI_BOND_STATUS_SUCCESS && this->_eventListener) {
+          this->_eventListener->BLEDeviceBonded(*this);
+        }
+
         break;
 
       case ACI_EVT_DATA_RECEIVED: {
@@ -1175,6 +1168,8 @@ void nRF8001::poll() {
         //for the credit.
         if (ACI_STATUS_ERROR_PEER_ATT_ERROR != aciEvt->params.pipe_error.error_code) {
           this->_aciState.data_credit_available++;
+        } else if (this->_bondStore) {
+          lib_aci_bond_request();
         }
         break;
 
@@ -1355,33 +1350,68 @@ bool nRF8001::writeRemoteCharacteristic(BLERemoteCharacteristic& characteristic,
 }
 
 bool nRF8001::canSubscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
-  // TODO
+  bool success = false;
 
-  return false;
+  for (int i = 0; i < this->_numRemotePipeInfo; i++) {
+    struct remotePipeInfo* remotePipeInfo = &this->_remotePipeInfo[i];
+
+    if (remotePipeInfo->characteristic == &characteristic) {
+      success = remotePipeInfo->rxPipe || remotePipeInfo->rxAckPipe;
+
+      break;
+    }
+  }
+
+  return success;
 }
 
 bool nRF8001::subscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
-  // TODO
+  bool success = false;
 
-  return false;
+  for (int i = 0; i < this->_numRemotePipeInfo; i++) {
+    struct remotePipeInfo* remotePipeInfo = &this->_remotePipeInfo[i];
+
+    if (remotePipeInfo->characteristic == &characteristic) {
+      unsigned char pipe = remotePipeInfo->rxPipe ? remotePipeInfo->rxPipe : remotePipeInfo->rxAckPipe;
+
+      if (pipe) {
+        success = lib_aci_open_remote_pipe(&this->_aciState, pipe);
+      }
+      break;
+    }
+  }
+
+  return success;
 }
 
 bool nRF8001::canUnsubscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
-  // TODO
-
-  return false;
+  return this->canSubscribeRemoteCharacteristic(characteristic);
 }
 
 bool nRF8001::unsubcribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
-  // TODO
-  return false;
+  bool success = false;
+
+  for (int i = 0; i < this->_numRemotePipeInfo; i++) {
+    struct remotePipeInfo* remotePipeInfo = &this->_remotePipeInfo[i];
+
+    if (remotePipeInfo->characteristic == &characteristic) {
+      unsigned char pipe = remotePipeInfo->rxPipe ? remotePipeInfo->rxPipe : remotePipeInfo->rxAckPipe;
+
+      if (pipe) {
+        success = lib_aci_close_remote_pipe(&this->_aciState, pipe);
+      }
+      break;
+    }
+  }
+
+  return success;
 }
 
 void nRF8001::startAdvertising() {
   uint16_t advertisingInterval = (this->_advertisingInterval * 16) / 10;
 
   if (this->_connectable) {
-    if (this->_bondStore == NULL || ((this->_dynamicData[24] & 0x02) && (this->_dynamicData[106] & 0x08)))   {
+    if (this->_bondStore == NULL || (this->_dynamicData[24] & 0x82))   {
       lib_aci_connect(0/* in seconds, 0 means forever */, advertisingInterval);
     } else {
       lib_aci_bond(180/* in seconds, 0 means forever */, advertisingInterval);
