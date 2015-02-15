@@ -18,8 +18,8 @@ BLERemoteService                 ancsService                              = BLER
 
 // remote characteristics
 BLERemoteCharacteristic          ancsNotificationSourceCharacteristic     = BLERemoteCharacteristic("9fbf120d630142d98c5825e699a21dbd", BLENotify);
-BLERemoteCharacteristic          ancsControlPointCharacteristic           = BLERemoteCharacteristic("69d1d8f345e149a898219bbdfdaad9d9", BLEWrite);
-BLERemoteCharacteristic          ancsDataSourceCharacteristic             = BLERemoteCharacteristic("22eac6e924d64bb5be44b36ace7c7bfb", BLENotify);
+//BLERemoteCharacteristic          ancsControlPointCharacteristic           = BLERemoteCharacteristic("69d1d8f345e149a898219bbdfdaad9d9", BLEWrite);
+//BLERemoteCharacteristic          ancsDataSourceCharacteristic             = BLERemoteCharacteristic("22eac6e924d64bb5be44b36ace7c7bfb", BLENotify);
 
 
 void setup() {
@@ -42,8 +42,8 @@ void setup() {
 
   blePeripheral.addRemoteAttribute(ancsService);
   blePeripheral.addRemoteAttribute(ancsNotificationSourceCharacteristic);
-  blePeripheral.addRemoteAttribute(ancsControlPointCharacteristic);
-  blePeripheral.addRemoteAttribute(ancsDataSourceCharacteristic);
+//  blePeripheral.addRemoteAttribute(ancsControlPointCharacteristic);
+//  blePeripheral.addRemoteAttribute(ancsDataSourceCharacteristic);
 
   // assign event handlers for connected, disconnected to peripheral
   blePeripheral.setEventHandler(BLEConnected, blePeripheralConnectHandler);
@@ -53,7 +53,7 @@ void setup() {
 
   // assign event handlers for characteristic
   ancsNotificationSourceCharacteristic.setEventHandler(BLEValueUpdated, ancsNotificationSourceCharacteristicValueUpdated);
-  ancsDataSourceCharacteristic.setEventHandler(BLEValueUpdated, ancsDataSourceCharacteristicCharacteristicValueUpdated);
+//  ancsDataSourceCharacteristic.setEventHandler(BLEValueUpdated, ancsDataSourceCharacteristicCharacteristicValueUpdated);
 
   // begin initialization
   blePeripheral.begin();
@@ -92,7 +92,7 @@ void blePeripheralRemoteServicesDiscoveredHandler(BLECentral& central) {
   Serial.print(F("Remote services discovered event, central: "));
   Serial.println(central.address());
 
-  if (ancsNotificationSourceCharacteristic.canSubscribe()) {
+  if (ancsNotificationSourceCharacteristic.canSubscribe()) {    
     ancsNotificationSourceCharacteristic.subscribe();
   }
 }
@@ -153,9 +153,9 @@ void ancsNotificationSourceCharacteristicValueUpdated(BLECentral& central, BLERe
 //  BLEUtil::printBuffer(characteristic.value(), characteristic.valueLength());
 }
 
-void ancsDataSourceCharacteristicCharacteristicValueUpdated(BLECentral& central, BLERemoteCharacteristic& characteristic) {
-  Serial.print(F("ANCS Data Source Value Updated: "));
-
-  BLEUtil::printBuffer(characteristic.value(), characteristic.valueLength());
-}
+//void ancsDataSourceCharacteristicCharacteristicValueUpdated(BLECentral& central, BLERemoteCharacteristic& characteristic) {
+//  Serial.print(F("ANCS Data Source Value Updated: "));
+//
+//  BLEUtil::printBuffer(characteristic.value(), characteristic.valueLength());
+//}
 
