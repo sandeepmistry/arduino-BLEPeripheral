@@ -84,6 +84,8 @@ void setup() {
 #endif
 
   // clears bond data on every boot
+  bleBondStore.clearData();
+
   blePeripheral.setBondStore(bleBondStore);
 
   blePeripheral.setDeviceName("Arduino Keyboard");
