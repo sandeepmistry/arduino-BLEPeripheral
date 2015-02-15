@@ -1024,33 +1024,31 @@ void nRF8001::poll() {
           this->_closedPipesCleared = true;
         }
 
-        if (this->_closedPipesCleared) {
-          for (int i = 0; i < this->_numLocalPipeInfo; i++) {
-            struct localPipeInfo* localPipeInfo = &this->_localPipeInfo[i];
+        for (int i = 0; i < this->_numLocalPipeInfo; i++) {
+          struct localPipeInfo* localPipeInfo = &this->_localPipeInfo[i];
 
-            if (localPipeInfo->txPipe) {
-              localPipeInfo->txPipeOpen = lib_aci_is_pipe_available(&this->_aciState, localPipeInfo->txPipe);
-            }
-
-            if (localPipeInfo->txAckPipe) {
-              localPipeInfo->txAckPipeOpen = lib_aci_is_pipe_available(&this->_aciState, localPipeInfo->txAckPipe);
-            }
-
-            bool subscribed = (localPipeInfo->txPipeOpen || localPipeInfo->txAckPipeOpen);
-
-            if (localPipeInfo->characteristic->subscribed() != subscribed) {
-              if (this->_eventListener) {
-                this->_eventListener->BLEDeviceCharacteristicSubscribedChanged(*this, *localPipeInfo->characteristic, subscribed);
-              }
-            }
+          if (localPipeInfo->txPipe) {
+            localPipeInfo->txPipeOpen = lib_aci_is_pipe_available(&this->_aciState, localPipeInfo->txPipe);
           }
 
-          if (discoveryFinished && !this->_remoteServicesDiscovered) {
-            if (!this->_remoteServicesDiscovered && this->_eventListener) {
-              this->_remoteServicesDiscovered = true;
+          if (localPipeInfo->txAckPipe) {
+            localPipeInfo->txAckPipeOpen = lib_aci_is_pipe_available(&this->_aciState, localPipeInfo->txAckPipe);
+          }
 
-              this->_eventListener->BLEDeviceRemoteServicesDiscovered(*this);
+          bool subscribed = (localPipeInfo->txPipeOpen || localPipeInfo->txAckPipeOpen);
+
+          if (localPipeInfo->characteristic->subscribed() != subscribed) {
+            if (this->_eventListener) {
+              this->_eventListener->BLEDeviceCharacteristicSubscribedChanged(*this, *localPipeInfo->characteristic, subscribed);
             }
+          }
+        }
+
+        if (this->_closedPipesCleared && discoveryFinished && !this->_remoteServicesDiscovered) {
+          if (!this->_remoteServicesDiscovered && this->_eventListener) {
+            this->_remoteServicesDiscovered = true;
+
+            this->_eventListener->BLEDeviceRemoteServicesDiscovered(*this);
           }
         }
         break;
