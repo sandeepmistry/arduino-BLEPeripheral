@@ -19,6 +19,11 @@ class BLERemoteCharacteristicValueChangeListener
 
     virtual bool canWriteRemoteCharacteristic(BLERemoteCharacteristic& characteristic) = 0;
     virtual bool writeRemoteCharacteristic(BLERemoteCharacteristic& characteristic, const unsigned char value[], unsigned char length) = 0;
+
+    virtual bool canSubscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) = 0;
+    virtual bool subscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) = 0;
+    virtual bool canUnsubscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) = 0;
+    virtual bool unsubcribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) = 0;
 };
 
 typedef void (*BLERemoteCharacteristicEventHandler)(BLECentral& central, BLERemoteCharacteristic& characteristic);
@@ -41,6 +46,10 @@ class BLERemoteCharacteristic : public BLERemoteAttribute
     bool read();
     bool canWrite();
     bool write(const unsigned char value[], unsigned char length);
+    bool canSubscribe();
+    bool subscribe();
+    bool canUnsubscribe();
+    bool unsubscribe();
 
     bool valueUpdated();
 
@@ -60,7 +69,7 @@ class BLERemoteCharacteristic : public BLERemoteAttribute
     bool                                              _valueUpdated;
 
     BLERemoteCharacteristicValueChangeListener*       _listener;
-    BLERemoteCharacteristicEventHandler               _eventHandlers[3];
+    BLERemoteCharacteristicEventHandler               _eventHandlers[1];
 };
 
 #endif

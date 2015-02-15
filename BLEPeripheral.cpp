@@ -18,6 +18,8 @@ BLEPeripheral::BLEPeripheral(unsigned char req, unsigned char rdy, unsigned char
 #endif
 
   _localName(NULL),
+  _advertisedServiceUuid(NULL),
+  _serviceSolicitationUuid(NULL),
   _manufacturerData(NULL),
   _manufacturerDataLength(0),
 
@@ -71,7 +73,14 @@ void BLEPeripheral::begin() {
   unsigned char advertisementData[BLE_ADVERTISEMENT_DATA_MAX_VALUE_LENGTH];
   unsigned char scanData[BLE_SCAN_DATA_MAX_VALUE_LENGTH];
 
-  if (this->_advertisedServiceUuid){
+  if (this->_serviceSolicitationUuid){
+    BLEUuid serviceSolicitationUuid = BLEUuid(this->_serviceSolicitationUuid);
+
+    advertisementDataLength = serviceSolicitationUuid.length();
+    advertisementDataType = (advertisementDataLength > 2) ? 0x15 : 0x14;
+
+    memcpy(advertisementData, serviceSolicitationUuid.data(), advertisementDataLength);
+  } else if (this->_advertisedServiceUuid){
     BLEUuid advertisedServiceUuid = BLEUuid(this->_advertisedServiceUuid);
 
     advertisementDataLength = advertisedServiceUuid.length();
@@ -144,6 +153,10 @@ void BLEPeripheral::poll() {
 
 void BLEPeripheral::setAdvertisedServiceUuid(const char* advertisedServiceUuid) {
   this->_advertisedServiceUuid = advertisedServiceUuid;
+}
+
+void BLEPeripheral::setServiceSolicitationUuid(const char* serviceSolicitationUuid) {
+  this->_serviceSolicitationUuid = serviceSolicitationUuid;
 }
 
 void BLEPeripheral::setManufacturerData(const unsigned char manufacturerData[], unsigned char manufacturerDataLength) {
@@ -251,6 +264,22 @@ bool BLEPeripheral::writeRemoteCharacteristic(BLERemoteCharacteristic& character
   return this->_device->writeRemoteCharacteristic(characteristic, value, length);
 }
 
+bool BLEPeripheral::canSubscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
+  return this->_device->canSubscribeRemoteCharacteristic(characteristic);
+}
+
+bool BLEPeripheral::subscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
+  return this->_device->subscribeRemoteCharacteristic(characteristic);
+}
+
+bool BLEPeripheral::canUnsubscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
+  return this->_device->canUnsubscribeRemoteCharacteristic(characteristic);
+}
+
+bool BLEPeripheral::unsubcribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
+  return this->_device->unsubcribeRemoteCharacteristic(characteristic);
+}
+
 void BLEPeripheral::BLEDeviceConnected(BLEDevice& device, const unsigned char* address) {
   this->_central.setAddress(address);
 
@@ -277,6 +306,18 @@ void BLEPeripheral::BLEDeviceDisconnected(BLEDevice& device) {
   }
 
   this->_central.clearAddress();
+}
+
+void BLEPeripheral::BLEDeviceBonded(BLEDevice& device) {
+#ifdef BLE_PERIPHERAL_DEBUG
+  Serial.print(F("Peripheral bonded: "));
+  Serial.println(this->_central.address());
+#endif
+
+  BLEPeripheralEventHandler eventHandler = this->_eventHandlers[BLEBonded];
+  if (eventHandler) {
+    eventHandler(this->_central);
+  }
 }
 
 void BLEPeripheral::BLEDeviceRemoteServicesDiscovered(BLEDevice& device) {

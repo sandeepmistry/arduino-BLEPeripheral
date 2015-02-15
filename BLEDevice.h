@@ -6,6 +6,7 @@
 #include "BLELocalAttribute.h"
 #include "BLERemoteAttribute.h"
 #include "BLERemoteCharacteristic.h"
+#include "BLERemoteService.h"
 
 class BLEDevice;
 
@@ -14,6 +15,7 @@ class BLEDeviceEventListener
   public:
     virtual void BLEDeviceConnected(BLEDevice& device, const unsigned char* address) = 0;
     virtual void BLEDeviceDisconnected(BLEDevice& device) = 0;
+    virtual void BLEDeviceBonded(BLEDevice& device) = 0;
     virtual void BLEDeviceRemoteServicesDiscovered(BLEDevice& device) = 0;
 
     virtual void BLEDeviceCharacteristicValueChanged(BLEDevice& device, BLECharacteristic& characteristic, const unsigned char* value, unsigned char valueLength) = 0;
@@ -68,6 +70,10 @@ class BLEDevice
     virtual bool readRemoteCharacteristic(BLERemoteCharacteristic& remoteCharacteristic) = 0;
     virtual bool canWriteRemoteCharacteristic(BLERemoteCharacteristic& characteristic) = 0;
     virtual bool writeRemoteCharacteristic(BLERemoteCharacteristic& characteristic, const unsigned char value[], unsigned char length) = 0;
+    virtual bool canSubscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) = 0;
+    virtual bool subscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) = 0;
+    virtual bool canUnsubscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) = 0;
+    virtual bool unsubcribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) = 0;
 
     virtual void requestAddress() = 0;
     virtual void requestTemperature() = 0;

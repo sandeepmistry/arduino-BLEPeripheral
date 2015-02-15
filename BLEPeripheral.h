@@ -25,7 +25,8 @@
 enum BLEPeripheralEvent {
   BLEConnected = 0,
   BLEDisconnected = 1,
-  BLERemoteServicesDiscovered = 2
+  BLEBonded = 2,
+  BLERemoteServicesDiscovered = 3
 };
 
 typedef void (*BLEPeripheralEventHandler)(BLECentral& central);
@@ -43,6 +44,7 @@ class BLEPeripheral : public BLEDeviceEventListener,
     void poll();
 
     void setAdvertisedServiceUuid(const char* advertisedServiceUuid);
+    void setServiceSolicitationUuid(const char* serviceSolicitationUuid);
     void setManufacturerData(const unsigned char manufacturerData[], unsigned char manufacturerDataLength);
     void setLocalName(const char *localName);
 
@@ -75,10 +77,14 @@ class BLEPeripheral : public BLEDeviceEventListener,
     bool readRemoteCharacteristic(BLERemoteCharacteristic& characteristic);
     bool canWriteRemoteCharacteristic(BLERemoteCharacteristic& characteristic);
     bool writeRemoteCharacteristic(BLERemoteCharacteristic& characteristic, const unsigned char value[], unsigned char length);
-
+    bool canSubscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic);
+    bool subscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic);
+    bool canUnsubscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic);
+    bool unsubcribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic);
 
     virtual void BLEDeviceConnected(BLEDevice& device, const unsigned char* address);
     virtual void BLEDeviceDisconnected(BLEDevice& device);
+    virtual void BLEDeviceBonded(BLEDevice& device);
     virtual void BLEDeviceRemoteServicesDiscovered(BLEDevice& device);
 
     virtual void BLEDeviceCharacteristicValueChanged(BLEDevice& device, BLECharacteristic& characteristic, const unsigned char* value, unsigned char valueLength);
@@ -103,6 +109,7 @@ class BLEPeripheral : public BLEDeviceEventListener,
 #endif
 
     const char*                    _advertisedServiceUuid;
+    const char*                    _serviceSolicitationUuid;
     const unsigned char*           _manufacturerData;
     unsigned char                  _manufacturerDataLength;
     const char*                    _localName;
@@ -122,7 +129,7 @@ class BLEPeripheral : public BLEDeviceEventListener,
     BLERemoteCharacteristic        _remoteServicesChangedCharacteristic;
 
     BLECentral                     _central;
-    BLEPeripheralEventHandler      _eventHandlers[3];
+    BLEPeripheralEventHandler      _eventHandlers[4];
 };
 
 #endif

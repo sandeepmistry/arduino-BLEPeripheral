@@ -1354,6 +1354,29 @@ bool nRF8001::writeRemoteCharacteristic(BLERemoteCharacteristic& characteristic,
   return success;
 }
 
+bool nRF8001::canSubscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
+  // TODO
+
+  return false;
+}
+
+bool nRF8001::subscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
+  // TODO
+
+  return false;
+}
+
+bool nRF8001::canUnsubscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
+  // TODO
+
+  return false;
+}
+
+bool nRF8001::unsubcribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
+  // TODO
+  return false;
+}
+
 void nRF8001::startAdvertising() {
   uint16_t advertisingInterval = (this->_advertisingInterval * 16) / 10;
 

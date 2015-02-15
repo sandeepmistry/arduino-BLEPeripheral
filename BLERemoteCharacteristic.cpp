@@ -67,6 +67,46 @@ bool BLERemoteCharacteristic::write(const unsigned char value[], unsigned char l
   return result;
 }
 
+bool BLERemoteCharacteristic::canSubscribe() {
+  bool result = false;
+
+  if (this->_listener) {
+    result = this->_listener->canSubscribeRemoteCharacteristic(*this);
+  }
+
+  return result;
+}
+
+bool BLERemoteCharacteristic::subscribe() {
+  bool result = false;
+
+  if (this->_listener) {
+    result = this->_listener->subscribeRemoteCharacteristic(*this);
+  }
+
+  return result;
+}
+
+bool BLERemoteCharacteristic::canUnsubscribe() {
+  bool result = false;
+
+  if (this->_listener) {
+    result = this->_listener->canUnsubscribeRemoteCharacteristic(*this);
+  }
+
+  return result;
+}
+
+bool BLERemoteCharacteristic::unsubscribe() {
+  bool result = false;
+
+  if (this->_listener) {
+    result = this->_listener->unsubcribeRemoteCharacteristic(*this);
+  }
+
+  return result;
+}
+
 bool BLERemoteCharacteristic::valueUpdated() {
   bool valueUpdated = this->_valueUpdated;
 
