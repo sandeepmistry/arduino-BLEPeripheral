@@ -13,15 +13,9 @@
 BLEPeripheral                    blePeripheral                            = BLEPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
 BLEBondStore                     bleBondStore;
 
-// local services
-BLEService                       batteryService                           = BLEService("180f");
-
-// local characteristics
-BLEUnsignedCharCharacteristic    batteryLevelCharacteristic               = BLEUnsignedCharCharacteristic("2a19", BLERead);
-
 // remote services
 BLERemoteService                 ancsService                              = BLERemoteService("7905f431b5ce4e99a40f4b1e122d00d0");
-                                                                                              
+
 // remote characteristics
 BLERemoteCharacteristic          ancsNotificationSourceCharacteristic     = BLERemoteCharacteristic("9fbf120d630142d98c5825e699a21dbd", BLENotify);
 BLERemoteCharacteristic          ancsControlPointCharacteristic           = BLERemoteCharacteristic("69d1d8f345e149a898219bbdfdaad9d9", BLEWrite);
@@ -35,31 +29,27 @@ void setup() {
 #endif
 
   // clears bond data on every boot
-//  bleBondStore.clearData();
-  
+  bleBondStore.clearData();
+
   blePeripheral.setBondStore(bleBondStore);
 
-  blePeripheral.setAdvertisedServiceUuid(ancsService.uuid());
+  blePeripheral.setServiceSolicitationUuid(ancsService.uuid());
   blePeripheral.setLocalName("ANCS");
 
   // set device name and appearance
   blePeripheral.setDeviceName("Arduino ANCS");
   blePeripheral.setAppearance(0x0080);
 
-  // add service, characteristic, and decriptor to peripheral
-  blePeripheral.addAttribute(batteryService);
-  blePeripheral.addAttribute(batteryLevelCharacteristic);
-  
   blePeripheral.addRemoteAttribute(ancsService);
   blePeripheral.addRemoteAttribute(ancsNotificationSourceCharacteristic);
   blePeripheral.addRemoteAttribute(ancsControlPointCharacteristic);
   blePeripheral.addRemoteAttribute(ancsDataSourceCharacteristic);
-  
-  batteryLevelCharacteristic.setValue(100);
-  
+
   // assign event handlers for connected, disconnected to peripheral
   blePeripheral.setEventHandler(BLEConnected, blePeripheralConnectHandler);
   blePeripheral.setEventHandler(BLEDisconnected, blePeripheralDisconnectHandler);
+  blePeripheral.setEventHandler(BLEBonded, blePeripheralBondedHandler);
+  blePeripheral.setEventHandler(BLERemoteServicesDiscovered, blePeripheralRemoteServicesDiscoveredHandler);
 
   // assign event handlers for characteristic
   ancsNotificationSourceCharacteristic.setEventHandler(BLEValueUpdated, ancsNotificationSourceCharacteristicValueUpdated);
@@ -85,6 +75,26 @@ void blePeripheralDisconnectHandler(BLECentral& central) {
   // central disconnected event handler
   Serial.print(F("Disconnected event, central: "));
   Serial.println(central.address());
+}
+
+void blePeripheralBondedHandler(BLECentral& central) {
+  // central bonded event handler
+  Serial.print(F("Remote bonded event, central: "));
+  Serial.println(central.address());
+
+  if (ancsNotificationSourceCharacteristic.canSubscribe()) {
+    ancsNotificationSourceCharacteristic.subscribe();
+  }
+}
+
+void blePeripheralRemoteServicesDiscoveredHandler(BLECentral& central) {
+  // central remote services discovered event handler
+  Serial.print(F("Remote services discovered event, central: "));
+  Serial.println(central.address());
+
+  if (ancsNotificationSourceCharacteristic.canSubscribe()) {
+    ancsNotificationSourceCharacteristic.subscribe();
+  }
 }
 
 enum AncsNotificationEventId {
@@ -126,9 +136,9 @@ struct AncsNotification {
 void ancsNotificationSourceCharacteristicValueUpdated(BLECentral& central, BLERemoteCharacteristic& characteristic) {
   Serial.println(F("ANCS Notification Source Value Updated:"));
   struct AncsNotification notification;
-  
+
   memcpy(&notification, characteristic.value(), sizeof(notification));
-    
+
   Serial.print("\tEvent ID: ");
   Serial.println(notification.eventId);
   Serial.print("\tEvent Flags: 0x");
@@ -139,13 +149,13 @@ void ancsNotificationSourceCharacteristicValueUpdated(BLECentral& central, BLERe
   Serial.println(notification.catergoryCount);
   Serial.print("\tNotification UID: ");
   Serial.println(notification.notificationUid);
-  
+
 //  BLEUtil::printBuffer(characteristic.value(), characteristic.valueLength());
 }
 
 void ancsDataSourceCharacteristicCharacteristicValueUpdated(BLECentral& central, BLERemoteCharacteristic& characteristic) {
   Serial.print(F("ANCS Data Source Value Updated: "));
-  
+
   BLEUtil::printBuffer(characteristic.value(), characteristic.valueLength());
 }
 
