@@ -27,11 +27,11 @@ const unsigned char hidReportDescriptorValue[] = {
   0x75, 0x01,                         //     Report Size (1)
   0x95, 0x08,                         //     Report Count (8)
   0x81, 0x02,                         //     Input (Data, Variable, Absolute)
-  
+
   0x95, 0x01,                         //     Report Count (1)
   0x75, 0x08,                         //     Report Size (8)
   0x81, 0x01,                         //     Input (Constant) reserved byte(1)
-  
+
   0x95, 0x05,                         //     Report Count (5)
   0x75, 0x01,                         //     Report Size (1)
   0x05, 0x08,                         //     Usage Page (Page# for LEDs)
@@ -41,7 +41,7 @@ const unsigned char hidReportDescriptorValue[] = {
   0x95, 0x01,                         //     Report Count (1)
   0x75, 0x03,                         //     Report Size (3)
   0x91, 0x01,                         //     Output (Data, Variable, Absolute), Led report padding
-  
+
   0x95, 0x06,                         //     Report Count (6)
   0x75, 0x08,                         //     Report Size (8)
   0x15, 0x00,                         //     Logical Minimum (0)
@@ -50,15 +50,15 @@ const unsigned char hidReportDescriptorValue[] = {
   0x19, 0x00,                         //     Usage Minimum (0)
   0x29, 0x65,                         //     Usage Maximum (101)
   0x81, 0x00,                         //     Input (Data, Array) Key array(6 bytes)
-  
-  
+
+
   0x09, 0x05,                         //     Usage (Vendor Defined)
   0x15, 0x00,                         //     Logical Minimum (0)
   0x26, 0xFF, 0x00,                   //     Logical Maximum (255)
   0x75, 0x08,                         //     Report Count (2)
   0x95, 0x02,                         //     Report Size (8 bit)
   0xB1, 0x02,                         //     Feature (Data, Variable, Absolute)
-  
+
   0xC0                                // End Collection (Application)
 };
 const unsigned char hidReportReferenceDescriptorValue2[] = {0x00, 0x02};
@@ -85,7 +85,7 @@ void setup() {
 
   // clears bond data on every boot
   blePeripheral.setBondStore(bleBondStore);
-  
+
   blePeripheral.setDeviceName("Arduino Keyboard");
   blePeripheral.setAppearance(961);
 
@@ -104,16 +104,16 @@ void setup() {
   blePeripheral.addAttribute(reportReferenceDescriptor2);
   blePeripheral.addAttribute(bootKeyboardInputReportCharacateristic);
   blePeripheral.addAttribute(bootKeyboardOutputReportCharacateristic);
-  
+
   // initialize characteristics values
   hidProtocolModeCharacteristic.setValue(0x01);
-  
+
   unsigned char bootKeyboardInputReportCharacateristicValue[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
   bootKeyboardInputReportCharacateristic.setValue(bootKeyboardInputReportCharacateristicValue, sizeof(bootKeyboardInputReportCharacateristicValue));
 
   // begin initialization
   blePeripheral.begin();
-  
+
   Serial.println(F("BLE HID Keyboard Peripheral"));
 }
 
@@ -127,14 +127,14 @@ void loop() {
 
     while (central.connected()) {
       uint8_t keyPress[8]= { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-      
+
       if (Serial.available() > 0) {
         // read the ascii character
         unsigned char ascii = Serial.read();
-        
+
         Serial.print(F("ascii = "));
         Serial.println(ascii);
-        
+
         // https://github.com/SFE-Chris/UNO-HIDKeyboard-Library/blob/master/HIDKeyboard.h
         const static uint8_t HIDTable[] =  {
       	  0x00, // 0
@@ -152,28 +152,28 @@ void loop() {
       	  0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, // 120
       	  0x1c, 0x1d, 0x2f, 0x31, 0x30, 0x35, 127 // 127
         };
-        
+
         if (ascii < sizeof(HIDTable)) {
-          
+
           unsigned char hid = HIDTable[ascii];
-          
+
           Serial.print(F("hid = "));
           Serial.println(hid);
-          
+
           // wait until we can notify
           while(!hidReportCharacteristic.canNotify()) {
             blePeripheral.poll();
           }
-          
+
           // send hid key code
           keyPress[2] = hid;
           hidReportCharacteristic.setValue(keyPress, sizeof(keyPress));
-          
+
           // wait until we can notify
           while(!hidReportCharacteristic.canNotify()) {
             blePeripheral.poll();
           }
-  
+
           // send cleared hid code
           keyPress[2] = 0x00;
           hidReportCharacteristic.setValue(keyPress, sizeof(keyPress));
