@@ -99,6 +99,7 @@ class nRF8001 : protected BLEDevice
     unsigned char               _numRemotePipeInfo;
 
     unsigned char*              _dynamicData;
+    unsigned char               _dynamicDataLength;
     unsigned char               _dynamicDataOffset;
     unsigned char               _dynamicDataSequenceNo;
     bool                        _storeDynamicData;

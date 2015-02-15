@@ -26,9 +26,8 @@ struct setupMsgData {
 #define NB_BASE_SETUP_MESSAGES                  7
 #define MAX_ATTRIBUTE_VALUE_PER_SETUP_MSG       28
 
-#define DYNAMIC_DATA_MIN_CHUNK_SIZE             4
 #define DYNAMIC_DATA_MAX_CHUNK_SIZE             26
-#define DYNAMIC_DATA_SIZE                       (DYNAMIC_DATA_MAX_CHUNK_SIZE * 5 + DYNAMIC_DATA_MIN_CHUNK_SIZE)
+#define DYNAMIC_DATA_SIZE                       (DYNAMIC_DATA_MAX_CHUNK_SIZE * 6)
 
 #if defined (__AVR__)
   /* Store the setup for the nRF8001 in the flash of the AVR to save on RAM */
@@ -125,6 +124,7 @@ nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
   _numRemotePipeInfo(0),
 
   _dynamicData(NULL),
+  _dynamicDataLength(0),
   _dynamicDataOffset(0),
   _dynamicDataSequenceNo(0),
   _storeDynamicData(false),
@@ -278,7 +278,7 @@ void nRF8001::begin(unsigned char advertisementDataType,
     memset(this->_dynamicData, 0x00, DYNAMIC_DATA_SIZE);
 
     if (this->_bondStore->hasData()) {
-      this->_bondStore->restoreData(this->_dynamicData, DYNAMIC_DATA_SIZE);
+      this->_dynamicDataLength = this->_bondStore->restoreData(this->_dynamicData, DYNAMIC_DATA_SIZE);
     }
 
     this->_storeDynamicData = false;
@@ -862,9 +862,7 @@ void nRF8001::poll() {
             //When an iPhone connects to us we will get an ACI_EVT_CONNECTED event from the nRF8001
             if (aciEvt->params.device_started.hw_error) {
               delay(20); //Handle the HW error event correctly.
-            } else if (this->_bondStore &&
-                  (this->_dynamicData[24] & 0x82)) {
-
+            } else if (this->_bondStore && (this->_dynamicData[24] & 0x82)) {
               this->_dynamicDataSequenceNo = 1;
               this->_dynamicDataOffset = 0;
 
@@ -906,17 +904,17 @@ void nRF8001::poll() {
               BLEUtil::printBuffer(aciEvt->params.cmd_rsp.params.read_dynamic_data.dynamic_data, aciEvt->len - 4);
 #endif
               if (aciEvt->params.cmd_rsp.params.read_dynamic_data.seq_no == 1) {
-                this->_dynamicDataOffset = 0;
+                this->_dynamicDataLength = 0;
               }
 
-              memcpy(this->_dynamicData + this->_dynamicDataOffset, aciEvt->params.cmd_rsp.params.read_dynamic_data.dynamic_data, aciEvt->len - 4);
-              this->_dynamicDataOffset += (aciEvt->len - 4);
+              memcpy(this->_dynamicData + this->_dynamicDataLength, aciEvt->params.cmd_rsp.params.read_dynamic_data.dynamic_data, aciEvt->len - 4);
+              this->_dynamicDataLength += (aciEvt->len - 4);
 
               if (aciEvt->params.cmd_rsp.cmd_status == ACI_STATUS_TRANSACTION_CONTINUE) {
                 lib_aci_read_dynamic_data();
               } else if (aciEvt->params.cmd_rsp.cmd_status == ACI_STATUS_TRANSACTION_COMPLETE) {
                 // persist dynamic data
-                this->_bondStore->storeData(this->_dynamicData, DYNAMIC_DATA_SIZE);
+                this->_bondStore->storeData(this->_dynamicData, this->_dynamicDataLength);
 
                 this->startAdvertising();
               }
@@ -930,15 +928,9 @@ void nRF8001::poll() {
               Serial.println(F(" complete"));
 #endif
               if (aciEvt->params.cmd_rsp.cmd_status == ACI_STATUS_TRANSACTION_CONTINUE) {
-                unsigned char writeSize = DYNAMIC_DATA_MAX_CHUNK_SIZE;
+                unsigned char writeSize = min(this->_dynamicDataLength - this->_dynamicDataOffset, DYNAMIC_DATA_MAX_CHUNK_SIZE);
 
                 this->_dynamicDataSequenceNo++;
-
-                if (this->_dynamicDataSequenceNo == 2) {
-                  writeSize = 22;
-                } else if (this->_dynamicDataSequenceNo == 7) {
-                  writeSize = DYNAMIC_DATA_MIN_CHUNK_SIZE;
-                }
 
                 lib_aci_write_dynamic_data(this->_dynamicDataSequenceNo,
                                             this->_dynamicData + this->_dynamicDataOffset,
@@ -1017,20 +1009,18 @@ void nRF8001::poll() {
         break;
 
       case ACI_EVT_PIPE_STATUS: {
-        uint64_t openPipes;
-        uint64_t closedPipes;
+        uint64_t* openPipes = (uint64_t*)&aciEvt->params.pipe_status.pipes_open_bitmap;
+        uint64_t* closedPipes = (uint64_t*)&aciEvt->params.pipe_status.pipes_closed_bitmap;
 
-        memcpy(&openPipes, aciEvt->params.pipe_status.pipes_open_bitmap, sizeof(openPipes));
-        memcpy(&closedPipes, aciEvt->params.pipe_status.pipes_closed_bitmap, sizeof(closedPipes));
 #ifdef NRF_8001_DEBUG
         Serial.println(F("Evt Pipe Status "));
 
-        Serial.println((unsigned long)openPipes, HEX);
-        Serial.println((unsigned long)closedPipes, HEX);
+        Serial.println((unsigned long)*openPipes, HEX);
+        Serial.println((unsigned long)*closedPipes, HEX);
 #endif
         bool discoveryFinished = lib_aci_is_discovery_finished(&this->_aciState);
 
-        if (closedPipes == 0 && !discoveryFinished) {
+        if (*closedPipes == 0 && !discoveryFinished) {
           this->_closedPipesCleared = true;
         }
 
@@ -1110,6 +1100,8 @@ void nRF8001::poll() {
                                     (this->_aciState.bonded != ACI_BOND_STATUS_SUCCESS);
 
         this->_aciState.bonded = aciEvt->params.bond_status.status_code;
+
+        this->_remoteServicesDiscovered = false;
 
         if (aciEvt->params.bond_status.status_code == ACI_BOND_STATUS_SUCCESS && this->_eventListener) {
           this->_eventListener->BLEDeviceBonded(*this);
@@ -1341,7 +1333,11 @@ bool nRF8001::canSubscribeRemoteCharacteristic(BLERemoteCharacteristic& characte
 
   if (remotePipeInfo) {
     if (remotePipeInfo->characteristic == &characteristic) {
-      success = remotePipeInfo->rxPipe || remotePipeInfo->rxAckPipe;
+      unsigned char pipe = remotePipeInfo->rxPipe ? remotePipeInfo->rxPipe : remotePipeInfo->rxAckPipe;
+
+      if (pipe) {
+        success = lib_aci_is_pipe_closed(&this->_aciState, pipe);
+      }
     }
   }
 
@@ -1357,7 +1353,7 @@ bool nRF8001::subscribeRemoteCharacteristic(BLERemoteCharacteristic& characteris
     unsigned char pipe = remotePipeInfo->rxPipe ? remotePipeInfo->rxPipe : remotePipeInfo->rxAckPipe;
 
     if (pipe) {
-      success = lib_aci_open_remote_pipe(&this->_aciState, pipe);
+      success = lib_aci_is_pipe_closed(&this->_aciState, pipe) && lib_aci_open_remote_pipe(&this->_aciState, pipe);
     }
   }
 
