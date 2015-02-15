@@ -1016,7 +1016,7 @@ void nRF8001::poll() {
         this->_aciState.data_credit_available = this->_aciState.data_credit_total;
         break;
 
-      case ACI_EVT_PIPE_STATUS:
+      case ACI_EVT_PIPE_STATUS: {
         uint64_t openPipes;
         uint64_t closedPipes;
 
@@ -1028,7 +1028,9 @@ void nRF8001::poll() {
         Serial.println((unsigned long)openPipes, HEX);
         Serial.println((unsigned long)closedPipes, HEX);
 #endif
-        if (closedPipes == 0) {
+        bool discoveryFinished = lib_aci_is_discovery_finished(&this->_aciState);
+
+        if (closedPipes == 0 && !discoveryFinished) {
           this->_closedPipesCleared = true;
         }
 
@@ -1053,7 +1055,7 @@ void nRF8001::poll() {
             }
           }
 
-          if (lib_aci_is_discovery_finished(&this->_aciState) && !this->_remoteServicesDiscovered) {
+          if (discoveryFinished && !this->_remoteServicesDiscovered) {
             if (!this->_remoteServicesDiscovered && this->_eventListener) {
               this->_remoteServicesDiscovered = true;
 
@@ -1062,6 +1064,7 @@ void nRF8001::poll() {
           }
         }
         break;
+      }
 
       case ACI_EVT_TIMING:
 #ifdef NRF_8001_DEBUG
@@ -1203,37 +1206,33 @@ void nRF8001::poll() {
 bool nRF8001::updateCharacteristicValue(BLECharacteristic& characteristic) {
   bool success = true;
 
-  for (int i = 0; i < this->_numLocalPipeInfo; i++) {
-    struct localPipeInfo* localPipeInfo = &this->_localPipeInfo[i];
+  struct localPipeInfo* localPipeInfo = this->localPipeInfoForCharacteristic(characteristic);
 
-    if (localPipeInfo->characteristic == &characteristic) {
-      if (localPipeInfo->advPipe && (this->_broadcastPipe == localPipeInfo->advPipe)) {
-        success &= lib_aci_set_local_data(&this->_aciState, localPipeInfo->advPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
+  if (localPipeInfo) {
+    if (localPipeInfo->advPipe && (this->_broadcastPipe == localPipeInfo->advPipe)) {
+      success &= lib_aci_set_local_data(&this->_aciState, localPipeInfo->advPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
+    }
+
+    if (localPipeInfo->setPipe) {
+      success &= lib_aci_set_local_data(&this->_aciState, localPipeInfo->setPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
+    }
+
+    if (localPipeInfo->txPipe && localPipeInfo->txPipeOpen) {
+      if (this->canNotifyCharacteristic(characteristic)) {
+        this->_aciState.data_credit_available--;
+        success &= lib_aci_send_data(localPipeInfo->txPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
+      } else {
+        success = false;
       }
+    }
 
-      if (localPipeInfo->setPipe) {
-        success &= lib_aci_set_local_data(&this->_aciState, localPipeInfo->setPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
+    if (localPipeInfo->txAckPipe && localPipeInfo->txAckPipeOpen) {
+      if (this->canIndicateCharacteristic(characteristic)) {
+        this->_aciState.data_credit_available--;
+        success &= lib_aci_send_data(localPipeInfo->txAckPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
+      } else {
+        success = false;
       }
-
-      if (localPipeInfo->txPipe && localPipeInfo->txPipeOpen) {
-        if (this->canNotifyCharacteristic(characteristic)) {
-          this->_aciState.data_credit_available--;
-          success &= lib_aci_send_data(localPipeInfo->txPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
-        } else {
-          success = false;
-        }
-      }
-
-      if (localPipeInfo->txAckPipe && localPipeInfo->txAckPipeOpen) {
-        if (this->canIndicateCharacteristic(characteristic)) {
-          this->_aciState.data_credit_available--;
-          success &= lib_aci_send_data(localPipeInfo->txAckPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
-        } else {
-          success = false;
-        }
-      }
-
-      break;
     }
   }
 
@@ -1243,22 +1242,18 @@ bool nRF8001::updateCharacteristicValue(BLECharacteristic& characteristic) {
 bool nRF8001::broadcastCharacteristic(BLECharacteristic& characteristic) {
   bool success = false;
 
-  for (int i = 0; i < this->_numLocalPipeInfo; i++) {
-    struct localPipeInfo* localPipeInfo = &this->_localPipeInfo[i];
+  struct localPipeInfo* localPipeInfo = this->localPipeInfoForCharacteristic(characteristic);
 
-    if (localPipeInfo->characteristic == &characteristic) {
-      if (localPipeInfo->advPipe) {
-        uint64_t advPipes = ((uint64_t)1) << (localPipeInfo->advPipe);
+  if (localPipeInfo) {
+    if (localPipeInfo->advPipe) {
+      uint64_t advPipes = ((uint64_t)1) << (localPipeInfo->advPipe);
 
-        success = lib_aci_open_adv_pipes((uint8_t*)&advPipes) &&
-                    lib_aci_set_local_data(&this->_aciState, localPipeInfo->advPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
+      success = lib_aci_open_adv_pipes((uint8_t*)&advPipes) &&
+                  lib_aci_set_local_data(&this->_aciState, localPipeInfo->advPipe, (uint8_t*)characteristic.value(), characteristic.valueLength());
 
-        if (success) {
-          this->_broadcastPipe = localPipeInfo->advPipe;
-        }
+      if (success) {
+        this->_broadcastPipe = localPipeInfo->advPipe;
       }
-
-      break;
     }
   }
 
@@ -1276,17 +1271,13 @@ bool nRF8001::canIndicateCharacteristic(BLECharacteristic& characteristic) {
 bool nRF8001::canReadRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
   bool success = false;
 
-  for (int i = 0; i < this->_numRemotePipeInfo; i++) {
-    struct remotePipeInfo* remotePipeInfo = &this->_remotePipeInfo[i];
+  struct remotePipeInfo* remotePipeInfo = this->remotePipeInfoForCharacteristic(characteristic);
 
-    if (remotePipeInfo->characteristic == &characteristic) {
-      unsigned char rxReqPipe = remotePipeInfo->rxReqPipe;
+  if (remotePipeInfo) {
+    unsigned char rxReqPipe = remotePipeInfo->rxReqPipe;
 
-      if (rxReqPipe) {
-        success = lib_aci_is_pipe_available(&this->_aciState, rxReqPipe);
-      }
-
-      break;
+    if (rxReqPipe) {
+      success = lib_aci_is_pipe_available(&this->_aciState, rxReqPipe);
     }
   }
 
@@ -1296,18 +1287,14 @@ bool nRF8001::canReadRemoteCharacteristic(BLERemoteCharacteristic& characteristi
 bool nRF8001::readRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
   bool success = false;
 
-  for (int i = 0; i < this->_numRemotePipeInfo; i++) {
-    struct remotePipeInfo* remotePipeInfo = &this->_remotePipeInfo[i];
+  struct remotePipeInfo* remotePipeInfo = this->remotePipeInfoForCharacteristic(characteristic);
 
-    if (remotePipeInfo->characteristic == &characteristic) {
-      unsigned char rxReqPipe = remotePipeInfo->rxReqPipe;
+  if (remotePipeInfo) {
+    unsigned char rxReqPipe = remotePipeInfo->rxReqPipe;
 
-      if (rxReqPipe) {
-        success = lib_aci_is_pipe_available(&this->_aciState, rxReqPipe) &&
-                  lib_aci_request_data(&this->_aciState, rxReqPipe);
-      }
-
-      break;
+    if (rxReqPipe) {
+      success = lib_aci_is_pipe_available(&this->_aciState, rxReqPipe) &&
+                lib_aci_request_data(&this->_aciState, rxReqPipe);
     }
   }
 
@@ -1317,17 +1304,13 @@ bool nRF8001::readRemoteCharacteristic(BLERemoteCharacteristic& characteristic) 
 bool nRF8001::canWriteRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
   bool success = false;
 
-  for (int i = 0; i < this->_numRemotePipeInfo; i++) {
-    struct remotePipeInfo* remotePipeInfo = &this->_remotePipeInfo[i];
+  struct remotePipeInfo* remotePipeInfo = this->remotePipeInfoForCharacteristic(characteristic);
 
-    if (remotePipeInfo->characteristic == &characteristic) {
-      unsigned char pipe = remotePipeInfo->txAckPipe ? remotePipeInfo->txAckPipe : remotePipeInfo->txPipe;
+  if (remotePipeInfo) {
+    unsigned char pipe = remotePipeInfo->txAckPipe ? remotePipeInfo->txAckPipe : remotePipeInfo->txPipe;
 
-      if (pipe) {
-        success = lib_aci_is_pipe_available(&this->_aciState, pipe);
-      }
-
-      break;
+    if (pipe) {
+      success = lib_aci_is_pipe_available(&this->_aciState, pipe);
     }
   }
 
@@ -1337,18 +1320,14 @@ bool nRF8001::canWriteRemoteCharacteristic(BLERemoteCharacteristic& characterist
 bool nRF8001::writeRemoteCharacteristic(BLERemoteCharacteristic& characteristic, const unsigned char value[], unsigned char length) {
   bool success = false;
 
-  for (int i = 0; i < this->_numRemotePipeInfo; i++) {
-    struct remotePipeInfo* remotePipeInfo = &this->_remotePipeInfo[i];
+  struct remotePipeInfo* remotePipeInfo = this->remotePipeInfoForCharacteristic(characteristic);
 
-    if (remotePipeInfo->characteristic == &characteristic) {
-      unsigned char pipe = remotePipeInfo->txAckPipe ? remotePipeInfo->txAckPipe : remotePipeInfo->txPipe;
+  if (remotePipeInfo) {
+    unsigned char pipe = remotePipeInfo->txAckPipe ? remotePipeInfo->txAckPipe : remotePipeInfo->txPipe;
 
-      if (pipe) {
-        success = lib_aci_is_pipe_available(&this->_aciState, pipe) &&
-                  lib_aci_send_data(pipe, (uint8_t*)value, length);
-      }
-
-      break;
+    if (pipe) {
+      success = lib_aci_is_pipe_available(&this->_aciState, pipe) &&
+                lib_aci_send_data(pipe, (uint8_t*)value, length);
     }
   }
 
@@ -1358,13 +1337,11 @@ bool nRF8001::writeRemoteCharacteristic(BLERemoteCharacteristic& characteristic,
 bool nRF8001::canSubscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
   bool success = false;
 
-  for (int i = 0; i < this->_numRemotePipeInfo; i++) {
-    struct remotePipeInfo* remotePipeInfo = &this->_remotePipeInfo[i];
+  struct remotePipeInfo* remotePipeInfo = this->remotePipeInfoForCharacteristic(characteristic);
 
+  if (remotePipeInfo) {
     if (remotePipeInfo->characteristic == &characteristic) {
       success = remotePipeInfo->rxPipe || remotePipeInfo->rxAckPipe;
-
-      break;
     }
   }
 
@@ -1374,16 +1351,13 @@ bool nRF8001::canSubscribeRemoteCharacteristic(BLERemoteCharacteristic& characte
 bool nRF8001::subscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
   bool success = false;
 
-  for (int i = 0; i < this->_numRemotePipeInfo; i++) {
-    struct remotePipeInfo* remotePipeInfo = &this->_remotePipeInfo[i];
+  struct remotePipeInfo* remotePipeInfo = this->remotePipeInfoForCharacteristic(characteristic);
 
-    if (remotePipeInfo->characteristic == &characteristic) {
-      unsigned char pipe = remotePipeInfo->rxPipe ? remotePipeInfo->rxPipe : remotePipeInfo->rxAckPipe;
+  if (remotePipeInfo) {
+    unsigned char pipe = remotePipeInfo->rxPipe ? remotePipeInfo->rxPipe : remotePipeInfo->rxAckPipe;
 
-      if (pipe) {
-        success = lib_aci_open_remote_pipe(&this->_aciState, pipe);
-      }
-      break;
+    if (pipe) {
+      success = lib_aci_open_remote_pipe(&this->_aciState, pipe);
     }
   }
 
@@ -1397,16 +1371,13 @@ bool nRF8001::canUnsubscribeRemoteCharacteristic(BLERemoteCharacteristic& charac
 bool nRF8001::unsubcribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
   bool success = false;
 
-  for (int i = 0; i < this->_numRemotePipeInfo; i++) {
-    struct remotePipeInfo* remotePipeInfo = &this->_remotePipeInfo[i];
+  struct remotePipeInfo* remotePipeInfo = this->remotePipeInfoForCharacteristic(characteristic);
 
-    if (remotePipeInfo->characteristic == &characteristic) {
-      unsigned char pipe = remotePipeInfo->rxPipe ? remotePipeInfo->rxPipe : remotePipeInfo->rxAckPipe;
+  if (remotePipeInfo) {
+    unsigned char pipe = remotePipeInfo->rxPipe ? remotePipeInfo->rxPipe : remotePipeInfo->rxAckPipe;
 
-      if (pipe) {
-        success = lib_aci_close_remote_pipe(&this->_aciState, pipe);
-      }
-      break;
+    if (pipe) {
+      success = lib_aci_close_remote_pipe(&this->_aciState, pipe);
     }
   }
 
@@ -1532,6 +1503,36 @@ void nRF8001::sendSetupMessage(hal_aci_data_t* setupMsg, unsigned char type, uns
   this->sendSetupMessage(setupMsg, withCrc);
 
   offset += (setupMsgData->length - 3);
+}
+
+struct nRF8001::localPipeInfo* nRF8001::localPipeInfoForCharacteristic(BLECharacteristic& characteristic) {
+  struct localPipeInfo* result = NULL;
+
+  for (int i = 0; i < this->_numLocalPipeInfo; i++) {
+    struct localPipeInfo* localPipeInfo = &this->_localPipeInfo[i];
+
+    if (localPipeInfo->characteristic == &characteristic) {
+      result = localPipeInfo;
+      break;
+    }
+  }
+
+  return result;
+}
+
+struct nRF8001::remotePipeInfo* nRF8001::remotePipeInfoForCharacteristic(BLERemoteCharacteristic& characteristic) {
+  struct remotePipeInfo* result = NULL;
+
+  for (int i = 0; i < this->_numRemotePipeInfo; i++) {
+    struct remotePipeInfo* remotePipeInfo = &this->_remotePipeInfo[i];
+
+    if (remotePipeInfo->characteristic == &characteristic) {
+      result = remotePipeInfo;
+      break;
+    }
+  }
+
+  return result;
 }
 
 #endif

@@ -82,6 +82,9 @@ class nRF8001 : protected BLEDevice
     void sendSetupMessage(hal_aci_data_t* data, bool withCrc = false);
     void sendSetupMessage(hal_aci_data_t* setupMsg, unsigned char type, unsigned short& offset, bool withCrc = false);
 
+    struct localPipeInfo* localPipeInfoForCharacteristic(BLECharacteristic& characteristic);
+    struct remotePipeInfo* remotePipeInfoForCharacteristic(BLERemoteCharacteristic& characteristic);
+
   private:
     struct aci_state_t          _aciState;
     hal_aci_evt_t               _aciData;
