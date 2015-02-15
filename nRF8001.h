@@ -4,7 +4,6 @@
 #include "Arduino.h"
 
 #include <utility/lib_aci.h>
-#include <utility/aci_setup.h>
 
 #include "BLEDevice.h"
 
