@@ -87,12 +87,11 @@ class nRF8001 : protected BLEDevice
     struct aci_state_t          _aciState;
     hal_aci_evt_t               _aciData;
 
-    uint64_t                    _openPipes;
-
     struct localPipeInfo*       _localPipeInfo;
     unsigned char               _numLocalPipeInfo;
     unsigned char               _broadcastPipe;
 
+    bool                        _closedPipesCleared;
     bool                        _remoteServicesDiscovered;
     struct remotePipeInfo*      _remotePipeInfo;
     unsigned char               _numRemotePipeInfo;

@@ -115,12 +115,11 @@ uint16_t crc_16_ccitt(uint16_t crc, uint8_t * data_in, uint16_t data_len) {
 nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
   BLEDevice(),
 
-  _openPipes(0),
-
   _localPipeInfo(NULL),
   _numLocalPipeInfo(0),
   _broadcastPipe(0),
 
+  _closedPipesCleared(false),
   _remoteServicesDiscovered(false),
   _remotePipeInfo(NULL),
   _numRemotePipeInfo(0),
@@ -874,7 +873,6 @@ void nRF8001::poll() {
 
               lib_aci_write_dynamic_data(this->_dynamicDataSequenceNo, this->_dynamicData, DYNAMIC_DATA_MAX_CHUNK_SIZE);
 
-              this->_dynamicDataSequenceNo++;
               this->_dynamicDataOffset += DYNAMIC_DATA_MAX_CHUNK_SIZE;
             } else {
               this->startAdvertising();
@@ -935,12 +933,21 @@ void nRF8001::poll() {
               Serial.println(F(" complete"));
 #endif
               if (aciEvt->params.cmd_rsp.cmd_status == ACI_STATUS_TRANSACTION_CONTINUE) {
-                lib_aci_write_dynamic_data(this->_dynamicDataSequenceNo,
-                                            this->_dynamicData + this->_dynamicDataOffset,
-                                            (this->_dynamicDataSequenceNo == 7) ? DYNAMIC_DATA_MIN_CHUNK_SIZE : DYNAMIC_DATA_MAX_CHUNK_SIZE);
+                unsigned char writeSize = DYNAMIC_DATA_MAX_CHUNK_SIZE;
 
                 this->_dynamicDataSequenceNo++;
-                this->_dynamicDataOffset += DYNAMIC_DATA_MAX_CHUNK_SIZE;
+
+                if (this->_dynamicDataSequenceNo == 2) {
+                  writeSize = 22;
+                } else if (this->_dynamicDataSequenceNo == 7) {
+                  writeSize = DYNAMIC_DATA_MIN_CHUNK_SIZE;
+                }
+
+                lib_aci_write_dynamic_data(this->_dynamicDataSequenceNo,
+                                            this->_dynamicData + this->_dynamicDataOffset,
+                                            writeSize);
+
+                this->_dynamicDataOffset += writeSize;
               } else if (aciEvt->params.cmd_rsp.cmd_status == ACI_STATUS_TRANSACTION_COMPLETE) {
                 this->startAdvertising();
               }
@@ -1002,6 +1009,7 @@ void nRF8001::poll() {
         Serial.print(F("Evt Connected "));
         Serial.println(address);
 #endif
+        this->_closedPipesCleared = false;
         this->_remoteServicesDiscovered = false;
 
         if (this->_eventListener) {
@@ -1012,21 +1020,22 @@ void nRF8001::poll() {
         break;
 
       case ACI_EVT_PIPE_STATUS:
-#ifdef NRF_8001_DEBUG
-        Serial.println(F("Evt Pipe Status "));
-
         uint64_t openPipes;
         uint64_t closedPipes;
 
         memcpy(&openPipes, aciEvt->params.pipe_status.pipes_open_bitmap, sizeof(openPipes));
         memcpy(&closedPipes, aciEvt->params.pipe_status.pipes_closed_bitmap, sizeof(closedPipes));
+#ifdef NRF_8001_DEBUG
+        Serial.println(F("Evt Pipe Status "));
 
         Serial.println((unsigned long)openPipes, HEX);
         Serial.println((unsigned long)closedPipes, HEX);
 #endif
-        if (memcmp(&this->_openPipes, aciEvt->params.pipe_status.pipes_open_bitmap, sizeof(this->_openPipes)) != 0) {
-          memcpy(&this->_openPipes, aciEvt->params.pipe_status.pipes_open_bitmap, sizeof(this->_openPipes));
+        if (closedPipes == 0) {
+          this->_closedPipesCleared = true;
+        }
 
+        if (this->_closedPipesCleared) {
           for (int i = 0; i < this->_numLocalPipeInfo; i++) {
             struct localPipeInfo* localPipeInfo = &this->_localPipeInfo[i];
 
