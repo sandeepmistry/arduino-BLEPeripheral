@@ -152,9 +152,6 @@ nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
   this->_aciState.aci_pins.reset_pin              = rst;
   this->_aciState.aci_pins.active_pin             = UNUSED;
   this->_aciState.aci_pins.optional_chip_sel_pin  = UNUSED;
-
-  this->_aciState.aci_pins.interface_is_interrupt = false;
-  this->_aciState.aci_pins.interrupt_number       = 1;
 }
 
 nRF8001::~nRF8001() {

@@ -50,6 +50,9 @@ and the received ACI event is placed in the tail of the event queue.
 #define HAL_ACI_MAX_LENGTH 31
 #endif
 
+// #define HAL_ACI_TL_DEBUG
+// #define HAL_ACI_TL_INTERRUPT
+
 /************************************************************************/
 /* Unused nRF8001 pin                                                    */
 /************************************************************************/
@@ -78,10 +81,11 @@ typedef struct aci_pins_t
 	uint8_t	reset_pin;				//Recommended but optional - Set it to UNUSED when not connected
 	uint8_t active_pin;				//Optional - Set it to UNUSED when not connected
 	uint8_t optional_chip_sel_pin;  //Optional - Used only when the reqn line is required to be separate from the SPI chip select. Eg. Arduino DUE
-
+#ifdef HAL_ACI_TL_INTERRUPT
 	bool	interface_is_interrupt;	//Required - true = Uses interrupt on RDYN pin. false - Uses polling on RDYN pin
 
 	uint8_t	interrupt_number;		//Required when using interrupts, otherwise ignored
+#endif
 } aci_pins_t;
 
 /** @brief ACI Transport Layer initialization.
