@@ -853,12 +853,11 @@ void nRF8001::poll() {
 #ifdef NRF_8001_DEBUG
         Serial.println(F("Evt Bond Status"));
         Serial.println(aciEvt->params.bond_status.status_code);
-
+#endif
         this->_storeDynamicData = (aciEvt->params.bond_status.status_code == ACI_BOND_STATUS_SUCCESS) &&
                                     (this->_aciState.bonded != ACI_BOND_STATUS_SUCCESS);
 
         this->_aciState.bonded = aciEvt->params.bond_status.status_code;
-#endif
         break;
 
       case ACI_EVT_DATA_RECEIVED: {
