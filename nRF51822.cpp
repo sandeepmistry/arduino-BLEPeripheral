@@ -340,7 +340,9 @@ void nRF51822::begin(unsigned char advertisementDataType,
     }
   }
 
-  numRemoteAttributes -= 2; // 0x1801, 0x2a05
+  if ( numRemoteAttributes > 0) {
+    numRemoteAttributes -= 2; // 0x1801, 0x2a05
+  }
 
   for (int i = 0; i < numRemoteAttributes; i++) {
     BLERemoteAttribute *remoteAttribute = remoteAttributes[i];
