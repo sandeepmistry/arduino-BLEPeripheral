@@ -970,7 +970,9 @@ bool nRF51822::writeRemoteCharacteristic(BLERemoteCharacteristic& characteristic
         ble_gattc_write_params_t writeParams;
 
         writeParams.write_op = (this->_remoteCharacteristicInfo[i].properties.write) ? BLE_GATT_OP_WRITE_REQ : BLE_GATT_OP_WRITE_CMD;
+#ifndef __RFduino__
         writeParams.flags = 0;
+#endif
         writeParams.handle = this->_remoteCharacteristicInfo[i].valueHandle;
         writeParams.offset = 0;
         writeParams.len = length;
@@ -1014,7 +1016,9 @@ bool nRF51822::subscribeRemoteCharacteristic(BLERemoteCharacteristic& characteri
         uint16_t value = (this->_remoteCharacteristicInfo[i].properties.notify ? 0x0001 : 0x002);
 
         writeParams.write_op = BLE_GATT_OP_WRITE_REQ;
+#ifndef __RFduino__
         writeParams.flags = 0;
+#endif
         writeParams.handle = (this->_remoteCharacteristicInfo[i].valueHandle + 1); // don't discover descriptors for now
         writeParams.offset = 0;
         writeParams.len = sizeof(value);
@@ -1048,7 +1052,9 @@ bool nRF51822::unsubcribeRemoteCharacteristic(BLERemoteCharacteristic& character
         uint16_t value = 0x0000;
 
         writeParams.write_op = BLE_GATT_OP_WRITE_REQ;
+#ifndef __RFduino__
         writeParams.flags = 0;
+#endif
         writeParams.handle = (this->_remoteCharacteristicInfo[i].valueHandle + 1); // don't discover descriptors for now
         writeParams.offset = 0;
         writeParams.len = sizeof(value);
