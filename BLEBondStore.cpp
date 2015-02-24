@@ -118,14 +118,24 @@ void BLEBondStore::storeData(const unsigned char* data, unsigned char length) {
 #endif
 }
 
-void BLEBondStore::restoreData(unsigned char* data, unsigned char length) {
+unsigned char BLEBondStore::restoreData(unsigned char* data, unsigned char length) {
+  unsigned char storedLength = 0;
+
 #ifdef __AVR__
+  storedLength = eeprom_read_byte((unsigned char *)this->_offset);
+
+  length = min(storedLength, length);
+
   for (unsigned char i = 0; i < length; i++) {
     data[i] = eeprom_read_byte((unsigned char *)this->_offset + i + 1);
   }
 #elif defined(NRF51) || defined(__RFduino__)
+  storedLength = *(this->_flashPageStartAddress);
+
   uint32_t *in = (this->_flashPageStartAddress + 1);
   uint32_t *out  = (uint32_t*)data;
+
+  length = min(storedLength, length);
 
   for(int i = 0; i < length; i += 4) { // assumes length is multiple of 4
     *out = *in;
@@ -134,6 +144,12 @@ void BLEBondStore::restoreData(unsigned char* data, unsigned char length) {
     in++;
   }
 #else
+  storedLength = this->_dataLength;
+
+  length = min(storedLength, length);
+
   memcpy(data, this->_data, length);
 #endif
+
+  return storedLength;
 }

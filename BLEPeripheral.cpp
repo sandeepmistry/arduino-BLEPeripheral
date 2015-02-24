@@ -18,17 +18,24 @@ BLEPeripheral::BLEPeripheral(unsigned char req, unsigned char rdy, unsigned char
 #endif
 
   _localName(NULL),
+  _advertisedServiceUuid(NULL),
+  _serviceSolicitationUuid(NULL),
   _manufacturerData(NULL),
   _manufacturerDataLength(0),
 
-  _attributes(NULL),
-  _numAttributes(0),
+  _localAttributes(NULL),
+  _numLocalAttributes(0),
+  _remoteAttributes(NULL),
+  _numRemoteAttributes(0),
 
   _genericAccessService("1800"),
   _deviceNameCharacteristic("2a00", BLERead, 19),
   _appearanceCharacteristic("2a01", BLERead, 2),
   _genericAttributeService("1801"),
   _servicesChangedCharacteristic("2a05", BLEIndicate, 4),
+
+  _remoteGenericAttributeService("1801"),
+  _remoteServicesChangedCharacteristic("2a05", BLEIndicate),
 
   _central(this)
 {
@@ -47,8 +54,12 @@ BLEPeripheral::BLEPeripheral(unsigned char req, unsigned char rdy, unsigned char
 }
 
 BLEPeripheral::~BLEPeripheral() {
-  if (this->_attributes) {
-    free(this->_attributes);
+  if (this->_remoteAttributes) {
+    free(this->_remoteAttributes);
+  }
+
+  if (this->_localAttributes) {
+    free(this->_localAttributes);
   }
 }
 
@@ -62,7 +73,14 @@ void BLEPeripheral::begin() {
   unsigned char advertisementData[BLE_ADVERTISEMENT_DATA_MAX_VALUE_LENGTH];
   unsigned char scanData[BLE_SCAN_DATA_MAX_VALUE_LENGTH];
 
-  if (this->_advertisedServiceUuid){
+  if (this->_serviceSolicitationUuid){
+    BLEUuid serviceSolicitationUuid = BLEUuid(this->_serviceSolicitationUuid);
+
+    advertisementDataLength = serviceSolicitationUuid.length();
+    advertisementDataType = (advertisementDataLength > 2) ? 0x15 : 0x14;
+
+    memcpy(advertisementData, serviceSolicitationUuid.data(), advertisementDataLength);
+  } else if (this->_advertisedServiceUuid){
     BLEUuid advertisedServiceUuid = BLEUuid(this->_advertisedServiceUuid);
 
     advertisementDataLength = advertisedServiceUuid.length();
@@ -94,18 +112,37 @@ void BLEPeripheral::begin() {
     memcpy(scanData, this->_localName, scanDataLength);
   }
 
-  for (int i = 0; i < this->_numAttributes; i++) {
-    BLEAttribute* attribute = this->_attributes[i];
-    if (attribute->type() == BLETypeCharacteristic) {
-      BLECharacteristic* characteristic = (BLECharacteristic*)attribute;
+  if (this->_localAttributes == NULL) {
+    this->initLocalAttributes();
+  }
+
+  for (int i = 0; i < this->_numLocalAttributes; i++) {
+    BLELocalAttribute* localAttribute = this->_localAttributes[i];
+    if (localAttribute->type() == BLETypeCharacteristic) {
+      BLECharacteristic* characteristic = (BLECharacteristic*)localAttribute;
 
       characteristic->setValueChangeListener(*this);
     }
   }
 
+  for (int i = 0; i < this->_numRemoteAttributes; i++) {
+    BLERemoteAttribute* remoteAttribute = this->_remoteAttributes[i];
+    if (remoteAttribute->type() == BLETypeCharacteristic) {
+      BLERemoteCharacteristic* remoteCharacteristic = (BLERemoteCharacteristic*)remoteAttribute;
+
+      remoteCharacteristic->setValueChangeListener(*this);
+    }
+  }
+
+  if (this->_numRemoteAttributes) {
+    this->addRemoteAttribute(this->_remoteGenericAttributeService);
+    this->addRemoteAttribute(this->_remoteServicesChangedCharacteristic);
+  }
+
   this->_device->begin(advertisementDataType, advertisementDataLength, advertisementData,
                         scanDataType, scanDataLength, scanData,
-                        this->_attributes, this->_numAttributes);
+                        this->_localAttributes, this->_numLocalAttributes,
+                        this->_remoteAttributes, this->_numRemoteAttributes);
 
   this->_device->requestAddress();
 }
@@ -116,6 +153,10 @@ void BLEPeripheral::poll() {
 
 void BLEPeripheral::setAdvertisedServiceUuid(const char* advertisedServiceUuid) {
   this->_advertisedServiceUuid = advertisedServiceUuid;
+}
+
+void BLEPeripheral::setServiceSolicitationUuid(const char* serviceSolicitationUuid) {
+  this->_serviceSolicitationUuid = serviceSolicitationUuid;
 }
 
 void BLEPeripheral::setManufacturerData(const unsigned char manufacturerData[], unsigned char manufacturerDataLength) {
@@ -143,22 +184,26 @@ void BLEPeripheral::setAppearance(unsigned short appearance) {
   this->_appearanceCharacteristic.setValue((unsigned char *)&appearance, sizeof(appearance));
 }
 
-void BLEPeripheral::addAttribute(BLEAttribute& attribute) {
-  if (this->_attributes == NULL) {
-    this->_attributes = (BLEAttribute**)malloc(BLEAttribute::numAttributes() * sizeof(BLEAttribute*));
+void BLEPeripheral::addAttribute(BLELocalAttribute& attribute) {
+  this->addLocalAttribute(attribute);
+}
 
-    this->_attributes[0] = &this->_genericAccessService;
-    this->_attributes[1] = &this->_deviceNameCharacteristic;
-    this->_attributes[2] = &this->_appearanceCharacteristic;
-
-    this->_attributes[3] = &this->_genericAttributeService;
-    this->_attributes[4] = &this->_servicesChangedCharacteristic;
-
-    this->_numAttributes = 5;
+void BLEPeripheral::addLocalAttribute(BLELocalAttribute& localAttribute) {
+  if (this->_localAttributes == NULL) {
+    this->initLocalAttributes();
   }
 
-  this->_attributes[this->_numAttributes] = &attribute;
-  this->_numAttributes++;
+  this->_localAttributes[this->_numLocalAttributes] = &localAttribute;
+  this->_numLocalAttributes++;
+}
+
+void BLEPeripheral::addRemoteAttribute(BLERemoteAttribute& remoteAttribute) {
+  if (this->_remoteAttributes == NULL) {
+    this->_remoteAttributes = (BLERemoteAttribute**)malloc(BLERemoteAttribute::numAttributes() * sizeof(BLERemoteAttribute*));
+  }
+
+  this->_remoteAttributes[this->_numRemoteAttributes] = &remoteAttribute;
+  this->_numRemoteAttributes++;
 }
 
 void BLEPeripheral::setAdvertisingInterval(unsigned short advertisingInterval) {
@@ -203,6 +248,38 @@ bool BLEPeripheral::canIndicateCharacteristic(BLECharacteristic& characteristic)
   return this->_device->canIndicateCharacteristic(characteristic);
 }
 
+bool BLEPeripheral::canReadRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
+  return this->_device->canReadRemoteCharacteristic(characteristic);
+}
+
+bool BLEPeripheral::readRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
+  return this->_device->readRemoteCharacteristic(characteristic);
+}
+
+bool BLEPeripheral::canWriteRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
+  return this->_device->canWriteRemoteCharacteristic(characteristic);
+}
+
+bool BLEPeripheral::writeRemoteCharacteristic(BLERemoteCharacteristic& characteristic, const unsigned char value[], unsigned char length) {
+  return this->_device->writeRemoteCharacteristic(characteristic, value, length);
+}
+
+bool BLEPeripheral::canSubscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
+  return this->_device->canSubscribeRemoteCharacteristic(characteristic);
+}
+
+bool BLEPeripheral::subscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
+  return this->_device->subscribeRemoteCharacteristic(characteristic);
+}
+
+bool BLEPeripheral::canUnsubscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
+  return this->_device->canUnsubscribeRemoteCharacteristic(characteristic);
+}
+
+bool BLEPeripheral::unsubcribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
+  return this->_device->unsubcribeRemoteCharacteristic(characteristic);
+}
+
 void BLEPeripheral::BLEDeviceConnected(BLEDevice& device, const unsigned char* address) {
   this->_central.setAddress(address);
 
@@ -231,12 +308,40 @@ void BLEPeripheral::BLEDeviceDisconnected(BLEDevice& device) {
   this->_central.clearAddress();
 }
 
+void BLEPeripheral::BLEDeviceBonded(BLEDevice& device) {
+#ifdef BLE_PERIPHERAL_DEBUG
+  Serial.print(F("Peripheral bonded: "));
+  Serial.println(this->_central.address());
+#endif
+
+  BLEPeripheralEventHandler eventHandler = this->_eventHandlers[BLEBonded];
+  if (eventHandler) {
+    eventHandler(this->_central);
+  }
+}
+
+void BLEPeripheral::BLEDeviceRemoteServicesDiscovered(BLEDevice& device) {
+#ifdef BLE_PERIPHERAL_DEBUG
+  Serial.print(F("Peripheral discovered central remote services: "));
+  Serial.println(this->_central.address());
+#endif
+
+  BLEPeripheralEventHandler eventHandler = this->_eventHandlers[BLERemoteServicesDiscovered];
+  if (eventHandler) {
+    eventHandler(this->_central);
+  }
+}
+
 void BLEPeripheral::BLEDeviceCharacteristicValueChanged(BLEDevice& device, BLECharacteristic& characteristic, const unsigned char* value, unsigned char valueLength) {
   characteristic.setValue(this->_central, value, valueLength);
 }
 
 void BLEPeripheral::BLEDeviceCharacteristicSubscribedChanged(BLEDevice& device, BLECharacteristic& characteristic, bool subscribed) {
   characteristic.setSubscribed(this->_central, subscribed);
+}
+
+void BLEPeripheral::BLEDeviceRemoteCharacteristicValueChanged(BLEDevice& device, BLERemoteCharacteristic& remoteCharacteristic, const unsigned char* value, unsigned char valueLength) {
+  remoteCharacteristic.setValue(this->_central, value, valueLength);
 }
 
 void BLEPeripheral::BLEDeviceAddressReceived(BLEDevice& device, const unsigned char* address) {
@@ -254,4 +359,17 @@ void BLEPeripheral::BLEDeviceTemperatureReceived(BLEDevice& device, float temper
 }
 
 void BLEPeripheral::BLEDeviceBatteryLevelReceived(BLEDevice& device, float batteryLevel) {
+}
+
+void BLEPeripheral::initLocalAttributes() {
+  this->_localAttributes = (BLELocalAttribute**)malloc(BLELocalAttribute::numAttributes() * sizeof(BLELocalAttribute*));
+
+  this->_localAttributes[0] = &this->_genericAccessService;
+  this->_localAttributes[1] = &this->_deviceNameCharacteristic;
+  this->_localAttributes[2] = &this->_appearanceCharacteristic;
+
+  this->_localAttributes[3] = &this->_genericAttributeService;
+  this->_localAttributes[4] = &this->_servicesChangedCharacteristic;
+
+  this->_numLocalAttributes = 5;
 }

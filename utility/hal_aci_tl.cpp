@@ -49,9 +49,13 @@ The outgoing command and the incoming event needs to be converted
     #error "Unsupported platform"
 #endif
 
+#ifdef HAL_ACI_TL_DEBUG
 static void m_aci_data_print(hal_aci_data_t *p_data);
+#endif
 static void m_aci_event_check(void);
+#ifdef HAL_ACI_TL_INTERRUPT
 static void m_aci_isr(void);
+#endif
 static void m_aci_pins_set(aci_pins_t *a_pins_ptr);
 static inline void m_aci_reqn_disable (void);
 static inline void m_aci_reqn_enable (void);
@@ -59,14 +63,16 @@ static void m_aci_q_flush(void);
 static bool m_aci_spi_transfer(hal_aci_data_t * data_to_send, hal_aci_data_t * received_data);
 
 static uint8_t        spi_readwrite(uint8_t aci_byte);
-
+#ifdef HAL_ACI_TL_DEBUG
 static bool           aci_debug_print = false;
+#endif
 
 aci_queue_t    aci_tx_q;
 aci_queue_t    aci_rx_q;
 
 static aci_pins_t	 *a_pins_local_ptr;
 
+#ifdef HAL_ACI_TL_DEBUG
 void m_aci_data_print(hal_aci_data_t *p_data)
 {
   const uint8_t length = p_data->buffer[0];
@@ -80,7 +86,9 @@ void m_aci_data_print(hal_aci_data_t *p_data)
   }
   Serial.println(F(""));
 }
+#endif
 
+#ifdef HAL_ACI_TL_INTERRUPT
 /*
   Interrupt service routine called when the RDYN line goes low. Runs the SPI transfer.
 */
@@ -126,6 +134,7 @@ static void m_aci_isr(void)
 
   return;
 }
+#endif
 
 /*
   Checks the RDYN line and runs the SPI transfer if required.
@@ -258,7 +267,9 @@ static bool m_aci_spi_transfer(hal_aci_data_t * data_to_send, hal_aci_data_t * r
 
 void hal_aci_tl_debug_print(bool enable)
 {
+#ifdef HAL_ACI_TL_DEBUG
 	aci_debug_print = enable;
+#endif
 }
 
 void hal_aci_tl_pin_reset(void)
@@ -287,7 +298,9 @@ void hal_aci_tl_pin_reset(void)
 
 bool hal_aci_tl_event_peek(hal_aci_data_t *p_aci_data)
 {
+#ifdef HAL_ACI_TL_INTERRUPT
   if (!a_pins_local_ptr->interface_is_interrupt)
+#endif
   {
     m_aci_event_check();
   }
@@ -304,7 +317,11 @@ bool hal_aci_tl_event_get(hal_aci_data_t *p_aci_data)
 {
   bool was_full;
 
+#ifdef HAL_ACI_TL_INTERRUPT
   if (!a_pins_local_ptr->interface_is_interrupt && !aci_queue_is_full(&aci_rx_q))
+#else
+  if (!aci_queue_is_full(&aci_rx_q))
+#endif
   {
     m_aci_event_check();
   }
@@ -313,17 +330,21 @@ bool hal_aci_tl_event_get(hal_aci_data_t *p_aci_data)
 
   if (aci_queue_dequeue(&aci_rx_q, p_aci_data))
   {
+#ifdef HAL_ACI_TL_DEBUG
     if (aci_debug_print)
     {
       Serial.print(" E");
       m_aci_data_print(p_aci_data);
     }
+#endif
 
+#ifdef HAL_ACI_TL_INTERRUPT
     if (was_full && a_pins_local_ptr->interface_is_interrupt)
 	  {
       /* Enable RDY line interrupt again */
       attachInterrupt(a_pins_local_ptr->interrupt_number, m_aci_isr, LOW);
     }
+#endif
 
     /* Attempt to pull REQN LOW since we've made room for new messages */
     if (!aci_queue_is_full(&aci_rx_q) && !aci_queue_is_empty(&aci_tx_q))
@@ -339,7 +360,9 @@ bool hal_aci_tl_event_get(hal_aci_data_t *p_aci_data)
 
 void hal_aci_tl_init(aci_pins_t *a_pins, bool debug)
 {
+#ifdef HAL_ACI_TL_DEBUG
   aci_debug_print = debug;
+#endif
 
   /* Needs to be called as the first thing for proper intialization*/
   m_aci_pins_set(a_pins);
@@ -392,12 +415,14 @@ void hal_aci_tl_init(aci_pins_t *a_pins, bool debug)
 
   delay(30); //Wait for the nRF8001 to get hold of its lines - the lines float for a few ms after the reset
 
+#ifdef HAL_ACI_TL_INTERRUPT
   /* Attach the interrupt to the RDYN line as requested by the caller */
   if (a_pins->interface_is_interrupt)
   {
     // We use the LOW level of the RDYN line as the atmega328 can wakeup from sleep only on LOW
     attachInterrupt(a_pins->interrupt_number, m_aci_isr, LOW);
   }
+#endif
 }
 
 bool hal_aci_tl_send(hal_aci_data_t *p_aci_cmd)
@@ -419,11 +444,13 @@ bool hal_aci_tl_send(hal_aci_data_t *p_aci_cmd)
       m_aci_reqn_enable();
     }
 
+#ifdef HAL_ACI_TL_DEBUG
     if (aci_debug_print)
     {
       Serial.print("C"); //ACI Command
       m_aci_data_print(p_aci_cmd);
     }
+#endif
   }
 
   return ret_val;

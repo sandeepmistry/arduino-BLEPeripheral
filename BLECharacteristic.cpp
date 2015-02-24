@@ -5,7 +5,7 @@
 #include "BLECharacteristic.h"
 
 BLECharacteristic::BLECharacteristic(const char* uuid, unsigned char properties, unsigned char valueSize) :
-  BLEAttribute(uuid, BLETypeCharacteristic),
+  BLELocalAttribute(uuid, BLETypeCharacteristic),
   _properties(properties),
   _valueSize(min(valueSize, BLE_ATTRIBUTE_MAX_VALUE_LENGTH)),
   _value(NULL),
@@ -22,7 +22,7 @@ BLECharacteristic::BLECharacteristic(const char* uuid, unsigned char properties,
 }
 
 BLECharacteristic::BLECharacteristic(const char* uuid, unsigned char properties, const char* value) :
-  BLEAttribute(uuid, BLETypeCharacteristic),
+  BLELocalAttribute(uuid, BLETypeCharacteristic),
   _properties(properties),
   _valueSize(min(strlen(value), BLE_ATTRIBUTE_MAX_VALUE_LENGTH)),
   _value(NULL),
@@ -98,9 +98,7 @@ bool BLECharacteristic::broadcast() {
 bool BLECharacteristic::written() {
   bool written = this->_written;
 
-  if (written) {
-    this->_written = false;
-  }
+  this->_written = false;
 
   return written;
 }

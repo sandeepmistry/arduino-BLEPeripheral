@@ -1,9 +1,9 @@
 #ifndef _BLE_SERVICE_H_
 #define _BLE_SERVICE_H_
 
-#include "BLEAttribute.h"
+#include "BLELocalAttribute.h"
 
-class BLEService : public BLEAttribute
+class BLEService : public BLELocalAttribute
 {
   public:
     BLEService(const char* uuid);

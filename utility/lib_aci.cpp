@@ -426,10 +426,10 @@ bool lib_aci_request_data(aci_state_t *aci_stat, uint8_t pipe)
   bool ret_val = false;
   aci_cmd_params_request_data_t aci_cmd_params_request_data;
 
-  if(!((p_services_pipe_type_map[pipe-1].location == ACI_STORE_REMOTE)&&(p_services_pipe_type_map[pipe-1].pipe_type == ACI_RX_REQ)))
-  {
-    return false;
-  }
+  // if(!((p_services_pipe_type_map[pipe-1].location == ACI_STORE_REMOTE)&&(p_services_pipe_type_map[pipe-1].pipe_type == ACI_RX_REQ)))
+  // {
+  //   return false;
+  // }
 
 
   {
@@ -472,13 +472,13 @@ bool lib_aci_open_remote_pipe(aci_state_t *aci_stat, uint8_t pipe)
   bool ret_val = false;
   aci_cmd_params_open_remote_pipe_t aci_cmd_params_open_remote_pipe;
 
-  if(!((p_services_pipe_type_map[pipe-1].location == ACI_STORE_REMOTE)&&
-                ((p_services_pipe_type_map[pipe-1].pipe_type == ACI_RX)||
-                (p_services_pipe_type_map[pipe-1].pipe_type == ACI_RX_ACK_AUTO)||
-                (p_services_pipe_type_map[pipe-1].pipe_type == ACI_RX_ACK))))
-  {
-    return false;
-  }
+  // if(!((p_services_pipe_type_map[pipe-1].location == ACI_STORE_REMOTE)&&
+  //               ((p_services_pipe_type_map[pipe-1].pipe_type == ACI_RX)||
+  //               (p_services_pipe_type_map[pipe-1].pipe_type == ACI_RX_ACK_AUTO)||
+  //               (p_services_pipe_type_map[pipe-1].pipe_type == ACI_RX_ACK))))
+  // {
+  //   return false;
+  // }
 
 
   {
@@ -499,13 +499,13 @@ bool lib_aci_close_remote_pipe(aci_state_t *aci_stat, uint8_t pipe)
   bool ret_val = false;
   aci_cmd_params_close_remote_pipe_t aci_cmd_params_close_remote_pipe;
 
-  if(!((p_services_pipe_type_map[pipe-1].location == ACI_STORE_REMOTE)&&
-        ((p_services_pipe_type_map[pipe-1].pipe_type == ACI_RX)||
-         (p_services_pipe_type_map[pipe-1].pipe_type == ACI_RX_ACK_AUTO)||
-         (p_services_pipe_type_map[pipe-1].pipe_type == ACI_RX_ACK))))
-  {
-    return false;
-  }
+  // if(!((p_services_pipe_type_map[pipe-1].location == ACI_STORE_REMOTE)&&
+  //       ((p_services_pipe_type_map[pipe-1].pipe_type == ACI_RX)||
+  //        (p_services_pipe_type_map[pipe-1].pipe_type == ACI_RX_ACK_AUTO)||
+  //        (p_services_pipe_type_map[pipe-1].pipe_type == ACI_RX_ACK))))
+  // {
+  //   return false;
+  // }
 
 
   {

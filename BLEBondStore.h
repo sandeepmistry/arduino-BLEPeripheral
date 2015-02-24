@@ -10,7 +10,7 @@ class BLEBondStore
     bool hasData();
     void clearData();
     void storeData(const unsigned char* data, unsigned char length);
-    void restoreData(unsigned char* data, unsigned char length);
+    unsigned char restoreData(unsigned char* data, unsigned char length);
 
   private:
 #ifdef __AVR__

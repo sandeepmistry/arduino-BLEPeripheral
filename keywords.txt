@@ -11,7 +11,11 @@ BLEBondStore	KEYWORD1
 BLECentral	KEYWORD1
 BLECharacteristic	KEYWORD1
 BLEDescriptor	KEYWORD1
+BLELocalAttribute	KEYWORD1
 BLEPeripheral	KEYWORD1
+BLERemoteAttribute	KEYWORD1
+BLERemoteCharacteristic	KEYWORD1
+BLERemoteService	KEYWORD1
 BLEService	KEYWORD1
 BLETypedCharacteristic	KEYWORD1
 BLEUuid	KEYWORD1
@@ -53,9 +57,15 @@ setValue	KEYWORD2
 written	KEYWORD2
 subscribed	KEYWORD2
 setEventHandler	KEYWORD2
+canRead	KEYWORD2
+read	KEYWORD2
+canWrite	KEYWORD2
+write	KEYWORD2
+valueUpdated	KEYWORD2
 
 begin	KEYWORD2
 setAdvertisedServiceUuid	KEYWORD2
+setServiceSolicitationUuid	KEYWORD2
 setManufacturerData	KEYWORD2
 setLocalName	KEYWORD2
 setDeviceName	KEYWORD2
@@ -64,6 +74,8 @@ setAdvertisingInterval	KEYWORD2
 setConnectable	KEYWORD2
 setBondStore	KEYWORD2
 addAttribute	KEYWORD2
+addLocalAttribute	KEYWORD2
+addRemoteAttribute	KEYWORD2
 central	KEYWORD2
 hasData	KEYWORD2
 clearData	KEYWORD2
@@ -106,3 +118,8 @@ BLEUnsubscribed	LITERAL1
 
 BLEConnected	LITERAL1
 BLEDisconnected	LITERAL1
+BLEBonded	LITERAL1
+BLERemoteServicesDiscovered	LITERAL1
+
+BLEValueUpdated	LITERAL1
+
