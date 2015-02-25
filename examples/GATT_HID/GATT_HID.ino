@@ -33,7 +33,7 @@ void loop() {
       if (Serial.available() > 0) {
         Serial.read();
         
-        bleHID.write(0x1E); // 'a'
+        bleHID.write(KEYCODE_A);
       }
     }
 
