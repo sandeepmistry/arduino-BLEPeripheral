@@ -16,6 +16,7 @@ class BLEHID
     bool connected();
 
     size_t write(uint8_t k);
+    void pressMultimediaKey(uint8_t key);
 
   private:
     BLEPeripheral                   _blePeripheral;
@@ -31,7 +32,10 @@ class BLEHID
     BLEUnsignedCharCharacteristic   _hidControlPointCharacteristic;
 
     BLECharacteristic               _hidKeyboardReportCharacteristic;
-    BLEDescriptor                   _hidKeyboardreportReferenceDescriptor;
+    BLEDescriptor                   _hidKeyboardReportReferenceDescriptor;
+
+    BLECharacteristic               _hidMMKeyReportCharacteristic;
+    BLEDescriptor                   _hidMMKeyReportReferenceDescriptor;
 };
 
 #endif

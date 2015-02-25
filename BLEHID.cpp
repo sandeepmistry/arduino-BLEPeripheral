@@ -4,14 +4,14 @@ static const unsigned char hidInformationCharacteriticValue[]   = { 0x11, 0x01, 
 
 // From: https://github.com/adafruit/Adafruit-Trinket-USB/blob/master/TrinketHidCombo/TrinketHidComboC.h
 //       permission to use under MIT license by @ladyada (https://github.com/adafruit/Adafruit-Trinket-USB/issues/10)
-#define REPID_MOUSE         1
+// #define REPID_MOUSE         1
 #define REPID_KEYBOARD      0 //2
-#define REPID_MMKEY         3
-#define REPID_SYSCTRLKEY    4
-#define REPSIZE_MOUSE       4
-#define REPSIZE_KEYBOARD    8
-#define REPSIZE_MMKEY       3
-#define REPSIZE_SYSCTRLKEY  2
+#define REPID_MMKEY         1 //3
+// #define REPID_SYSCTRLKEY    4
+// #define REPSIZE_MOUSE       4
+// #define REPSIZE_KEYBOARD    8
+// #define REPSIZE_MMKEY       3
+// #define REPSIZE_SYSCTRLKEY  2
 
 static const unsigned char hidReportDescriptorValue[] = {
 // From: https://github.com/adafruit/Adafruit-Trinket-USB/blob/master/TrinketHidCombo/TrinketHidComboC.c
@@ -79,19 +79,19 @@ static const unsigned char hidReportDescriptorValue[] = {
   0x81, 0x00,           //   INPUT (Data,Ary,Abs)
   0xC0,                 // END_COLLECTION
 
-  // // this second multimedia key report is what handles the multimedia keys
-  // 0x05, 0x0C,           // USAGE_PAGE (Consumer Devices)
-  // 0x09, 0x01,           // USAGE (Consumer Control)
-  // 0xA1, 0x01,           // COLLECTION (Application)
-  // 0x85, REPID_MMKEY,    //   REPORT_ID
-  // 0x19, 0x00,           //   USAGE_MINIMUM (Unassigned)
-  // 0x2A, 0x3C, 0x02,     //   USAGE_MAXIMUM
-  // 0x15, 0x00,           //   LOGICAL_MINIMUM (0)
-  // 0x26, 0x3C, 0x02,     //   LOGICAL_MAXIMUM
-  // 0x95, 0x01,           //   REPORT_COUNT (1)
-  // 0x75, 0x10,           //   REPORT_SIZE (16)
-  // 0x81, 0x00,           //   INPUT (Data,Ary,Abs)
-  // 0xC0,                 // END_COLLECTION
+  // this second multimedia key report is what handles the multimedia keys
+  0x05, 0x0C,           // USAGE_PAGE (Consumer Devices)
+  0x09, 0x01,           // USAGE (Consumer Control)
+  0xA1, 0x01,           // COLLECTION (Application)
+  0x85, REPID_MMKEY,    //   REPORT_ID
+  0x19, 0x00,           //   USAGE_MINIMUM (Unassigned)
+  0x2A, 0x3C, 0x02,     //   USAGE_MAXIMUM
+  0x15, 0x00,           //   LOGICAL_MINIMUM (0)
+  0x26, 0x3C, 0x02,     //   LOGICAL_MAXIMUM
+  0x95, 0x01,           //   REPORT_COUNT (1)
+  0x75, 0x10,           //   REPORT_SIZE (16)
+  0x81, 0x00,           //   INPUT (Data,Ary,Abs)
+  0xC0,                 // END_COLLECTION
 
   // // system controls, like power, needs a 3rd different report and report descriptor
   // 0x05, 0x01,             // USAGE_PAGE (Generic Desktop)
@@ -111,7 +111,8 @@ static const unsigned char hidReportDescriptorValue[] = {
   // 0xC0,                   // END_COLLECTION
 };
 
-static const unsigned char hidKeyboardreportReferenceDescriptorValue[] = { 0x00, 0x01 };
+static const unsigned char hidKeyboardReportReferenceDescriptorValue[] = { REPID_KEYBOARD, 0x01 };
+static const unsigned char hidMMKeyReportReferenceDescriptorValue[] = { REPID_MMKEY, 0x01 };
 
 
 BLEHID::BLEHID(unsigned char req, unsigned char rdy, unsigned char rst) :
@@ -127,8 +128,11 @@ BLEHID::BLEHID(unsigned char req, unsigned char rdy, unsigned char rst) :
   _hidControlPointCharacteristic("2a4c", BLEWriteWithoutResponse),
   _hidReportMapCharacteristic("2a4b", hidReportDescriptorValue, sizeof(hidReportDescriptorValue)),
 
-  _hidKeyboardReportCharacteristic("2A4D", BLERead | BLENotify, 8),
-  _hidKeyboardreportReferenceDescriptor("2908", hidKeyboardreportReferenceDescriptorValue, sizeof(hidKeyboardreportReferenceDescriptorValue))
+  _hidKeyboardReportCharacteristic("2a4d", BLERead | BLENotify, 8),
+  _hidKeyboardReportReferenceDescriptor("2908", hidKeyboardReportReferenceDescriptorValue, sizeof(hidKeyboardReportReferenceDescriptorValue)),
+  _hidMMKeyReportCharacteristic("2a4d", BLERead | BLENotify, 2),
+  _hidMMKeyReportReferenceDescriptor("2908", hidMMKeyReportReferenceDescriptorValue, sizeof(hidMMKeyReportReferenceDescriptorValue))
+
 {
 
 }
@@ -155,7 +159,9 @@ void BLEHID::begin() {
   this->_blePeripheral.addAttribute(this->_hidReportMapCharacteristic);
 
   this->_blePeripheral.addAttribute(this->_hidKeyboardReportCharacteristic);
-  this->_blePeripheral.addAttribute(this->_hidKeyboardreportReferenceDescriptor);
+  this->_blePeripheral.addAttribute(this->_hidKeyboardReportReferenceDescriptor);
+  this->_blePeripheral.addAttribute(this->_hidMMKeyReportCharacteristic);
+  this->_blePeripheral.addAttribute(this->_hidMMKeyReportReferenceDescriptor);
 
 #ifdef USE_BOOT_PROTOCOL_MODE
   this->_blePeripheral.addAttribute(this->_hidBootKeyboardInputReportCharacateristic);
@@ -199,4 +205,28 @@ size_t BLEHID::write(uint8_t k) {
   // send cleared hid code
   keyPress[2] = 0x00;
   this->_hidKeyboardReportCharacteristic.setValue(keyPress, sizeof(keyPress));
+
+  return 1;
+}
+
+void BLEHID::pressMultimediaKey(uint8_t key) {
+  uint8_t multimediaKeyPress[2]= { 0x00, 0x00 };
+
+  // wait until we can notify
+  while(!this->_hidMMKeyReportCharacteristic.canNotify()) {
+    this->_blePeripheral.poll();
+  }
+
+  // send hid key code
+  multimediaKeyPress[0] = key;
+  this->_hidMMKeyReportCharacteristic.setValue(multimediaKeyPress, sizeof(multimediaKeyPress));
+
+  // wait until we can notify
+  while(!this->_hidMMKeyReportCharacteristic.canNotify()) {
+    this->_blePeripheral.poll();
+  }
+
+  // send cleared hid code
+  multimediaKeyPress[0] = 0x00;
+  this->_hidMMKeyReportCharacteristic.setValue(multimediaKeyPress, sizeof(multimediaKeyPress));
 }
