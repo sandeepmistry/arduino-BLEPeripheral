@@ -1,6 +1,5 @@
 #include "BLEHID.h"
 
-// static const unsigned char hidReportReferenceDescriptorValue1[] = { 0x00, 0x01 };
 static const unsigned char hidInformationCharacteriticValue[]   = { 0x11, 0x01, 0x00, 0x03 };
 
 static const unsigned char hidReportDescriptorValue[] = {
@@ -58,15 +57,16 @@ BLEHID::BLEHID(unsigned char req, unsigned char rdy, unsigned char rst) :
   _bleBondStore(),
 
   _hidService("1812"),
+#ifdef USE_BOOT_PROTOCOL_MODE
   _hidProtocolModeCharacteristic("2a4e", BLERead | BLEWriteWithoutResponse),
+  _bootKeyboardInputReportCharacateristic("2A23", BLERead | BLEWrite | BLEWriteWithoutResponse, 8)
+#endif
   _hidInformationCharacteristic("2a4a", hidInformationCharacteriticValue, sizeof(hidInformationCharacteriticValue)),
   _hidControlPointCharacteristic("2a4c", BLEWriteWithoutResponse),
   _hidReportMapCharacteristic("2a4b", hidReportDescriptorValue, sizeof(hidReportDescriptorValue)),
 
   _hidReportCharacteristic1("2A4D", BLERead | BLENotify, 8),
-  _reportReferenceDescriptor1("2908", hidReportReferenceDescriptorValue1, sizeof(hidReportReferenceDescriptorValue1)),
-
-  _bootKeyboardInputReportCharacateristic("2A23", BLERead | BLEWrite | BLEWriteWithoutResponse, 8)
+  _reportReferenceDescriptor1("2908", hidReportReferenceDescriptorValue1, sizeof(hidReportReferenceDescriptorValue1))
 {
 
 }
@@ -85,7 +85,9 @@ void BLEHID::begin() {
 
   // add attributes (services, characteristics, descriptors) to peripheral
   this->_blePeripheral.addAttribute(this->_hidService);
+#ifdef USE_BOOT_PROTOCOL_MODE
   this->_blePeripheral.addAttribute(this->_hidProtocolModeCharacteristic);
+#endif
   this->_blePeripheral.addAttribute(this->_hidInformationCharacteristic);
   this->_blePeripheral.addAttribute(this->_hidControlPointCharacteristic);
   this->_blePeripheral.addAttribute(this->_hidReportMapCharacteristic);
@@ -93,12 +95,14 @@ void BLEHID::begin() {
   this->_blePeripheral.addAttribute(this->_hidReportCharacteristic1);
   this->_blePeripheral.addAttribute(this->_reportReferenceDescriptor1);
 
+#ifdef USE_BOOT_PROTOCOL_MODE
   this->_blePeripheral.addAttribute(this->_bootKeyboardInputReportCharacateristic);
 
   this->_hidProtocolModeCharacteristic.setValue(0x01);
 
   unsigned char bootKeyboardInputReportCharacateristicValue[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
   this->_bootKeyboardInputReportCharacateristic.setValue(bootKeyboardInputReportCharacateristicValue, sizeof(bootKeyboardInputReportCharacateristicValue));
+#endif
 
   // begin initialization
   this->_blePeripheral.begin();

@@ -3,6 +3,8 @@
 
 #include "BLEPeripheral.h"
 
+// #define USE_BOOT_PROTOCOL_MODE
+
 class BLEHID
 {
   public:
@@ -20,15 +22,16 @@ class BLEHID
     BLEBondStore                    _bleBondStore;
     BLEService                      _hidService;
 
+#ifdef USE_BOOT_PROTOCOL_MODE
     BLEUnsignedCharCharacteristic   _hidProtocolModeCharacteristic;
+    BLECharacteristic               _bootKeyboardInputReportCharacateristic;
+#endif
     BLEConstantCharacteristic       _hidReportMapCharacteristic;
     BLEConstantCharacteristic       _hidInformationCharacteristic;
     BLEUnsignedCharCharacteristic   _hidControlPointCharacteristic;
 
     BLECharacteristic               _hidReportCharacteristic1;
     BLEDescriptor                   _reportReferenceDescriptor1;
-
-    BLECharacteristic               _bootKeyboardInputReportCharacateristic;
 };
 
 #endif
