@@ -15,6 +15,7 @@ class BLEHID
     BLECentral central();
     bool connected();
 
+    void mouseMove(signed char x, signed char y, uint8_t buttonMask);
     size_t write(uint8_t k);
     void pressMultimediaKey(uint8_t key);
     void pressSystemCtrlKey(uint8_t key);
@@ -32,12 +33,12 @@ class BLEHID
     BLEConstantCharacteristic       _hidInformationCharacteristic;
     BLEUnsignedCharCharacteristic   _hidControlPointCharacteristic;
 
+    BLECharacteristic               _hidMouseReportCharacteristic;
+    BLEDescriptor                   _hidMouseReportReferenceDescriptor;
     BLECharacteristic               _hidKeyboardReportCharacteristic;
     BLEDescriptor                   _hidKeyboardReportReferenceDescriptor;
-
     BLECharacteristic               _hidMMKeyReportCharacteristic;
     BLEDescriptor                   _hidMMKeyReportReferenceDescriptor;
-
     BLECharacteristic               _hidSysCtrlKeyReportCharacteristic;
     BLEDescriptor                   _hidSysCtrlKeyReportReferenceDescriptor;
 };
