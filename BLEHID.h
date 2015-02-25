@@ -20,12 +20,15 @@ class BLEHID
     BLEBondStore                    _bleBondStore;
     BLEService                      _hidService;
 
+    BLEUnsignedCharCharacteristic   _hidProtocolModeCharacteristic;
+    BLEConstantCharacteristic       _hidReportMapCharacteristic;
     BLEConstantCharacteristic       _hidInformationCharacteristic;
     BLEUnsignedCharCharacteristic   _hidControlPointCharacteristic;
-    BLEConstantCharacteristic       _hidReportDescriptor;
 
     BLECharacteristic               _hidReportCharacteristic1;
     BLEDescriptor                   _reportReferenceDescriptor1;
+
+    BLECharacteristic               _bootKeyboardInputReportCharacateristic;
 };
 
 #endif

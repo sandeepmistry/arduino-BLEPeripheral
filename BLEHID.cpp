@@ -58,12 +58,15 @@ BLEHID::BLEHID(unsigned char req, unsigned char rdy, unsigned char rst) :
   _bleBondStore(),
 
   _hidService("1812"),
+  _hidProtocolModeCharacteristic("2a4e", BLERead | BLEWriteWithoutResponse),
   _hidInformationCharacteristic("2a4a", hidInformationCharacteriticValue, sizeof(hidInformationCharacteriticValue)),
   _hidControlPointCharacteristic("2a4c", BLEWriteWithoutResponse),
-  _hidReportDescriptor("2a4b", hidReportDescriptorValue, sizeof(hidReportDescriptorValue)),
+  _hidReportMapCharacteristic("2a4b", hidReportDescriptorValue, sizeof(hidReportDescriptorValue)),
 
   _hidReportCharacteristic1("2A4D", BLERead | BLENotify, 8),
-  _reportReferenceDescriptor1("2908", hidReportReferenceDescriptorValue1, sizeof(hidReportReferenceDescriptorValue1))
+  _reportReferenceDescriptor1("2908", hidReportReferenceDescriptorValue1, sizeof(hidReportReferenceDescriptorValue1)),
+
+  _bootKeyboardInputReportCharacateristic("2A23", BLERead | BLEWrite | BLEWriteWithoutResponse, 8)
 {
 
 }
@@ -82,12 +85,20 @@ void BLEHID::begin() {
 
   // add attributes (services, characteristics, descriptors) to peripheral
   this->_blePeripheral.addAttribute(this->_hidService);
+  this->_blePeripheral.addAttribute(this->_hidProtocolModeCharacteristic);
   this->_blePeripheral.addAttribute(this->_hidInformationCharacteristic);
   this->_blePeripheral.addAttribute(this->_hidControlPointCharacteristic);
-  this->_blePeripheral.addAttribute(this->_hidReportDescriptor);
+  this->_blePeripheral.addAttribute(this->_hidReportMapCharacteristic);
 
   this->_blePeripheral.addAttribute(this->_hidReportCharacteristic1);
   this->_blePeripheral.addAttribute(this->_reportReferenceDescriptor1);
+
+  this->_blePeripheral.addAttribute(this->_bootKeyboardInputReportCharacateristic);
+
+  this->_hidProtocolModeCharacteristic.setValue(0x01);
+
+  unsigned char bootKeyboardInputReportCharacateristicValue[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  this->_bootKeyboardInputReportCharacateristic.setValue(bootKeyboardInputReportCharacateristicValue, sizeof(bootKeyboardInputReportCharacateristicValue));
 
   // begin initialization
   this->_blePeripheral.begin();
