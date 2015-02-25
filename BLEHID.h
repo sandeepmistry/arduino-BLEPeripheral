@@ -17,6 +17,7 @@ class BLEHID
 
     size_t write(uint8_t k);
     void pressMultimediaKey(uint8_t key);
+    void pressSystemCtrlKey(uint8_t key);
 
   private:
     BLEPeripheral                   _blePeripheral;
@@ -36,6 +37,9 @@ class BLEHID
 
     BLECharacteristic               _hidMMKeyReportCharacteristic;
     BLEDescriptor                   _hidMMKeyReportReferenceDescriptor;
+
+    BLECharacteristic               _hidSysCtrlKeyReportCharacteristic;
+    BLEDescriptor                   _hidSysCtrlKeyReportReferenceDescriptor;
 };
 
 #endif

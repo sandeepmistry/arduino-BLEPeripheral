@@ -7,7 +7,7 @@ static const unsigned char hidInformationCharacteriticValue[]   = { 0x11, 0x01, 
 // #define REPID_MOUSE         1
 #define REPID_KEYBOARD      0 //2
 #define REPID_MMKEY         1 //3
-// #define REPID_SYSCTRLKEY    4
+#define REPID_SYSCTRLKEY    2 //4
 // #define REPSIZE_MOUSE       4
 // #define REPSIZE_KEYBOARD    8
 // #define REPSIZE_MMKEY       3
@@ -93,26 +93,27 @@ static const unsigned char hidReportDescriptorValue[] = {
   0x81, 0x00,           //   INPUT (Data,Ary,Abs)
   0xC0,                 // END_COLLECTION
 
-  // // system controls, like power, needs a 3rd different report and report descriptor
-  // 0x05, 0x01,             // USAGE_PAGE (Generic Desktop)
-  // 0x09, 0x80,             // USAGE (System Control)
-  // 0xA1, 0x01,             // COLLECTION (Application)
-  // 0x85, REPID_SYSCTRLKEY, //   REPORT_ID
-  // 0x95, 0x01,             //   REPORT_COUNT (1)
-  // 0x75, 0x02,             //   REPORT_SIZE (2)
-  // 0x15, 0x01,             //   LOGICAL_MINIMUM (1)
-  // 0x25, 0x03,             //   LOGICAL_MAXIMUM (3)
-  // 0x09, 0x82,             //   USAGE (System Sleep)
-  // 0x09, 0x81,             //   USAGE (System Power)
-  // 0x09, 0x83,             //   USAGE (System Wakeup)
-  // 0x81, 0x60,             //   INPUT
-  // 0x75, 0x06,             //   REPORT_SIZE (6)
-  // 0x81, 0x03,             //   INPUT (Cnst,Var,Abs)
-  // 0xC0,                   // END_COLLECTION
+  // system controls, like power, needs a 3rd different report and report descriptor
+  0x05, 0x01,             // USAGE_PAGE (Generic Desktop)
+  0x09, 0x80,             // USAGE (System Control)
+  0xA1, 0x01,             // COLLECTION (Application)
+  0x85, REPID_SYSCTRLKEY, //   REPORT_ID
+  0x95, 0x01,             //   REPORT_COUNT (1)
+  0x75, 0x02,             //   REPORT_SIZE (2)
+  0x15, 0x01,             //   LOGICAL_MINIMUM (1)
+  0x25, 0x03,             //   LOGICAL_MAXIMUM (3)
+  0x09, 0x82,             //   USAGE (System Sleep)
+  0x09, 0x81,             //   USAGE (System Power)
+  0x09, 0x83,             //   USAGE (System Wakeup)
+  0x81, 0x60,             //   INPUT
+  0x75, 0x06,             //   REPORT_SIZE (6)
+  0x81, 0x03,             //   INPUT (Cnst,Var,Abs)
+  0xC0,                   // END_COLLECTION
 };
 
 static const unsigned char hidKeyboardReportReferenceDescriptorValue[] = { REPID_KEYBOARD, 0x01 };
 static const unsigned char hidMMKeyReportReferenceDescriptorValue[] = { REPID_MMKEY, 0x01 };
+static const unsigned char hidSysCtrlKeyReportReferenceDescriptorValue[] = { REPID_SYSCTRLKEY, 0x01 };
 
 
 BLEHID::BLEHID(unsigned char req, unsigned char rdy, unsigned char rst) :
@@ -131,8 +132,9 @@ BLEHID::BLEHID(unsigned char req, unsigned char rdy, unsigned char rst) :
   _hidKeyboardReportCharacteristic("2a4d", BLERead | BLENotify, 8),
   _hidKeyboardReportReferenceDescriptor("2908", hidKeyboardReportReferenceDescriptorValue, sizeof(hidKeyboardReportReferenceDescriptorValue)),
   _hidMMKeyReportCharacteristic("2a4d", BLERead | BLENotify, 2),
-  _hidMMKeyReportReferenceDescriptor("2908", hidMMKeyReportReferenceDescriptorValue, sizeof(hidMMKeyReportReferenceDescriptorValue))
-
+  _hidMMKeyReportReferenceDescriptor("2908", hidMMKeyReportReferenceDescriptorValue, sizeof(hidMMKeyReportReferenceDescriptorValue)),
+  _hidSysCtrlKeyReportCharacteristic("2a4d", BLERead | BLENotify, 1),
+  _hidSysCtrlKeyReportReferenceDescriptor("2908", hidSysCtrlKeyReportReferenceDescriptorValue, sizeof(hidSysCtrlKeyReportReferenceDescriptorValue))
 {
 
 }
@@ -162,6 +164,8 @@ void BLEHID::begin() {
   this->_blePeripheral.addAttribute(this->_hidKeyboardReportReferenceDescriptor);
   this->_blePeripheral.addAttribute(this->_hidMMKeyReportCharacteristic);
   this->_blePeripheral.addAttribute(this->_hidMMKeyReportReferenceDescriptor);
+  this->_blePeripheral.addAttribute(this->_hidSysCtrlKeyReportCharacteristic);
+  this->_blePeripheral.addAttribute(this->_hidSysCtrlKeyReportReferenceDescriptor);
 
 #ifdef USE_BOOT_PROTOCOL_MODE
   this->_blePeripheral.addAttribute(this->_hidBootKeyboardInputReportCharacateristic);
@@ -229,4 +233,26 @@ void BLEHID::pressMultimediaKey(uint8_t key) {
   // send cleared hid code
   multimediaKeyPress[0] = 0x00;
   this->_hidMMKeyReportCharacteristic.setValue(multimediaKeyPress, sizeof(multimediaKeyPress));
+}
+
+void BLEHID::pressSystemCtrlKey(uint8_t key) {
+  uint8_t sysCtrlKeyPress[1]= { 0x00 };
+
+  // wait until we can notify
+  while(!this->_hidSysCtrlKeyReportCharacteristic.canNotify()) {
+    this->_blePeripheral.poll();
+  }
+
+  // send hid key code
+  sysCtrlKeyPress[0] = key;
+  this->_hidSysCtrlKeyReportCharacteristic.setValue(sysCtrlKeyPress, sizeof(sysCtrlKeyPress));
+
+  // wait until we can notify
+  while(!this->_hidSysCtrlKeyReportCharacteristic.canNotify()) {
+    this->_blePeripheral.poll();
+  }
+
+  // send cleared hid code
+  sysCtrlKeyPress[0] = 0x00;
+  this->_hidSysCtrlKeyReportCharacteristic.setValue(sysCtrlKeyPress, sizeof(sysCtrlKeyPress));
 }
