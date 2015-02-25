@@ -24,14 +24,14 @@ class BLEHID
 
 #ifdef USE_BOOT_PROTOCOL_MODE
     BLEUnsignedCharCharacteristic   _hidProtocolModeCharacteristic;
-    BLECharacteristic               _bootKeyboardInputReportCharacateristic;
+    BLECharacteristic               _hidBootKeyboardInputReportCharacateristic;
 #endif
     BLEConstantCharacteristic       _hidReportMapCharacteristic;
     BLEConstantCharacteristic       _hidInformationCharacteristic;
     BLEUnsignedCharCharacteristic   _hidControlPointCharacteristic;
 
-    BLECharacteristic               _hidReportCharacteristic1;
-    BLEDescriptor                   _reportReferenceDescriptor1;
+    BLECharacteristic               _hidKeyboardReportCharacteristic;
+    BLEDescriptor                   _hidKeyboardreportReferenceDescriptor;
 };
 
 #endif

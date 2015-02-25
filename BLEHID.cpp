@@ -111,7 +111,7 @@ static const unsigned char hidReportDescriptorValue[] = {
   // 0xC0,                   // END_COLLECTION
 };
 
-static const unsigned char hidReportReferenceDescriptorValue1[] = { 0x00, 0x01 };
+static const unsigned char hidKeyboardreportReferenceDescriptorValue[] = { 0x00, 0x01 };
 
 
 BLEHID::BLEHID(unsigned char req, unsigned char rdy, unsigned char rst) :
@@ -121,14 +121,14 @@ BLEHID::BLEHID(unsigned char req, unsigned char rdy, unsigned char rst) :
   _hidService("1812"),
 #ifdef USE_BOOT_PROTOCOL_MODE
   _hidProtocolModeCharacteristic("2a4e", BLERead | BLEWriteWithoutResponse),
-  _bootKeyboardInputReportCharacateristic("2A23", BLERead | BLEWrite | BLEWriteWithoutResponse, 8)
+  _hidBootKeyboardInputReportCharacateristic("2A23", BLERead | BLEWrite | BLEWriteWithoutResponse, 8),
 #endif
   _hidInformationCharacteristic("2a4a", hidInformationCharacteriticValue, sizeof(hidInformationCharacteriticValue)),
   _hidControlPointCharacteristic("2a4c", BLEWriteWithoutResponse),
   _hidReportMapCharacteristic("2a4b", hidReportDescriptorValue, sizeof(hidReportDescriptorValue)),
 
-  _hidReportCharacteristic1("2A4D", BLERead | BLENotify, 8),
-  _reportReferenceDescriptor1("2908", hidReportReferenceDescriptorValue1, sizeof(hidReportReferenceDescriptorValue1))
+  _hidKeyboardReportCharacteristic("2A4D", BLERead | BLENotify, 8),
+  _hidKeyboardreportReferenceDescriptor("2908", hidKeyboardreportReferenceDescriptorValue, sizeof(hidKeyboardreportReferenceDescriptorValue))
 {
 
 }
@@ -154,16 +154,16 @@ void BLEHID::begin() {
   this->_blePeripheral.addAttribute(this->_hidControlPointCharacteristic);
   this->_blePeripheral.addAttribute(this->_hidReportMapCharacteristic);
 
-  this->_blePeripheral.addAttribute(this->_hidReportCharacteristic1);
-  this->_blePeripheral.addAttribute(this->_reportReferenceDescriptor1);
+  this->_blePeripheral.addAttribute(this->_hidKeyboardReportCharacteristic);
+  this->_blePeripheral.addAttribute(this->_hidKeyboardreportReferenceDescriptor);
 
 #ifdef USE_BOOT_PROTOCOL_MODE
-  this->_blePeripheral.addAttribute(this->_bootKeyboardInputReportCharacateristic);
+  this->_blePeripheral.addAttribute(this->_hidBootKeyboardInputReportCharacateristic);
 
   this->_hidProtocolModeCharacteristic.setValue(0x01);
 
-  unsigned char bootKeyboardInputReportCharacateristicValue[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-  this->_bootKeyboardInputReportCharacateristic.setValue(bootKeyboardInputReportCharacateristicValue, sizeof(bootKeyboardInputReportCharacateristicValue));
+  unsigned char hidBootKeyboardInputReportCharacateristicValue[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  this->_hidBootKeyboardInputReportCharacateristic.setValue(hidBootKeyboardInputReportCharacateristicValue, sizeof(hidBootKeyboardInputReportCharacateristicValue));
 #endif
 
   // begin initialization
@@ -183,20 +183,20 @@ size_t BLEHID::write(uint8_t k) {
   uint8_t keyPress[8]= { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
   // wait until we can notify
-  while(!this->_hidReportCharacteristic1.canNotify()) {
+  while(!this->_hidKeyboardReportCharacteristic.canNotify()) {
     this->_blePeripheral.poll();
   }
 
   // send hid key code
   keyPress[2] = k;
-  this->_hidReportCharacteristic1.setValue(keyPress, sizeof(keyPress));
+  this->_hidKeyboardReportCharacteristic.setValue(keyPress, sizeof(keyPress));
 
   // wait until we can notify
-  while(!this->_hidReportCharacteristic1.canNotify()) {
+  while(!this->_hidKeyboardReportCharacteristic.canNotify()) {
     this->_blePeripheral.poll();
   }
 
   // send cleared hid code
   keyPress[2] = 0x00;
-  this->_hidReportCharacteristic1.setValue(keyPress, sizeof(keyPress));
+  this->_hidKeyboardReportCharacteristic.setValue(keyPress, sizeof(keyPress));
 }
