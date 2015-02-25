@@ -2,51 +2,113 @@
 
 static const unsigned char hidInformationCharacteriticValue[]   = { 0x11, 0x01, 0x00, 0x03 };
 
+// From: https://github.com/adafruit/Adafruit-Trinket-USB/blob/master/TrinketHidCombo/TrinketHidComboC.h
+//       permission to use under MIT license by @ladyada (https://github.com/adafruit/Adafruit-Trinket-USB/issues/10)
+#define REPID_MOUSE         1
+#define REPID_KEYBOARD      0 //2
+#define REPID_MMKEY         3
+#define REPID_SYSCTRLKEY    4
+#define REPSIZE_MOUSE       4
+#define REPSIZE_KEYBOARD    8
+#define REPSIZE_MMKEY       3
+#define REPSIZE_SYSCTRLKEY  2
+
 static const unsigned char hidReportDescriptorValue[] = {
-  0x05, 0x01,                         // Usage Page (Generic Desktop)
-  0x09, 0x06,                         // Usage (Keyboard)
-  0xA1, 0x01,                         // Collection (Application)
-  0x05, 0x07,                         //     Usage Page (Key Codes)
-  0x19, 0xe0,                         //     Usage Minimum (224)
-  0x29, 0xe7,                         //     Usage Maximum (231)
-  0x15, 0x00,                         //     Logical Minimum (0)
-  0x25, 0x01,                         //     Logical Maximum (1)
-  0x75, 0x01,                         //     Report Size (1)
-  0x95, 0x08,                         //     Report Count (8)
-  0x81, 0x02,                         //     Input (Data, Variable, Absolute)
+// From: https://github.com/adafruit/Adafruit-Trinket-USB/blob/master/TrinketHidCombo/TrinketHidComboC.c
+//       permission to use under MIT license by @ladyada (https://github.com/adafruit/Adafruit-Trinket-USB/issues/10)
 
-  0x95, 0x01,                         //     Report Count (1)
-  0x75, 0x08,                         //     Report Size (8)
-  0x81, 0x01,                         //     Input (Constant) reserved byte(1)
+  // 0x05, 0x01,           // USAGE_PAGE (Generic Desktop)
+  // 0x09, 0x02,           // USAGE (Mouse)
+  // 0xa1, 0x01,           // COLLECTION (Application)
+  // 0x09, 0x01,           //   USAGE (Pointer)
+  // 0xA1, 0x00,           //   COLLECTION (Physical)
+  // 0x85, REPID_MOUSE,    //     REPORT_ID
+  // 0x05, 0x09,           //     USAGE_PAGE (Button)
+  // 0x19, 0x01,           //     USAGE_MINIMUM
+  // 0x29, 0x03,           //     USAGE_MAXIMUM
+  // 0x15, 0x00,           //     LOGICAL_MINIMUM (0)
+  // 0x25, 0x01,           //     LOGICAL_MAXIMUM (1)
+  // 0x95, 0x03,           //     REPORT_COUNT (3)
+  // 0x75, 0x01,           //     REPORT_SIZE (1)
+  // 0x81, 0x02,           //     INPUT (Data,Var,Abs)
+  // 0x95, 0x01,           //     REPORT_COUNT (1)
+  // 0x75, 0x05,           //     REPORT_SIZE (5)
+  // 0x81, 0x03,           //     INPUT (Const,Var,Abs)
+  // 0x05, 0x01,           //     USAGE_PAGE (Generic Desktop)
+  // 0x09, 0x30,           //     USAGE (X)
+  // 0x09, 0x31,           //     USAGE (Y)
+  // 0x15, 0x81,           //     LOGICAL_MINIMUM (-127)
+  // 0x25, 0x7F,           //     LOGICAL_MAXIMUM (127)
+  // 0x75, 0x08,           //     REPORT_SIZE (8)
+  // 0x95, 0x02,           //     REPORT_COUNT (2)
+  // 0x81, 0x06,           //     INPUT (Data,Var,Rel)
+  // 0xC0,                 //   END_COLLECTION
+  // 0xC0,                 // END COLLECTION
 
-  0x95, 0x05,                         //     Report Count (5)
-  0x75, 0x01,                         //     Report Size (1)
-  0x05, 0x08,                         //     Usage Page (Page# for LEDs)
-  0x19, 0x01,                         //     Usage Minimum (1)
-  0x29, 0x05,                         //     Usage Maximum (5)
-  0x91, 0x02,                         //     Output (Data, Variable, Absolute), Led report
-  0x95, 0x01,                         //     Report Count (1)
-  0x75, 0x03,                         //     Report Size (3)
-  0x91, 0x01,                         //     Output (Data, Variable, Absolute), Led report padding
+  0x05, 0x01,           // USAGE_PAGE (Generic Desktop)
+  0x09, 0x06,           // USAGE (Keyboard)
+  0xA1, 0x01,           // COLLECTION (Application)
+  0x85, REPID_KEYBOARD, // REPORT_ID
+  0x75, 0x01,           //   REPORT_SIZE (1)
+  0x95, 0x08,           //   REPORT_COUNT (8)
+  0x05, 0x07,           //   USAGE_PAGE (Keyboard)(Key Codes)
+  0x19, 0xE0,           //   USAGE_MINIMUM (Keyboard LeftControl)(224)
+  0x29, 0xE7,           //   USAGE_MAXIMUM (Keyboard Right GUI)(231)
+  0x15, 0x00,           //   LOGICAL_MINIMUM (0)
+  0x25, 0x01,           //   LOGICAL_MAXIMUM (1)
+  0x81, 0x02,           //   INPUT (Data,Var,Abs) ; Modifier byte
+  0x95, 0x01,           //   REPORT_COUNT (1)
+  0x75, 0x08,           //   REPORT_SIZE (8)
+  0x81, 0x03,           //   INPUT (Cnst,Var,Abs) ; Reserved byte
+  // 0x95, 0x05,           //   REPORT_COUNT (5)
+  // 0x75, 0x01,           //   REPORT_SIZE (1)
+  // 0x05, 0x08,           //   USAGE_PAGE (LEDs)
+  // 0x19, 0x01,           //   USAGE_MINIMUM (Num Lock)
+  // 0x29, 0x05,           //   USAGE_MAXIMUM (Kana)
+  // 0x91, 0x02,           //   OUTPUT (Data,Var,Abs) ; LED report
+  // 0x95, 0x01,           //   REPORT_COUNT (1)
+  // 0x75, 0x03,           //   REPORT_SIZE (3)
+  // 0x91, 0x03,           //   OUTPUT (Cnst,Var,Abs) ; LED report padding
+  0x95, 0x05,           //   REPORT_COUNT (5)
+  0x75, 0x08,           //   REPORT_SIZE (8)
+  0x15, 0x00,           //   LOGICAL_MINIMUM (0)
+  0x26, 0xA4, 0x00,     //   LOGICAL_MAXIMUM (164)
+  0x05, 0x07,           //   USAGE_PAGE (Keyboard)(Key Codes)
+  0x19, 0x00,           //   USAGE_MINIMUM (Reserved (no event indicated))(0)
+  0x2A, 0xA4, 0x00,     //   USAGE_MAXIMUM (Keyboard Application)(164)
+  0x81, 0x00,           //   INPUT (Data,Ary,Abs)
+  0xC0,                 // END_COLLECTION
 
-  0x95, 0x06,                         //     Report Count (6)
-  0x75, 0x08,                         //     Report Size (8)
-  0x15, 0x00,                         //     Logical Minimum (0)
-  0x25, 0x65,                         //     Logical Maximum (101)
-  0x05, 0x07,                         //     Usage Page (Key codes)
-  0x19, 0x00,                         //     Usage Minimum (0)
-  0x29, 0x65,                         //     Usage Maximum (101)
-  0x81, 0x00,                         //     Input (Data, Array) Key array(6 bytes)
+  // // this second multimedia key report is what handles the multimedia keys
+  // 0x05, 0x0C,           // USAGE_PAGE (Consumer Devices)
+  // 0x09, 0x01,           // USAGE (Consumer Control)
+  // 0xA1, 0x01,           // COLLECTION (Application)
+  // 0x85, REPID_MMKEY,    //   REPORT_ID
+  // 0x19, 0x00,           //   USAGE_MINIMUM (Unassigned)
+  // 0x2A, 0x3C, 0x02,     //   USAGE_MAXIMUM
+  // 0x15, 0x00,           //   LOGICAL_MINIMUM (0)
+  // 0x26, 0x3C, 0x02,     //   LOGICAL_MAXIMUM
+  // 0x95, 0x01,           //   REPORT_COUNT (1)
+  // 0x75, 0x10,           //   REPORT_SIZE (16)
+  // 0x81, 0x00,           //   INPUT (Data,Ary,Abs)
+  // 0xC0,                 // END_COLLECTION
 
-
-  0x09, 0x05,                         //     Usage (Vendor Defined)
-  0x15, 0x00,                         //     Logical Minimum (0)
-  0x26, 0xFF, 0x00,                   //     Logical Maximum (255)
-  0x75, 0x08,                         //     Report Count (2)
-  0x95, 0x02,                         //     Report Size (8 bit)
-  0xB1, 0x02,                         //     Feature (Data, Variable, Absolute)
-
-  0xC0                                // End Collection (Application)
+  // // system controls, like power, needs a 3rd different report and report descriptor
+  // 0x05, 0x01,             // USAGE_PAGE (Generic Desktop)
+  // 0x09, 0x80,             // USAGE (System Control)
+  // 0xA1, 0x01,             // COLLECTION (Application)
+  // 0x85, REPID_SYSCTRLKEY, //   REPORT_ID
+  // 0x95, 0x01,             //   REPORT_COUNT (1)
+  // 0x75, 0x02,             //   REPORT_SIZE (2)
+  // 0x15, 0x01,             //   LOGICAL_MINIMUM (1)
+  // 0x25, 0x03,             //   LOGICAL_MAXIMUM (3)
+  // 0x09, 0x82,             //   USAGE (System Sleep)
+  // 0x09, 0x81,             //   USAGE (System Power)
+  // 0x09, 0x83,             //   USAGE (System Wakeup)
+  // 0x81, 0x60,             //   INPUT
+  // 0x75, 0x06,             //   REPORT_SIZE (6)
+  // 0x81, 0x03,             //   INPUT (Cnst,Var,Abs)
+  // 0xC0,                   // END_COLLECTION
 };
 
 static const unsigned char hidReportReferenceDescriptorValue1[] = { 0x00, 0x01 };
