@@ -5,9 +5,9 @@ static const unsigned char hidInformationCharacteriticValue[]   = { 0x11, 0x01, 
 // From: https://github.com/adafruit/Adafruit-Trinket-USB/blob/master/TrinketHidCombo/TrinketHidComboC.h
 //       permission to use under MIT license by @ladyada (https://github.com/adafruit/Adafruit-Trinket-USB/issues/10)
 // #define REPID_MOUSE         1
-#define REPID_KEYBOARD      0 //2
-#define REPID_MMKEY         1 //3
-#define REPID_SYSCTRLKEY    2 //4
+#define REPID_KEYBOARD      2
+#define REPID_MMKEY         3
+#define REPID_SYSCTRLKEY    4
 // #define REPSIZE_MOUSE       4
 // #define REPSIZE_KEYBOARD    8
 // #define REPSIZE_MMKEY       3
@@ -129,7 +129,7 @@ BLEHID::BLEHID(unsigned char req, unsigned char rdy, unsigned char rst) :
   _hidControlPointCharacteristic("2a4c", BLEWriteWithoutResponse),
   _hidReportMapCharacteristic("2a4b", hidReportDescriptorValue, sizeof(hidReportDescriptorValue)),
 
-  _hidKeyboardReportCharacteristic("2a4d", BLERead | BLENotify, 8),
+  _hidKeyboardReportCharacteristic("2a4d", BLERead | BLENotify, 7),
   _hidKeyboardReportReferenceDescriptor("2908", hidKeyboardReportReferenceDescriptorValue, sizeof(hidKeyboardReportReferenceDescriptorValue)),
   _hidMMKeyReportCharacteristic("2a4d", BLERead | BLENotify, 2),
   _hidMMKeyReportReferenceDescriptor("2908", hidMMKeyReportReferenceDescriptorValue, sizeof(hidMMKeyReportReferenceDescriptorValue)),
@@ -190,7 +190,7 @@ bool BLEHID::connected() {
 }
 
 size_t BLEHID::write(uint8_t k) {
-  uint8_t keyPress[8]= { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+  uint8_t keyPress[7]= { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
   // wait until we can notify
   while(!this->_hidKeyboardReportCharacteristic.canNotify()) {
