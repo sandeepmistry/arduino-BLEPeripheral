@@ -33,7 +33,10 @@ void loop() {
       if (Serial.available() > 0) {
         Serial.read();
         
-        bleHID.write(KEYCODE_A);
+//        bleHID.mouseMove(100, 100, 0);
+//        bleHID.pressKey(KEYCODE_A);
+//        bleHID.pressMultimediaKey(MMKEY_VOL_UP);
+//        bleHID.pressSystemCtrlKey(SYSCTRLKEY_POWER);
       }
     }
 
