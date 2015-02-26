@@ -8,10 +8,6 @@ static const unsigned char hidInformationCharacteriticValue[]   = { 0x11, 0x01, 
 #define REPID_KEYBOARD      2
 #define REPID_MMKEY         3
 #define REPID_SYSCTRLKEY    4
-// #define REPSIZE_MOUSE       4
-// #define REPSIZE_KEYBOARD    8
-// #define REPSIZE_MMKEY       3
-// #define REPSIZE_SYSCTRLKEY  2
 
 static const unsigned char hidReportDescriptorValue[] = {
 // From: https://github.com/adafruit/Adafruit-Trinket-USB/blob/master/TrinketHidCombo/TrinketHidComboC.c
@@ -60,15 +56,17 @@ static const unsigned char hidReportDescriptorValue[] = {
   0x95, 0x01,           //   REPORT_COUNT (1)
   0x75, 0x08,           //   REPORT_SIZE (8)
   0x81, 0x03,           //   INPUT (Cnst,Var,Abs) ; Reserved byte
-  // 0x95, 0x05,           //   REPORT_COUNT (5)
-  // 0x75, 0x01,           //   REPORT_SIZE (1)
-  // 0x05, 0x08,           //   USAGE_PAGE (LEDs)
-  // 0x19, 0x01,           //   USAGE_MINIMUM (Num Lock)
-  // 0x29, 0x05,           //   USAGE_MAXIMUM (Kana)
-  // 0x91, 0x02,           //   OUTPUT (Data,Var,Abs) ; LED report
-  // 0x95, 0x01,           //   REPORT_COUNT (1)
-  // 0x75, 0x03,           //   REPORT_SIZE (3)
-  // 0x91, 0x03,           //   OUTPUT (Cnst,Var,Abs) ; LED report padding
+#ifdef USE_LED_REPORT
+  0x95, 0x05,           //   REPORT_COUNT (5)
+  0x75, 0x01,           //   REPORT_SIZE (1)
+  0x05, 0x08,           //   USAGE_PAGE (LEDs)
+  0x19, 0x01,           //   USAGE_MINIMUM (Num Lock)
+  0x29, 0x05,           //   USAGE_MAXIMUM (Kana)
+  0x91, 0x02,           //   OUTPUT (Data,Var,Abs) ; LED report
+  0x95, 0x01,           //   REPORT_COUNT (1)
+  0x75, 0x03,           //   REPORT_SIZE (3)
+  0x91, 0x03,           //   OUTPUT (Cnst,Var,Abs) ; LED report padding
+#endif
   0x95, 0x05,           //   REPORT_COUNT (5)
   0x75, 0x08,           //   REPORT_SIZE (8)
   0x15, 0x00,           //   LOGICAL_MINIMUM (0)
@@ -113,6 +111,9 @@ static const unsigned char hidReportDescriptorValue[] = {
 
 static const unsigned char hidMouseReportReferenceDescriptorValue[] = { REPID_MOUSE, 0x01 };
 static const unsigned char hidKeyboardReportReferenceDescriptorValue[] = { REPID_KEYBOARD, 0x01 };
+#ifdef USE_LED_REPORT
+static const unsigned char hidLedReportReferenceDescriptorValue[] = { REPID_KEYBOARD, 0x02 };
+#endif
 static const unsigned char hidMMKeyReportReferenceDescriptorValue[] = { REPID_MMKEY, 0x01 };
 static const unsigned char hidSysCtrlKeyReportReferenceDescriptorValue[] = { REPID_SYSCTRLKEY, 0x01 };
 
@@ -134,6 +135,10 @@ BLEHID::BLEHID(unsigned char req, unsigned char rdy, unsigned char rst) :
   _hidMouseReportReferenceDescriptor("2908", hidMouseReportReferenceDescriptorValue, sizeof(hidMouseReportReferenceDescriptorValue)),
   _hidKeyboardReportCharacteristic("2a4d", BLERead | BLENotify, 7),
   _hidKeyboardReportReferenceDescriptor("2908", hidKeyboardReportReferenceDescriptorValue, sizeof(hidKeyboardReportReferenceDescriptorValue)),
+#ifdef USE_LED_REPORT
+  _hidLedReportCharacteristic("2a4d", BLERead | BLEWrite | BLEWriteWithoutResponse, 1),
+  _hidLedReportReferenceDescriptor("2908", hidLedReportReferenceDescriptorValue, sizeof(hidLedReportReferenceDescriptorValue)),
+#endif
   _hidMMKeyReportCharacteristic("2a4d", BLERead | BLENotify, 2),
   _hidMMKeyReportReferenceDescriptor("2908", hidMMKeyReportReferenceDescriptorValue, sizeof(hidMMKeyReportReferenceDescriptorValue)),
   _hidSysCtrlKeyReportCharacteristic("2a4d", BLERead | BLENotify, 1),
@@ -167,6 +172,10 @@ void BLEHID::begin() {
   this->_blePeripheral.addAttribute(this->_hidMouseReportReferenceDescriptor);
   this->_blePeripheral.addAttribute(this->_hidKeyboardReportCharacteristic);
   this->_blePeripheral.addAttribute(this->_hidKeyboardReportReferenceDescriptor);
+#ifdef USE_LED_REPORT
+  this->_blePeripheral.addAttribute(this->_hidLedReportCharacteristic);
+  this->_blePeripheral.addAttribute(this->_hidLedReportReferenceDescriptor);
+#endif
   this->_blePeripheral.addAttribute(this->_hidMMKeyReportCharacteristic);
   this->_blePeripheral.addAttribute(this->_hidMMKeyReportReferenceDescriptor);
   this->_blePeripheral.addAttribute(this->_hidSysCtrlKeyReportCharacteristic);

@@ -4,6 +4,7 @@
 #include "BLEPeripheral.h"
 
 // #define USE_BOOT_PROTOCOL_MODE
+// #define USE_LED_REPORT
 
 class BLEHID
 {
@@ -37,6 +38,10 @@ class BLEHID
     BLEDescriptor                   _hidMouseReportReferenceDescriptor;
     BLECharacteristic               _hidKeyboardReportCharacteristic;
     BLEDescriptor                   _hidKeyboardReportReferenceDescriptor;
+#ifdef USE_LED_REPORT
+    BLECharacteristic               _hidLedReportCharacteristic;
+    BLEDescriptor                   _hidLedReportReferenceDescriptor;
+#endif
     BLECharacteristic               _hidMMKeyReportCharacteristic;
     BLEDescriptor                   _hidMMKeyReportReferenceDescriptor;
     BLECharacteristic               _hidSysCtrlKeyReportCharacteristic;
