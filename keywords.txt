@@ -36,6 +36,9 @@ BLEUnsignedLongCharacteristic	KEYWORD1
 BLEFloatCharacteristic	KEYWORD1
 BLEDoubleCharacteristic	KEYWORD1
 
+BLEHID	KEYWORD1
+URIBeacon	KEYWORD1
+
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
@@ -96,6 +99,11 @@ updateCharacteristicValue	KEYWORD2
 requestAddress	KEYWORD2
 requestTemperature	KEYWORD2
 requestBatteryLevel	KEYWORD2
+
+mouseMove	KEYWORD2
+pressKey	KEYWORD2
+pressMultimediaKey	KEYWORD2
+pressSystemCtrlKey	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
