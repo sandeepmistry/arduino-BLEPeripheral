@@ -122,6 +122,11 @@ BLEHID::BLEHID(unsigned char req, unsigned char rdy, unsigned char rst) :
   _blePeripheral(req, rdy, rst),
   _bleBondStore(),
 
+#ifdef USE_BATTERY_SERVICE
+  _batteryService("180f"),
+  _batteryLevelCharacteristic("2A19", BLERead),
+#endif
+
   _hidService("1812"),
 #ifdef USE_BOOT_PROTOCOL_MODE
   _hidProtocolModeCharacteristic("2a4e", BLERead | BLEWriteWithoutResponse),
@@ -163,6 +168,11 @@ void BLEHID::begin() {
   this->_blePeripheral.setAdvertisedServiceUuid(this->_hidService.uuid());
 
   // add attributes (services, characteristics, descriptors) to peripheral
+#ifdef USE_BATTERY_SERVICE
+  this->_blePeripheral.addAttribute(this->_batteryService);
+  this->_blePeripheral.addAttribute(this->_batteryLevelCharacteristic);
+#endif
+
   this->_blePeripheral.addAttribute(this->_hidService);
 #ifdef USE_BOOT_PROTOCOL_MODE
   this->_blePeripheral.addAttribute(this->_hidProtocolModeCharacteristic);
@@ -191,6 +201,10 @@ void BLEHID::begin() {
 
   unsigned char hidBootKeyboardInputReportCharacateristicValue[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
   this->_hidBootKeyboardInputReportCharacateristic.setValue(hidBootKeyboardInputReportCharacateristicValue, sizeof(hidBootKeyboardInputReportCharacateristicValue));
+#endif
+
+#ifdef USE_BATTERY_SERVICE
+  this->_batteryLevelCharacteristic.setValue(100);
 #endif
 
   // begin initialization

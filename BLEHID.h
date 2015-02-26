@@ -3,6 +3,7 @@
 
 #include "BLEPeripheral.h"
 
+// #define USE_BATTERY_SERVICE
 // #define USE_BOOT_PROTOCOL_MODE
 // #define USE_LED_REPORT
 
@@ -27,8 +28,13 @@ class BLEHID
   private:
     BLEPeripheral                   _blePeripheral;
     BLEBondStore                    _bleBondStore;
-    BLEService                      _hidService;
 
+#ifdef USE_BATTERY_SERVICE
+    BLEService                      _batteryService;
+    BLEUnsignedCharCharacteristic   _batteryLevelCharacteristic;
+#endif
+
+    BLEService                      _hidService;
     BLECharacteristic*              _hidReportCharacteristics[4];
 
 #ifdef USE_BOOT_PROTOCOL_MODE
