@@ -17,7 +17,7 @@ class BLEHID
     bool connected();
 
     void mouseMove(signed char x, signed char y, uint8_t buttonMask);
-    size_t write(uint8_t k);
+    void pressKey(uint8_t key);
     void pressMultimediaKey(uint8_t key);
     void pressSystemCtrlKey(uint8_t key);
 

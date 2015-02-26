@@ -219,7 +219,7 @@ void BLEHID::mouseMove(signed char x, signed char y, uint8_t buttonMask) {
   this->_hidMouseReportCharacteristic.setValue(mouseMove, sizeof(mouseMove));
 }
 
-size_t BLEHID::write(uint8_t k) {
+void BLEHID::pressKey(uint8_t key) {
   uint8_t keyPress[7]= { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
   // wait until we can notify
@@ -228,7 +228,7 @@ size_t BLEHID::write(uint8_t k) {
   }
 
   // send hid key code
-  keyPress[2] = k;
+  keyPress[2] = key;
   this->_hidKeyboardReportCharacteristic.setValue(keyPress, sizeof(keyPress));
 
   // wait until we can notify
@@ -239,8 +239,6 @@ size_t BLEHID::write(uint8_t k) {
   // send cleared hid code
   keyPress[2] = 0x00;
   this->_hidKeyboardReportCharacteristic.setValue(keyPress, sizeof(keyPress));
-
-  return 1;
 }
 
 void BLEHID::pressMultimediaKey(uint8_t key) {
