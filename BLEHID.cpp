@@ -1,6 +1,6 @@
 #include "BLEHID.h"
 
-static const unsigned char hidInformationCharacteriticValue[]   = { 0x11, 0x01, 0x00, 0x03 };
+static const PROGMEM unsigned char hidInformationCharacteriticValue[]   = { 0x11, 0x01, 0x00, 0x03 };
 
 // From: https://github.com/adafruit/Adafruit-Trinket-USB/blob/master/TrinketHidCombo/TrinketHidComboC.h
 //       permission to use under MIT license by @ladyada (https://github.com/adafruit/Adafruit-Trinket-USB/issues/10)
@@ -9,7 +9,7 @@ static const unsigned char hidInformationCharacteriticValue[]   = { 0x11, 0x01, 
 #define REPID_MMKEY         3
 #define REPID_SYSCTRLKEY    4
 
-static const unsigned char hidReportDescriptorValue[] = {
+static const PROGMEM unsigned char hidReportDescriptorValue[] = {
 // From: https://github.com/adafruit/Adafruit-Trinket-USB/blob/master/TrinketHidCombo/TrinketHidComboC.c
 //       permission to use under MIT license by @ladyada (https://github.com/adafruit/Adafruit-Trinket-USB/issues/10)
 
