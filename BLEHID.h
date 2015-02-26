@@ -22,9 +22,14 @@ class BLEHID
     void pressSystemCtrlKey(uint8_t key);
 
   private:
+    void sendReportData(unsigned char reportId, unsigned char data[], unsigned char length);
+
+  private:
     BLEPeripheral                   _blePeripheral;
     BLEBondStore                    _bleBondStore;
     BLEService                      _hidService;
+
+    BLECharacteristic*              _hidReportCharacteristics[4];
 
 #ifdef USE_BOOT_PROTOCOL_MODE
     BLEUnsignedCharCharacteristic   _hidProtocolModeCharacteristic;

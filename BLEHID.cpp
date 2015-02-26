@@ -144,7 +144,10 @@ BLEHID::BLEHID(unsigned char req, unsigned char rdy, unsigned char rst) :
   _hidSysCtrlKeyReportCharacteristic("2a4d", BLERead | BLENotify, 1),
   _hidSysCtrlKeyReportReferenceDescriptor("2908", hidSysCtrlKeyReportReferenceDescriptorValue, sizeof(hidSysCtrlKeyReportReferenceDescriptorValue))
 {
-
+  this->_hidReportCharacteristics[0] = &_hidMouseReportCharacteristic;
+  this->_hidReportCharacteristics[1] = &_hidKeyboardReportCharacteristic;
+  this->_hidReportCharacteristics[2] = &_hidMMKeyReportCharacteristic;
+  this->_hidReportCharacteristics[3] = &_hidSysCtrlKeyReportCharacteristic;
 }
 
 void BLEHID::begin() {
@@ -206,81 +209,63 @@ bool BLEHID::connected() {
 void BLEHID::mouseMove(signed char x, signed char y, uint8_t buttonMask) {
   uint8_t mouseMove[3]= { 0x00, 0x00, 0x00 };
 
-  // wait until we can notify
-  while(!this->_hidMouseReportCharacteristic.canNotify()) {
-    this->_blePeripheral.poll();
-  }
-
-  // send hid key code
+  // send key code
   mouseMove[0] = buttonMask;
   mouseMove[1] = x;
   mouseMove[2] = y;
 
-  this->_hidMouseReportCharacteristic.setValue(mouseMove, sizeof(mouseMove));
+  this->sendReportData(REPID_MOUSE, mouseMove, sizeof(mouseMove));
 }
 
 void BLEHID::pressKey(uint8_t key) {
   uint8_t keyPress[7]= { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-  // wait until we can notify
-  while(!this->_hidKeyboardReportCharacteristic.canNotify()) {
-    this->_blePeripheral.poll();
-  }
-
-  // send hid key code
+  // send key code
   keyPress[2] = key;
-  this->_hidKeyboardReportCharacteristic.setValue(keyPress, sizeof(keyPress));
 
-  // wait until we can notify
-  while(!this->_hidKeyboardReportCharacteristic.canNotify()) {
-    this->_blePeripheral.poll();
+  for (int i = 0; i < 2; i++) {
+    this->sendReportData(REPID_KEYBOARD, keyPress, sizeof(keyPress));
+
+    // send cleared code
+    keyPress[2] = 0x00;
   }
-
-  // send cleared hid code
-  keyPress[2] = 0x00;
-  this->_hidKeyboardReportCharacteristic.setValue(keyPress, sizeof(keyPress));
 }
 
 void BLEHID::pressMultimediaKey(uint8_t key) {
   uint8_t multimediaKeyPress[2]= { 0x00, 0x00 };
 
-  // wait until we can notify
-  while(!this->_hidMMKeyReportCharacteristic.canNotify()) {
-    this->_blePeripheral.poll();
-  }
-
-  // send hid key code
+  // send key code
   multimediaKeyPress[0] = key;
-  this->_hidMMKeyReportCharacteristic.setValue(multimediaKeyPress, sizeof(multimediaKeyPress));
 
-  // wait until we can notify
-  while(!this->_hidMMKeyReportCharacteristic.canNotify()) {
-    this->_blePeripheral.poll();
+  for (int i = 0; i < 2; i++) {
+    this->sendReportData(REPID_MMKEY, multimediaKeyPress, sizeof(multimediaKeyPress));
+
+    // send cleared code
+    multimediaKeyPress[0] = 0x00;
   }
-
-  // send cleared hid code
-  multimediaKeyPress[0] = 0x00;
-  this->_hidMMKeyReportCharacteristic.setValue(multimediaKeyPress, sizeof(multimediaKeyPress));
 }
 
 void BLEHID::pressSystemCtrlKey(uint8_t key) {
   uint8_t sysCtrlKeyPress[1]= { 0x00 };
 
-  // wait until we can notify
-  while(!this->_hidSysCtrlKeyReportCharacteristic.canNotify()) {
-    this->_blePeripheral.poll();
-  }
-
-  // send hid key code
+  // send key code
   sysCtrlKeyPress[0] = key;
-  this->_hidSysCtrlKeyReportCharacteristic.setValue(sysCtrlKeyPress, sizeof(sysCtrlKeyPress));
+
+  for (int i = 0; i < 2; i++) {
+    this->sendReportData(REPID_MMKEY, sysCtrlKeyPress, sizeof(sysCtrlKeyPress));
+
+    // send cleared code
+    sysCtrlKeyPress[0] = 0x00;
+  }
+}
+
+void BLEHID::sendReportData(unsigned char reportId, unsigned char data[], unsigned char length) {
+  BLECharacteristic* characteristic = this->_hidReportCharacteristics[reportId - 1];
 
   // wait until we can notify
-  while(!this->_hidSysCtrlKeyReportCharacteristic.canNotify()) {
+  while(!characteristic->canNotify()) {
     this->_blePeripheral.poll();
   }
 
-  // send cleared hid code
-  sysCtrlKeyPress[0] = 0x00;
-  this->_hidSysCtrlKeyReportCharacteristic.setValue(sysCtrlKeyPress, sizeof(sysCtrlKeyPress));
+  characteristic->setValue(data, length);
 }
