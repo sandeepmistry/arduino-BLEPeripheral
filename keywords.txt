@@ -37,6 +37,10 @@ BLEFloatCharacteristic	KEYWORD1
 BLEDoubleCharacteristic	KEYWORD1
 
 BLEHID	KEYWORD1
+BLEMouse	KEYWORD1
+BLEKeyboard	KEYWORD1
+BLEMultimedia	KEYWORD1
+BLESystemControl	KEYWORD1
 URIBeacon	KEYWORD1
 
 #######################################
@@ -100,10 +104,15 @@ requestAddress	KEYWORD2
 requestTemperature	KEYWORD2
 requestBatteryLevel	KEYWORD2
 
-mouseMove	KEYWORD2
-pressKey	KEYWORD2
-pressMultimediaKey	KEYWORD2
-pressSystemCtrlKey	KEYWORD2
+clearBondStoreData	KEYWORD2
+addDevice	KEYWORD2
+click	KEYWORD2
+move	KEYWORD2
+press	KEYWORD2
+release	KEYWORD2
+isPressed	KEYWORD2
+write	KEYWORD2
+releaseAll	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)

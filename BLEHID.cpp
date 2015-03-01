@@ -1,17 +1,12 @@
+#include "BLEHIDReport.h"
+
 #include "BLEHID.h"
 
 static const PROGMEM unsigned char hidInformationCharacteriticValue[]   = { 0x11, 0x01, 0x00, 0x03 };
 
-// From: https://github.com/adafruit/Adafruit-Trinket-USB/blob/master/TrinketHidCombo/TrinketHidComboC.h
-//       permission to use under MIT license by @ladyada (https://github.com/adafruit/Adafruit-Trinket-USB/issues/10)
-#define REPID_MOUSE         1
-#define REPID_KEYBOARD      2
-#define REPID_MMKEY         3
-#define REPID_SYSCTRLKEY    4
-
 static const PROGMEM unsigned char hidReportDescriptorValue[] = {
-// From: https://github.com/adafruit/Adafruit-Trinket-USB/blob/master/TrinketHidCombo/TrinketHidComboC.c
-//       permission to use under MIT license by @ladyada (https://github.com/adafruit/Adafruit-Trinket-USB/issues/10)
+// // From: https://github.com/adafruit/Adafruit-Trinket-USB/blob/master/TrinketHidCombo/TrinketHidComboC.c
+// //       permission to use under MIT license by @ladyada (https://github.com/adafruit/Adafruit-Trinket-USB/issues/10)
 
   0x05, 0x01,           // USAGE_PAGE (Generic Desktop)
   0x09, 0x02,           // USAGE (Mouse)
@@ -109,108 +104,75 @@ static const PROGMEM unsigned char hidReportDescriptorValue[] = {
   0xC0,                   // END_COLLECTION
 };
 
-static const unsigned char hidMouseReportReferenceDescriptorValue[] = { REPID_MOUSE, 0x01 };
-static const unsigned char hidKeyboardReportReferenceDescriptorValue[] = { REPID_KEYBOARD, 0x01 };
-#ifdef USE_LED_REPORT
-static const unsigned char hidLedReportReferenceDescriptorValue[] = { REPID_KEYBOARD, 0x02 };
-#endif
-static const unsigned char hidMMKeyReportReferenceDescriptorValue[] = { REPID_MMKEY, 0x01 };
-static const unsigned char hidSysCtrlKeyReportReferenceDescriptorValue[] = { REPID_SYSCTRLKEY, 0x01 };
-
+BLEHID* BLEHID::_instance = NULL;
 
 BLEHID::BLEHID(unsigned char req, unsigned char rdy, unsigned char rst) :
   _blePeripheral(req, rdy, rst),
   _bleBondStore(),
 
-#ifdef USE_BATTERY_SERVICE
-  _batteryService("180f"),
-  _batteryLevelCharacteristic("2A19", BLERead),
-#endif
-
   _hidService("1812"),
-#ifdef USE_BOOT_PROTOCOL_MODE
-  _hidProtocolModeCharacteristic("2a4e", BLERead | BLEWriteWithoutResponse),
-  _hidBootKeyboardInputReportCharacateristic("2A23", BLERead | BLEWrite | BLEWriteWithoutResponse, 8),
-#endif
   _hidInformationCharacteristic("2a4a", hidInformationCharacteriticValue, sizeof(hidInformationCharacteriticValue)),
   _hidControlPointCharacteristic("2a4c", BLEWriteWithoutResponse),
   _hidReportMapCharacteristic("2a4b", hidReportDescriptorValue, sizeof(hidReportDescriptorValue)),
 
-  _hidMouseReportCharacteristic("2a4d", BLERead | BLENotify, 3),
-  _hidMouseReportReferenceDescriptor("2908", hidMouseReportReferenceDescriptorValue, sizeof(hidMouseReportReferenceDescriptorValue)),
-  _hidKeyboardReportCharacteristic("2a4d", BLERead | BLENotify, 7),
-  _hidKeyboardReportReferenceDescriptor("2908", hidKeyboardReportReferenceDescriptorValue, sizeof(hidKeyboardReportReferenceDescriptorValue)),
-#ifdef USE_LED_REPORT
-  _hidLedReportCharacteristic("2a4d", BLERead | BLEWrite | BLEWriteWithoutResponse, 1),
-  _hidLedReportReferenceDescriptor("2908", hidLedReportReferenceDescriptorValue, sizeof(hidLedReportReferenceDescriptorValue)),
-#endif
-  _hidMMKeyReportCharacteristic("2a4d", BLERead | BLENotify, 2),
-  _hidMMKeyReportReferenceDescriptor("2908", hidMMKeyReportReferenceDescriptorValue, sizeof(hidMMKeyReportReferenceDescriptorValue)),
-  _hidSysCtrlKeyReportCharacteristic("2a4d", BLERead | BLENotify, 1),
-  _hidSysCtrlKeyReportReferenceDescriptor("2908", hidSysCtrlKeyReportReferenceDescriptorValue, sizeof(hidSysCtrlKeyReportReferenceDescriptorValue))
+  _devices(NULL),
+  _numDevices(0)
 {
-  this->_hidReportCharacteristics[0] = &_hidMouseReportCharacteristic;
-  this->_hidReportCharacteristics[1] = &_hidKeyboardReportCharacteristic;
-  this->_hidReportCharacteristics[2] = &_hidMMKeyReportCharacteristic;
-  this->_hidReportCharacteristics[3] = &_hidSysCtrlKeyReportCharacteristic;
+  _instance = this;
+
+  this->setDeviceName("Arduino BLE HID");
+}
+
+BLEHID::~BLEHID() {
+  if (this->_devices) {
+    free(this->_devices);
+  }
+}
+
+BLEHID* BLEHID::instance() {
+  return _instance;
 }
 
 void BLEHID::begin() {
-  // clears bond data on every boot
-  this->_bleBondStore.clearData();
-
   this->_blePeripheral.setBondStore(this->_bleBondStore);
 
-  this->_blePeripheral.setDeviceName("Arduino BLE HID");
-  // this->_blePeripheral.setAppearance(961);
-
-  this->_blePeripheral.setLocalName("HID");
   this->_blePeripheral.setAdvertisedServiceUuid(this->_hidService.uuid());
 
-  // add attributes (services, characteristics, descriptors) to peripheral
-#ifdef USE_BATTERY_SERVICE
-  this->_blePeripheral.addAttribute(this->_batteryService);
-  this->_blePeripheral.addAttribute(this->_batteryLevelCharacteristic);
-#endif
-
   this->_blePeripheral.addAttribute(this->_hidService);
-#ifdef USE_BOOT_PROTOCOL_MODE
-  this->_blePeripheral.addAttribute(this->_hidProtocolModeCharacteristic);
-#endif
   this->_blePeripheral.addAttribute(this->_hidInformationCharacteristic);
   this->_blePeripheral.addAttribute(this->_hidControlPointCharacteristic);
   this->_blePeripheral.addAttribute(this->_hidReportMapCharacteristic);
 
-  this->_blePeripheral.addAttribute(this->_hidMouseReportCharacteristic);
-  this->_blePeripheral.addAttribute(this->_hidMouseReportReferenceDescriptor);
-  this->_blePeripheral.addAttribute(this->_hidKeyboardReportCharacteristic);
-  this->_blePeripheral.addAttribute(this->_hidKeyboardReportReferenceDescriptor);
-#ifdef USE_LED_REPORT
-  this->_blePeripheral.addAttribute(this->_hidLedReportCharacteristic);
-  this->_blePeripheral.addAttribute(this->_hidLedReportReferenceDescriptor);
-#endif
-  this->_blePeripheral.addAttribute(this->_hidMMKeyReportCharacteristic);
-  this->_blePeripheral.addAttribute(this->_hidMMKeyReportReferenceDescriptor);
-  this->_blePeripheral.addAttribute(this->_hidSysCtrlKeyReportCharacteristic);
-  this->_blePeripheral.addAttribute(this->_hidSysCtrlKeyReportReferenceDescriptor);
+  for (int i = 0; i < this->_numDevices; i++) {
+    BLEHIDDevice *device = this->_devices[i];
 
-#ifdef USE_BOOT_PROTOCOL_MODE
-  this->_blePeripheral.addAttribute(this->_hidBootKeyboardInputReportCharacateristic);
+    unsigned char numAttributes = device->numAttributes();
+    BLELocalAttribute** attributes = device->attributes();
 
-  this->_hidProtocolModeCharacteristic.setValue(0x01);
-
-  unsigned char hidBootKeyboardInputReportCharacateristicValue[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-  this->_hidBootKeyboardInputReportCharacateristic.setValue(hidBootKeyboardInputReportCharacateristicValue, sizeof(hidBootKeyboardInputReportCharacateristicValue));
-#endif
-
-#ifdef USE_BATTERY_SERVICE
-  this->_batteryLevelCharacteristic.setValue(100);
-#endif
+    for (int j = 0; j < numAttributes; j++) {
+      this->_blePeripheral.addAttribute(*attributes[j]);
+    }
+  }
 
   // begin initialization
   this->_blePeripheral.begin();
 }
 
+void BLEHID::clearBondStoreData() {
+  this->_bleBondStore.clearData();
+}
+
+void BLEHID::setLocalName(const char *localName) {
+  this->_blePeripheral.setLocalName(localName);
+}
+
+void BLEHID::setDeviceName(const char* deviceName) {
+  this->_blePeripheral.setDeviceName(deviceName);
+}
+
+void BLEHID::setAppearance(unsigned short appearance) {
+  this->_blePeripheral.setAppearance(appearance);
+}
 
 BLECentral BLEHID::central() {
   return this->_blePeripheral.central();
@@ -220,66 +182,19 @@ bool BLEHID::connected() {
   return this->_blePeripheral.connected();
 }
 
-void BLEHID::mouseMove(signed char x, signed char y, uint8_t buttonMask) {
-  uint8_t mouseMove[3]= { 0x00, 0x00, 0x00 };
-
-  // send key code
-  mouseMove[0] = buttonMask;
-  mouseMove[1] = x;
-  mouseMove[2] = y;
-
-  this->sendReportData(REPID_MOUSE, mouseMove, sizeof(mouseMove));
+void BLEHID::poll() {
+  this->_blePeripheral.poll();
 }
 
-void BLEHID::pressKey(uint8_t key) {
-  uint8_t keyPress[7]= { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-
-  // send key code
-  keyPress[2] = key;
-
-  for (int i = 0; i < 2; i++) {
-    this->sendReportData(REPID_KEYBOARD, keyPress, sizeof(keyPress));
-
-    // send cleared code
-    keyPress[2] = 0x00;
+void BLEHID::addDevice(BLEHIDDevice& device) {
+  if (this->_devices == NULL) {
+    this->_devices = (BLEHIDDevice**)malloc(sizeof(BLEHIDDevice *) * BLEHIDDevice::numDevices());
   }
+
+  this->_devices[this->_numDevices] = &device;
+  this->_numDevices++;
 }
 
-void BLEHID::pressMultimediaKey(uint8_t key) {
-  uint8_t multimediaKeyPress[2]= { 0x00, 0x00 };
-
-  // send key code
-  multimediaKeyPress[0] = key;
-
-  for (int i = 0; i < 2; i++) {
-    this->sendReportData(REPID_MMKEY, multimediaKeyPress, sizeof(multimediaKeyPress));
-
-    // send cleared code
-    multimediaKeyPress[0] = 0x00;
-  }
-}
-
-void BLEHID::pressSystemCtrlKey(uint8_t key) {
-  uint8_t sysCtrlKeyPress[1]= { 0x00 };
-
-  // send key code
-  sysCtrlKeyPress[0] = key;
-
-  for (int i = 0; i < 2; i++) {
-    this->sendReportData(REPID_MMKEY, sysCtrlKeyPress, sizeof(sysCtrlKeyPress));
-
-    // send cleared code
-    sysCtrlKeyPress[0] = 0x00;
-  }
-}
-
-void BLEHID::sendReportData(unsigned char reportId, unsigned char data[], unsigned char length) {
-  BLECharacteristic* characteristic = this->_hidReportCharacteristics[reportId - 1];
-
-  // wait until we can notify
-  while(!characteristic->canNotify()) {
-    this->_blePeripheral.poll();
-  }
-
-  characteristic->setValue(data, length);
+void BLEHID::addAttribute(BLELocalAttribute& attribute) {
+  this->_blePeripheral.addAttribute(attribute);
 }
