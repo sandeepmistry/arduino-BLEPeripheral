@@ -407,7 +407,7 @@ void nRF51822::begin(unsigned char advertisementDataType,
 #ifdef NRF_51822_DEBUG
     Serial.println(F("Restoring bond data"));
 #endif
-    this->_bondStore->restoreData(this->_authStatusBuffer, sizeof(this->_authStatusBuffer));
+    this->_bondStore->getData(this->_authStatusBuffer, 0, sizeof(this->_authStatusBuffer));
   }
 
   this->startAdvertising();
@@ -486,7 +486,7 @@ void nRF51822::poll() {
 #ifdef NRF_51822_DEBUG
           Serial.println(F("Storing bond data"));
 #endif
-          this->_bondStore->storeData(this->_authStatusBuffer, sizeof(this->_authStatusBuffer));
+          this->_bondStore->putData(this->_authStatusBuffer, 0, sizeof(this->_authStatusBuffer));
 
           this->_storeAuthStatus = false;
         }

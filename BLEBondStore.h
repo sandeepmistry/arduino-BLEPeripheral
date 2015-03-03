@@ -5,21 +5,17 @@ class BLEBondStore
 {
   public:
     BLEBondStore(int offset = 0);
-    ~BLEBondStore();
 
     bool hasData();
     void clearData();
-    void storeData(const unsigned char* data, unsigned char length);
-    unsigned char restoreData(unsigned char* data, unsigned char length);
+    void putData(const unsigned char* data, unsigned char offset, unsigned char length);
+    void getData(unsigned char* data, unsigned char offset, unsigned char length);
 
   private:
 #ifdef __AVR__
     int             _offset;
 #elif defined(NRF51) || defined(__RFduino__)
     uint32_t*       _flashPageStartAddress;
-#else
-    unsigned char   _dataLength;
-    unsigned char*  _data;
 #endif
 };
 

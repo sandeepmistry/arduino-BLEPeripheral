@@ -123,8 +123,6 @@ nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
   _remotePipeInfo(NULL),
   _numRemotePipeInfo(0),
 
-  _dynamicData(NULL),
-  _dynamicDataLength(0),
   _dynamicDataOffset(0),
   _dynamicDataSequenceNo(0),
   _storeDynamicData(false),
@@ -155,10 +153,6 @@ nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
 }
 
 nRF8001::~nRF8001() {
-  if (this->_dynamicData) {
-    free(this->_dynamicData);
-  }
-
   if (this->_localPipeInfo) {
     free(this->_localPipeInfo);
   }
@@ -273,13 +267,6 @@ void nRF8001::begin(unsigned char advertisementDataType,
 
   if (this->_bondStore) {
     this->_aciState.bonded = ACI_BOND_STATUS_FAILED;
-
-    this->_dynamicData = (unsigned char*)malloc(DYNAMIC_DATA_SIZE);
-    memset(this->_dynamicData, 0x00, DYNAMIC_DATA_SIZE);
-
-    if (this->_bondStore->hasData()) {
-      this->_dynamicDataLength = this->_bondStore->restoreData(this->_dynamicData, DYNAMIC_DATA_SIZE);
-    }
 
     this->_storeDynamicData = false;
   }
@@ -862,13 +849,19 @@ void nRF8001::poll() {
             //When an iPhone connects to us we will get an ACI_EVT_CONNECTED event from the nRF8001
             if (aciEvt->params.device_started.hw_error) {
               delay(20); //Handle the HW error event correctly.
-            } else if (this->_bondStore && (this->_dynamicData[24] & 0x82)) {
+            } else if (this->_bondStore && this->_bondStore->hasData()) {
               this->_dynamicDataSequenceNo = 1;
               this->_dynamicDataOffset = 0;
 
-              lib_aci_write_dynamic_data(this->_dynamicDataSequenceNo, this->_dynamicData, DYNAMIC_DATA_MAX_CHUNK_SIZE);
+              unsigned char chunkSize;
+              this->_bondStore->getData(&chunkSize, this->_dynamicDataOffset, sizeof(chunkSize));
+              this->_dynamicDataOffset++;
 
-              this->_dynamicDataOffset += DYNAMIC_DATA_MAX_CHUNK_SIZE;
+              unsigned char chunkData[DYNAMIC_DATA_MAX_CHUNK_SIZE];
+              this->_bondStore->getData(chunkData, this->_dynamicDataOffset, chunkSize);
+              this->_dynamicDataOffset += chunkSize;
+
+              lib_aci_write_dynamic_data(this->_dynamicDataSequenceNo, chunkData, chunkSize);
             } else {
               this->startAdvertising();
             }
@@ -893,7 +886,7 @@ void nRF8001::poll() {
 #endif
         } else {
           switch (aciEvt->params.cmd_rsp.cmd_opcode) {
-            case ACI_CMD_READ_DYNAMIC_DATA:
+            case ACI_CMD_READ_DYNAMIC_DATA: {
 #ifdef NRF_8001_DEBUG
               Serial.print(F("Dynamic data read sequence "));
               Serial.print(aciEvt->params.cmd_rsp.params.read_dynamic_data.seq_no);
@@ -904,43 +897,48 @@ void nRF8001::poll() {
               BLEUtil::printBuffer(aciEvt->params.cmd_rsp.params.read_dynamic_data.dynamic_data, aciEvt->len - 4);
 #endif
               if (aciEvt->params.cmd_rsp.params.read_dynamic_data.seq_no == 1) {
-                this->_dynamicDataLength = 0;
+                this->_dynamicDataOffset = 0;
               }
 
-              memcpy(this->_dynamicData + this->_dynamicDataLength, aciEvt->params.cmd_rsp.params.read_dynamic_data.dynamic_data, aciEvt->len - 4);
-              this->_dynamicDataLength += (aciEvt->len - 4);
+              unsigned char chunkLength = aciEvt->len - 4;
+
+              this->_bondStore->putData(&chunkLength, this->_dynamicDataOffset, sizeof(chunkLength));
+              this->_dynamicDataOffset++;
+
+              this->_bondStore->putData(aciEvt->params.cmd_rsp.params.read_dynamic_data.dynamic_data, this->_dynamicDataOffset, chunkLength);
+              this->_dynamicDataOffset += chunkLength;
 
               if (aciEvt->params.cmd_rsp.cmd_status == ACI_STATUS_TRANSACTION_CONTINUE) {
                 lib_aci_read_dynamic_data();
               } else if (aciEvt->params.cmd_rsp.cmd_status == ACI_STATUS_TRANSACTION_COMPLETE) {
-                // persist dynamic data
-                this->_bondStore->storeData(this->_dynamicData, this->_dynamicDataLength);
-
                 this->startAdvertising();
               }
               break;
+            }
 
-            case ACI_CMD_WRITE_DYNAMIC_DATA:
+            case ACI_CMD_WRITE_DYNAMIC_DATA: {
 #ifdef NRF_8001_DEBUG
               Serial.print(F("Dynamic data write sequence "));
               Serial.print(this->_dynamicDataSequenceNo);
-
               Serial.println(F(" complete"));
 #endif
               if (aciEvt->params.cmd_rsp.cmd_status == ACI_STATUS_TRANSACTION_CONTINUE) {
-                unsigned char writeSize = min(this->_dynamicDataLength - this->_dynamicDataOffset, DYNAMIC_DATA_MAX_CHUNK_SIZE);
-
                 this->_dynamicDataSequenceNo++;
 
-                lib_aci_write_dynamic_data(this->_dynamicDataSequenceNo,
-                                            this->_dynamicData + this->_dynamicDataOffset,
-                                            writeSize);
+                unsigned char chunkSize;
+                this->_bondStore->getData(&chunkSize, this->_dynamicDataOffset, sizeof(chunkSize));
+                this->_dynamicDataOffset++;
 
-                this->_dynamicDataOffset += writeSize;
+                unsigned char chunkData[DYNAMIC_DATA_MAX_CHUNK_SIZE];
+                this->_bondStore->getData(chunkData, this->_dynamicDataOffset, chunkSize);
+                this->_dynamicDataOffset += chunkSize;
+
+                lib_aci_write_dynamic_data(this->_dynamicDataSequenceNo, chunkData, chunkSize);
               } else if (aciEvt->params.cmd_rsp.cmd_status == ACI_STATUS_TRANSACTION_COMPLETE) {
                 this->startAdvertising();
               }
               break;
+            }
 
             case ACI_CMD_GET_DEVICE_VERSION:
               break;
@@ -1381,7 +1379,7 @@ void nRF8001::startAdvertising() {
   uint16_t advertisingInterval = (this->_advertisingInterval * 16) / 10;
 
   if (this->_connectable) {
-    if (this->_bondStore == NULL || (this->_dynamicData[24] & 0x82))   {
+    if (this->_bondStore == NULL || this->_bondStore->hasData())   {
       lib_aci_connect(0/* in seconds, 0 means forever */, advertisingInterval);
     } else {
       lib_aci_bond(180/* in seconds, 0 means forever */, advertisingInterval);
