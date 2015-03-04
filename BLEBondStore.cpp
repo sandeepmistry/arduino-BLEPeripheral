@@ -57,11 +57,11 @@ void BLEBondStore::clearData() {
 #endif
 }
 
-void BLEBondStore::putData(const unsigned char* data, unsigned char offset, unsigned char length) {
+void BLEBondStore::putData(const unsigned char* data, unsigned int offset, unsigned int length) {
 #ifdef __AVR__
   eeprom_write_byte((unsigned char *)this->_offset, 0x01);
 
-  for (unsigned char i = 0; i < length; i++) {
+  for (unsigned int i = 0; i < length; i++) {
     eeprom_write_byte((unsigned char *)this->_offset + offset + i + 1, data[i]);
   }
 #elif defined(NRF51) || defined(__RFduino__) // ignores offset
@@ -94,9 +94,9 @@ void BLEBondStore::putData(const unsigned char* data, unsigned char offset, unsi
 #endif
 }
 
-void BLEBondStore::getData(unsigned char* data, unsigned char offset, unsigned char length) {
+void BLEBondStore::getData(unsigned char* data, unsigned int offset, unsigned int length) {
 #ifdef __AVR__
-  for (unsigned char i = 0; i < length; i++) {
+  for (unsigned int i = 0; i < length; i++) {
     data[i] = eeprom_read_byte((unsigned char *)this->_offset + offset + i + 1);
   }
 #elif defined(NRF51) || defined(__RFduino__) // ignores offset

@@ -98,7 +98,7 @@ class nRF8001 : protected BLEDevice
     struct remotePipeInfo*      _remotePipeInfo;
     unsigned char               _numRemotePipeInfo;
 
-    unsigned char               _dynamicDataOffset;
+    unsigned int                _dynamicDataOffset;
     unsigned char               _dynamicDataSequenceNo;
     bool                        _storeDynamicData;
 
