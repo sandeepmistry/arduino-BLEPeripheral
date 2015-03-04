@@ -8,8 +8,8 @@ class BLEBondStore
 
     bool hasData();
     void clearData();
-    void putData(const unsigned char* data, unsigned char offset, unsigned char length);
-    void getData(unsigned char* data, unsigned char offset, unsigned char length);
+    void putData(const unsigned char* data, unsigned int offset, unsigned int length);
+    void getData(unsigned char* data, unsigned int offset, unsigned int length);
 
   private:
 #ifdef __AVR__
