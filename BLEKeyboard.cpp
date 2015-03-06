@@ -53,7 +53,7 @@ size_t BLEKeyboard::write(uint8_t k) {
 }
 
 size_t BLEKeyboard::press(uint8_t k) {
-  unsigned char keyPress[7]= { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+  unsigned char keyPress[8]= { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
   // send key code
   keyPress[2] = k;
