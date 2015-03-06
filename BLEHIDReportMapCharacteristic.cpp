@@ -34,7 +34,7 @@ unsigned char BLEHIDReportMapCharacteristic::operator[] (int offset) const {
       break;
     }
 
-    totalOffset = descriptorLength;
+    totalOffset += descriptorLength;
   }
 
   return value;
