@@ -482,7 +482,6 @@ void nRF8001::begin(unsigned char advertisementDataType,
 
       unsigned char valueSize = characteristic->valueSize();
       unsigned char valueLength = characteristic->valueLength();
-      bool constantValue = characteristic->constantValue();
 
       setupMsgData->data[2]  = valueSize;
       if (characteristic->fixedLength()) {
@@ -517,10 +516,8 @@ void nRF8001::begin(unsigned char advertisementDataType,
         memset(setupMsgData->data, 0x00, chunkSize);
 
         if (valueCopySize > 0) {
-          if (constantValue) {
-            memcpy_P(setupMsgData->data, characteristic->value() + valueOffset, valueCopySize);
-          } else {
-            memcpy(setupMsgData->data, characteristic->value() + valueOffset, valueCopySize);
+          for (int j = 0; j < chunkSize; j++) {
+            setupMsgData->data[j] = (*characteristic)[j + valueOffset];
           }
         }
 
@@ -584,7 +581,9 @@ void nRF8001::begin(unsigned char advertisementDataType,
 
         setupMsgData->length = 3 + chunkSize;
 
-        memcpy(setupMsgData->data, descriptor->value() + valueOffset, chunkSize);
+        for (int j = 0; j < chunkSize; j++) {
+          setupMsgData->data[j] = (*descriptor)[j + valueOffset];
+        }
 
         this->sendSetupMessage(&setupMsg, 0x2, gattSetupMsgOffset);
 

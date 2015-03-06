@@ -2,6 +2,7 @@
 #define _BLE_HID_H_
 
 #include "BLEHIDDevice.h"
+#include "BLEHIDReportMapCharacteristic.h"
 #include "BLEPeripheral.h"
 
 class BLEHID
@@ -36,7 +37,7 @@ class BLEHID
     BLEBondStore                    _bleBondStore;
 
     BLEService                      _hidService;
-    BLEConstantCharacteristic       _hidReportMapCharacteristic;
+    BLEHIDReportMapCharacteristic   _hidReportMapCharacteristic;
     BLEConstantCharacteristic       _hidInformationCharacteristic;
     BLEUnsignedCharCharacteristic   _hidControlPointCharacteristic;
 

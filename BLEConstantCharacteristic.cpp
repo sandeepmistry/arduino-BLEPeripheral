@@ -18,8 +18,8 @@ BLEConstantCharacteristic::~BLEConstantCharacteristic() {
   this->_value = NULL; // null so super destructor doesn't try to free
 }
 
-bool BLEConstantCharacteristic::constantValue() const {
-  return true;
+unsigned char BLEConstantCharacteristic::operator[] (int offset) const {
+  return pgm_read_byte_near(&this->_value[offset]);
 }
 
 bool BLEConstantCharacteristic::setValue(const unsigned char value[], unsigned char length) {

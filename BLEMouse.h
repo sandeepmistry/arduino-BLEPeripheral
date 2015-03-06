@@ -4,7 +4,7 @@
 #include "Arduino.h"
 
 #include "BLECharacteristic.h"
-#include "BLEDescriptor.h"
+#include "BLEHIDReportReferenceDescriptor.h"
 #include "BLEHIDDevice.h"
 
 // From: https://github.com/adafruit/Adafruit-Trinket-USB/blob/master/TrinketHidCombo/TrinketHidCombo.h
@@ -27,12 +27,13 @@ class BLEMouse : public BLEHIDDevice
     bool isPressed(uint8_t b = MOUSEBTN_LEFT_MASK);
 
   protected:
+    virtual void setReportId(unsigned char reportId);
     virtual unsigned char numAttributes();
     virtual BLELocalAttribute** attributes();
 
   private:
-    BLECharacteristic               _reportCharacteristic;
-    BLEDescriptor                   _reportReferenceDescriptor;
+    BLECharacteristic                 _reportCharacteristic;
+    BLEHIDReportReferenceDescriptor   _reportReferenceDescriptor;
 
     unsigned char                   _button;
 };

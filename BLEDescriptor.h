@@ -11,8 +11,9 @@ class BLEDescriptor : public BLELocalAttribute
 
     virtual ~BLEDescriptor();
 
-    const unsigned char* value() const;
-    unsigned char valueLength() const;
+    virtual const unsigned char* value() const;
+    virtual unsigned char valueLength() const;
+    virtual unsigned char operator[] (int offset) const;
 
   private:
     const char*           _uuid;

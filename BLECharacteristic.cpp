@@ -63,8 +63,8 @@ bool BLECharacteristic::fixedLength() const {
   return false;
 }
 
-bool BLECharacteristic::constantValue() const {
-  return false;
+unsigned char BLECharacteristic::operator[] (int offset) const {
+  return this->_value[offset];
 }
 
 bool BLECharacteristic::setValue(const unsigned char value[], unsigned char length) {

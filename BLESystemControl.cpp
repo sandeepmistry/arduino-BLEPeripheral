@@ -1,12 +1,31 @@
-#include "BLEHIDReport.h"
-
 #include "BLESystemControl.h"
 
-static const unsigned char reportReferenceDescriptorValue[] = { REPID_SYSCTRLKEY, 0x01 };
+static const PROGMEM unsigned char descriptorValue[] = {
+  // From: https://github.com/adafruit/Adafruit-Trinket-USB/blob/master/TrinketHidCombo/TrinketHidComboC.c
+  //       permission to use under MIT license by @ladyada (https://github.com/adafruit/Adafruit-Trinket-USB/issues/10)
+
+  // system controls, like power, needs a 3rd different report and report descriptor
+  0x05, 0x01,             // USAGE_PAGE (Generic Desktop)
+  0x09, 0x80,             // USAGE (System Control)
+  0xA1, 0x01,             // COLLECTION (Application)
+  0x85, 0x00,             //   REPORT_ID
+  0x95, 0x01,             //   REPORT_COUNT (1)
+  0x75, 0x02,             //   REPORT_SIZE (2)
+  0x15, 0x01,             //   LOGICAL_MINIMUM (1)
+  0x25, 0x03,             //   LOGICAL_MAXIMUM (3)
+  0x09, 0x82,             //   USAGE (System Sleep)
+  0x09, 0x81,             //   USAGE (System Power)
+  0x09, 0x83,             //   USAGE (System Wakeup)
+  0x81, 0x60,             //   INPUT
+  0x75, 0x06,             //   REPORT_SIZE (6)
+  0x81, 0x03,             //   INPUT (Cnst,Var,Abs)
+  0xC0,                   // END_COLLECTION
+};
 
 BLESystemControl::BLESystemControl() :
-  _reportCharacteristic("2a4d", BLERead | BLENotify, 1),
-  _reportReferenceDescriptor("2908", reportReferenceDescriptorValue, sizeof(reportReferenceDescriptorValue))
+  BLEHIDDevice(descriptorValue, sizeof(descriptorValue), 7),
+  _reportCharacteristic("2a4d", BLERead | BLENotify, 4),
+  _reportReferenceDescriptor(BLEHIDDescriptorTypeInput)
 {
 }
 
@@ -22,6 +41,12 @@ size_t BLESystemControl::write(uint8_t k) {
     // send cleared code
     sysCtrlKeyPress[0] = 0x00;
   }
+}
+
+void BLESystemControl::setReportId(unsigned char reportId) {
+  BLEHIDDevice::setReportId(reportId);
+
+  this->_reportReferenceDescriptor.setReportId(reportId);
 }
 
 unsigned char BLESystemControl::numAttributes() {

@@ -35,12 +35,12 @@ class BLECharacteristic : public BLELocalAttribute
 
     unsigned char properties() const;
 
-    unsigned char valueSize() const;
-    const unsigned char* value() const;
-    unsigned char valueLength() const;
+    virtual unsigned char valueSize() const;
+    virtual const unsigned char* value() const;
+    virtual unsigned char valueLength() const;
+    virtual unsigned char operator[] (int offset) const;
 
     virtual bool fixedLength() const;
-    virtual bool constantValue() const;
 
     virtual bool setValue(const unsigned char value[], unsigned char length);
     virtual bool setValue(const char* value);
