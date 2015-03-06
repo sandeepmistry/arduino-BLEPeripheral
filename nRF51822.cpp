@@ -163,6 +163,7 @@ void nRF51822::begin(unsigned char advertisementDataType,
     BLELocalAttribute *localAttribute = localAttributes[i];
     BLEUuid uuid = BLEUuid(localAttribute->uuid());
     const unsigned char* uuidData = uuid.data();
+    unsigned char value[255];
 
     ble_uuid_t nordicUUID;
 
@@ -294,7 +295,11 @@ void nRF51822::begin(unsigned char advertisementDataType,
         sd_ble_gatts_characteristic_add(BLE_GATT_HANDLE_INVALID, &characteristicMetaData, &characteristicValueAttribute, &this->_localCharacteristicInfo[localCharacteristicIndex].handles);
 
         if (valueLength) {
-          sd_ble_gatts_value_set(this->_localCharacteristicInfo[localCharacteristicIndex].handles.value_handle, 0, &valueLength, characteristic->value());
+          for (int j = 0; j < valueLength; j++) {
+            value[j] = (*characteristic)[j];
+          }
+Serial.println(valueLength);
+          sd_ble_gatts_value_set(this->_localCharacteristicInfo[localCharacteristicIndex].handles.value_handle, 0, &valueLength, value);
         }
 
         localCharacteristicIndex++;
@@ -335,7 +340,11 @@ void nRF51822::begin(unsigned char advertisementDataType,
       sd_ble_gatts_descriptor_add(BLE_GATT_HANDLE_INVALID, &descriptorAttribute, &handle);
 
       if (valueLength) {
-        sd_ble_gatts_value_set(handle, 0, &valueLength, descriptor->value());
+        for (int j = 0; j < valueLength; j++) {
+          value[j] = (*descriptor)[j];
+        }
+
+        sd_ble_gatts_value_set(handle, 0, &valueLength, value);
       }
     }
   }
