@@ -16,7 +16,7 @@ static const PROGMEM unsigned char descriptorValue[] = {
   0x95, 0x01,           //   REPORT_COUNT (1)
   0x75, 0x10,           //   REPORT_SIZE (16)
   0x81, 0x00,           //   INPUT (Data,Ary,Abs)
-  0xC0,                 // END_COLLECTION
+  0xC0                  // END_COLLECTION
 };
 
 BLEMultimedia::BLEMultimedia() :

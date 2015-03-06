@@ -19,7 +19,7 @@ static const PROGMEM unsigned char descriptorValue[] = {
   0x81, 0x60,             //   INPUT
   0x75, 0x06,             //   REPORT_SIZE (6)
   0x81, 0x03,             //   INPUT (Cnst,Var,Abs)
-  0xC0,                   // END_COLLECTION
+  0xC0                    // END_COLLECTION
 };
 
 BLESystemControl::BLESystemControl() :

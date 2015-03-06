@@ -38,7 +38,7 @@ static const PROGMEM unsigned char descriptorValue[] = {
   0x19, 0x00,           //   USAGE_MINIMUM (Reserved (no event indicated))(0)
   0x2A, 0xA4, 0x00,     //   USAGE_MAXIMUM (Keyboard Application)(164)
   0x81, 0x00,           //   INPUT (Data,Ary,Abs)
-  0xC0,                 // END_COLLECTION
+  0xC0                  // END_COLLECTION
 };
 
 BLEKeyboard::BLEKeyboard() :

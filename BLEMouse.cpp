@@ -30,7 +30,7 @@ static const PROGMEM unsigned char descriptorValue[] = {
   0x95, 0x02,           //     REPORT_COUNT (2)
   0x81, 0x06,           //     INPUT (Data,Var,Rel)
   0xC0,                 //   END_COLLECTION
-  0xC0,                 // END COLLECTION
+  0xC0                  // END COLLECTION
 };
 
 BLEMouse::BLEMouse() :
