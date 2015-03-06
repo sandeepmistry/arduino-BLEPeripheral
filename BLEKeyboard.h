@@ -5,7 +5,7 @@
 
 #include "BLECharacteristic.h"
 #include "BLEHIDReportReferenceDescriptor.h"
-#include "BLEHIDDevice.h"
+#include "BLEHID.h"
 
 // From: https://github.com/adafruit/Adafruit-Trinket-USB/blob/master/TrinketHidCombo/TrinketHidCombo.h
 //       permission to use under MIT license by @ladyada (https://github.com/adafruit/Adafruit-Trinket-USB/issues/10)
@@ -108,7 +108,7 @@
 #define KEYCODE_ARROW_DOWN    0x51
 #define KEYCODE_ARROW_UP    0x52
 
-class BLEKeyboard : public BLEHIDDevice, public Print
+class BLEKeyboard : public BLEHID, public Print
 {
   public:
     BLEKeyboard();

@@ -42,7 +42,7 @@ static const PROGMEM unsigned char descriptorValue[] = {
 };
 
 BLEKeyboard::BLEKeyboard() :
-  BLEHIDDevice(descriptorValue, sizeof(descriptorValue), 7),
+  BLEHID(descriptorValue, sizeof(descriptorValue), 7),
   _reportCharacteristic("2a4d", BLERead | BLENotify, 8),
   _reportReferenceDescriptor(BLEHIDDescriptorTypeInput)
 {
@@ -77,7 +77,7 @@ void BLEKeyboard::releaseAll(void) {
 }
 
 void BLEKeyboard::setReportId(unsigned char reportId) {
-  BLEHIDDevice::setReportId(reportId);
+  BLEHID::setReportId(reportId);
 
   this->_reportReferenceDescriptor.setReportId(reportId);
 }

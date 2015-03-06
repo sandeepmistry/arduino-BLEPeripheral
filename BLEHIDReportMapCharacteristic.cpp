@@ -2,8 +2,8 @@
 
 BLEHIDReportMapCharacteristic::BLEHIDReportMapCharacteristic() :
   BLEConstantCharacteristic("2a4b", NULL, 0),
-  _devices(NULL),
-  _numDevices(0)
+  _hids(NULL),
+  _numHids(0)
 {
 
 }
@@ -11,8 +11,8 @@ BLEHIDReportMapCharacteristic::BLEHIDReportMapCharacteristic() :
 unsigned char BLEHIDReportMapCharacteristic::valueSize() const {
   unsigned char valueSize = 0;
 
-  for (unsigned char i = 0; i < this->_numDevices; i++) {
-    valueSize += this->_devices[i]->getDescriptorLength();
+  for (unsigned char i = 0; i < this->_numHids; i++) {
+    valueSize += this->_hids[i]->getDescriptorLength();
   }
 
   return valueSize;
@@ -26,11 +26,11 @@ unsigned char BLEHIDReportMapCharacteristic::operator[] (int offset) const {
   unsigned char value = 0x00;
   unsigned char totalOffset = 0;
 
-  for (unsigned char i = 0; i < this->_numDevices; i++) {
-    unsigned char descriptorLength = this->_devices[i]->getDescriptorLength();
+  for (unsigned char i = 0; i < this->_numHids; i++) {
+    unsigned char descriptorLength = this->_hids[i]->getDescriptorLength();
 
     if ((offset >= totalOffset) && (offset < (totalOffset + descriptorLength))) {
-      value = this->_devices[i]->getDescriptorValueAtOffset(offset - totalOffset);
+      value = this->_hids[i]->getDescriptorValueAtOffset(offset - totalOffset);
       break;
     }
 
@@ -40,7 +40,7 @@ unsigned char BLEHIDReportMapCharacteristic::operator[] (int offset) const {
   return value;
 }
 
-void BLEHIDReportMapCharacteristic::setDevices(BLEHIDDevice** devices, unsigned char numDevices) {
-  this->_devices = devices;
-  this->_numDevices = numDevices;
+void BLEHIDReportMapCharacteristic::setHids(BLEHID** hids, unsigned char numHids) {
+  this->_hids = hids;
+  this->_numHids = numHids;
 }

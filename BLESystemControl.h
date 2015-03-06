@@ -5,7 +5,7 @@
 
 #include "BLECharacteristic.h"
 #include "BLEHIDReportReferenceDescriptor.h"
-#include "BLEHIDDevice.h"
+#include "BLEHID.h"
 
 // From: https://github.com/adafruit/Adafruit-Trinket-USB/blob/master/TrinketHidCombo/TrinketHidCombo.h
 //       permission to use under MIT license by @ladyada (https://github.com/adafruit/Adafruit-Trinket-USB/issues/10)
@@ -15,7 +15,7 @@
 #define SYSCTRLKEY_SLEEP    0x02
 #define SYSCTRLKEY_WAKE     0x03
 
-class BLESystemControl : public BLEHIDDevice
+class BLESystemControl : public BLEHID
 {
   public:
     BLESystemControl();

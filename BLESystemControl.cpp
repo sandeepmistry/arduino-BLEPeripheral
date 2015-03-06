@@ -23,7 +23,7 @@ static const PROGMEM unsigned char descriptorValue[] = {
 };
 
 BLESystemControl::BLESystemControl() :
-  BLEHIDDevice(descriptorValue, sizeof(descriptorValue), 7),
+  BLEHID(descriptorValue, sizeof(descriptorValue), 7),
   _reportCharacteristic("2a4d", BLERead | BLENotify, 4),
   _reportReferenceDescriptor(BLEHIDDescriptorTypeInput)
 {
@@ -44,7 +44,7 @@ size_t BLESystemControl::write(uint8_t k) {
 }
 
 void BLESystemControl::setReportId(unsigned char reportId) {
-  BLEHIDDevice::setReportId(reportId);
+  BLEHID::setReportId(reportId);
 
   this->_reportReferenceDescriptor.setReportId(reportId);
 }

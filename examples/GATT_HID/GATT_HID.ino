@@ -1,7 +1,6 @@
 // Import libraries (BLEPeripheral depends on SPI)
 #include <SPI.h>
-#include <BLEPeripheral.h>
-#include <BLEHID.h>
+#include <BLEHIDPeripheral.h>
 #include <BLEMouse.h>
 #include <BLEKeyboard.h>
 #include <BLEMultimedia.h>
@@ -12,7 +11,7 @@
 #define BLE_RDY   7
 #define BLE_RST   4
 
-BLEHID bleHID = BLEHID(BLE_REQ, BLE_RDY, BLE_RST);
+BLEHIDPeripheral bleHID = BLEHIDPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
 BLEMouse bleMouse;
 BLEKeyboard bleKeyboard;
 BLEMultimedia bleMultimedia;
@@ -32,10 +31,10 @@ void setup() {
 
   bleHID.setLocalName("HID");
 
-  bleHID.addDevice(bleMouse);
-  bleHID.addDevice(bleKeyboard);
-  bleHID.addDevice(bleMultimedia);
-  bleHID.addDevice(bleSystemControl);
+  bleHID.addHID(bleMouse);
+  bleHID.addHID(bleKeyboard);
+  bleHID.addHID(bleMultimedia);
+  bleHID.addHID(bleSystemControl);
 
   bleHID.begin();
 
@@ -54,10 +53,10 @@ void loop() {
       if (Serial.available() > 0) {
         Serial.read();
         
-        bleMouse.move(100, 100, 0);
-        bleKeyboard.write(KEYCODE_A);
+//        bleMouse.move(100, 100, 0);
+//        bleKeyboard.press(KEYCODE_A);
         bleMultimedia.write(MMKEY_VOL_UP);
-        bleSystemControl.write(SYSCTRLKEY_POWER);
+//        bleSystemControl.write(SYSCTRLKEY_POWER);
       }
     }
 

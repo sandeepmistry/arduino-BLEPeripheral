@@ -5,7 +5,7 @@
 
 #include "BLECharacteristic.h"
 #include "BLEHIDReportReferenceDescriptor.h"
-#include "BLEHIDDevice.h"
+#include "BLEHID.h"
 
 // From: https://github.com/adafruit/Adafruit-Trinket-USB/blob/master/TrinketHidCombo/TrinketHidCombo.h
 //       permission to use under MIT license by @ladyada (https://github.com/adafruit/Adafruit-Trinket-USB/issues/10)
@@ -35,7 +35,7 @@
 #define MMKEY_KB_FIND     0x7E
 #define MMKEY_KB_MUTE     0x7F // do not use
 
-class BLEMultimedia : public BLEHIDDevice
+class BLEMultimedia : public BLEHID
 {
   public:
     BLEMultimedia();

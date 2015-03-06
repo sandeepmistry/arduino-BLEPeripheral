@@ -34,7 +34,7 @@ static const PROGMEM unsigned char descriptorValue[] = {
 };
 
 BLEMouse::BLEMouse() :
-  BLEHIDDevice(descriptorValue, sizeof(descriptorValue), 11),
+  BLEHID(descriptorValue, sizeof(descriptorValue), 11),
   _reportCharacteristic("2a4d", BLERead | BLENotify, 4),
   _reportReferenceDescriptor(BLEHIDDescriptorTypeInput),
   _button(0)
@@ -75,7 +75,7 @@ bool BLEMouse::isPressed(uint8_t b) {
 }
 
 void BLEMouse::setReportId(unsigned char reportId) {
-  BLEHIDDevice::setReportId(reportId);
+  BLEHID::setReportId(reportId);
 
   this->_reportReferenceDescriptor.setReportId(reportId);
 }

@@ -1,48 +1,35 @@
 #ifndef _BLE_HID_H_
 #define _BLE_HID_H_
 
-#include "BLEHIDDevice.h"
-#include "BLEHIDReportMapCharacteristic.h"
-#include "BLEPeripheral.h"
+#include "BLELocalAttribute.h"
+#include "BLECharacteristic.h"
 
 class BLEHID
 {
-  friend class BLEHIDDevice;
+  friend class BLEHIDPeripheral;
 
   public:
-    BLEHID(unsigned char req, unsigned char rdy, unsigned char rst);
-    ~BLEHID();
+    BLEHID(const unsigned char* descriptor, unsigned char descriptorLength, unsigned char reportIdOffset);
 
-    void begin();
-
-    void clearBondStoreData();
-    void setLocalName(const char *localName);
-    void setDeviceName(const char* deviceName);
-    void setAppearance(unsigned short appearance);
-
-    BLECentral central();
-    bool connected();
-    void poll();
-
-    void addDevice(BLEHIDDevice& device);
-    void addAttribute(BLELocalAttribute& attribute);
+    unsigned char getDescriptorLength();
+    unsigned char getDescriptorValueAtOffset(unsigned char offset);
 
   protected:
-    static BLEHID* instance();
+    static unsigned char numHids();
+
+    void sendData(BLECharacteristic& characteristic, unsigned char data[], unsigned char dataLength);
+
+    virtual void setReportId(unsigned char reportId);
+    virtual unsigned char numAttributes() = 0;
+    virtual BLELocalAttribute** attributes() = 0;
 
   private:
-    static BLEHID*                  _instance;
+    static unsigned char _numHids;
 
-    BLEPeripheral                   _blePeripheral;
-    BLEBondStore                    _bleBondStore;
-
-    BLEService                      _hidService;
-    BLEHIDReportMapCharacteristic   _hidReportMapCharacteristic;
-    BLEConstantCharacteristic       _hidInformationCharacteristic;
-    BLEUnsignedCharCharacteristic   _hidControlPointCharacteristic;
-
-    BLEHIDDevice**                  _devices;
-    unsigned char                   _numDevices;
+    unsigned char _reportId;
+    const unsigned char* _descriptor;
+    unsigned char _descriptorLength;
+    unsigned char _reportIdOffset;
 };
 
 #endif

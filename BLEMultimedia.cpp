@@ -20,7 +20,7 @@ static const PROGMEM unsigned char descriptorValue[] = {
 };
 
 BLEMultimedia::BLEMultimedia() :
-  BLEHIDDevice(descriptorValue, sizeof(descriptorValue), 7),
+  BLEHID(descriptorValue, sizeof(descriptorValue), 7),
   _reportCharacteristic("2a4d", BLERead | BLENotify, 2),
   _reportReferenceDescriptor(BLEHIDDescriptorTypeInput)
 {
@@ -43,7 +43,7 @@ size_t BLEMultimedia::write(uint8_t k) {
 }
 
 void BLEMultimedia::setReportId(unsigned char reportId) {
-  BLEHIDDevice::setReportId(reportId);
+  BLEHID::setReportId(reportId);
 
   this->_reportReferenceDescriptor.setReportId(reportId);
 }

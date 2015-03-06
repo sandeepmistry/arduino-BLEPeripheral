@@ -36,7 +36,7 @@ BLEUnsignedLongCharacteristic	KEYWORD1
 BLEFloatCharacteristic	KEYWORD1
 BLEDoubleCharacteristic	KEYWORD1
 
-BLEHID	KEYWORD1
+BLEHIDPeripheral	KEYWORD1
 BLEMouse	KEYWORD1
 BLEKeyboard	KEYWORD1
 BLEMultimedia	KEYWORD1
@@ -105,7 +105,7 @@ requestTemperature	KEYWORD2
 requestBatteryLevel	KEYWORD2
 
 clearBondStoreData	KEYWORD2
-addDevice	KEYWORD2
+addHID	KEYWORD2
 click	KEYWORD2
 move	KEYWORD2
 press	KEYWORD2

@@ -5,7 +5,7 @@
 
 #include "BLECharacteristic.h"
 #include "BLEHIDReportReferenceDescriptor.h"
-#include "BLEHIDDevice.h"
+#include "BLEHID.h"
 
 // From: https://github.com/adafruit/Adafruit-Trinket-USB/blob/master/TrinketHidCombo/TrinketHidCombo.h
 //       permission to use under MIT license by @ladyada (https://github.com/adafruit/Adafruit-Trinket-USB/issues/10)
@@ -15,7 +15,7 @@
 #define MOUSEBTN_RIGHT_MASK   0x02
 #define MOUSEBTN_MIDDLE_MASK  0x04
 
-class BLEMouse : public BLEHIDDevice
+class BLEMouse : public BLEHID
 {
   public:
     BLEMouse();
@@ -35,7 +35,7 @@ class BLEMouse : public BLEHIDDevice
     BLECharacteristic                 _reportCharacteristic;
     BLEHIDReportReferenceDescriptor   _reportReferenceDescriptor;
 
-    unsigned char                   _button;
+    unsigned char                     _button;
 };
 
 #endif
