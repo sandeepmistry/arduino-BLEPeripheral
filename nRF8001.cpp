@@ -939,6 +939,7 @@ void nRF8001::poll() {
 
                 lib_aci_write_dynamic_data(this->_dynamicDataSequenceNo, chunkData, chunkSize);
               } else if (aciEvt->params.cmd_rsp.cmd_status == ACI_STATUS_TRANSACTION_COMPLETE) {
+                delay(20);
                 this->startAdvertising();
               }
               break;
