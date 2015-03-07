@@ -114,9 +114,9 @@ class BLEKeyboard : public BLEHID, public Print
     BLEKeyboard();
 
     virtual size_t write(uint8_t k);
-    virtual size_t press(uint8_t k);
-    virtual size_t release(uint8_t k);
-    virtual void releaseAll(void);
+    virtual size_t press(uint8_t keycode, uint8_t modifiers = 0);
+    virtual size_t release(uint8_t keycode, uint8_t modifiers = 0);
+    virtual void releaseAll();
 
   protected:
     virtual void setReportId(unsigned char reportId);
@@ -124,8 +124,14 @@ class BLEKeyboard : public BLEHID, public Print
     virtual BLELocalAttribute** attributes();
 
   private:
+    void sendValue();
+    void keyToCodeAndModifier(uint8_t k, uint8_t& code, uint8_t& modifier);
+
+  private:
     BLECharacteristic                 _reportCharacteristic;
     BLEHIDReportReferenceDescriptor   _reportReferenceDescriptor;
+
+    unsigned char                     _value[8];
 };
 
 #endif
