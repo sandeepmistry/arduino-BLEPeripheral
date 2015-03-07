@@ -31,14 +31,13 @@ void setup() {
   pinMode(ENC_B_PIN, INPUT_PULLUP);
 
   if (buttonState == LOW) {
-    Serial.println(F("BLE HID Peripheral clearing bond data"));
+    Serial.println(F("BLE HID Peripheral - clearing bond data"));
     
-    // clears bond data
+    // clear bond store data
     bleHIDPeripheral.clearBondStoreData();
   }
   
   bleHIDPeripheral.setLocalName("HID Volume");
-
   bleHIDPeripheral.addHID(bleMultimedia);
 
   bleHIDPeripheral.begin();
