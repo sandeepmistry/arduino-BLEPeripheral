@@ -31,18 +31,18 @@ class BLEHIDPeripheral
     static BLEHIDPeripheral* instance();
 
   private:
-    static BLEHIDPeripheral*        _instance;
+    static BLEHIDPeripheral*            _instance;
 
-    BLEPeripheral                   _blePeripheral;
-    BLEBondStore                    _bleBondStore;
+    BLEPeripheral                       _blePeripheral;
+    BLEBondStore                        _bleBondStore;
 
-    BLEService                      _hidService;
-    BLEHIDReportMapCharacteristic   _hidReportMapCharacteristic;
-    BLEConstantCharacteristic       _hidInformationCharacteristic;
-    BLEUnsignedCharCharacteristic   _hidControlPointCharacteristic;
+    BLEService                          _hidService;
+    BLEHIDReportMapCharacteristic       _hidReportMapCharacteristic;
+    BLEProgmemConstantCharacteristic    _hidInformationCharacteristic;
+    BLEUnsignedCharCharacteristic       _hidControlPointCharacteristic;
 
-    BLEHID**                        _hids;
-    unsigned char                   _numHids;
+    BLEHID**                            _hids;
+    unsigned char                       _numHids;
 };
 
 #endif

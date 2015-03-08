@@ -24,6 +24,7 @@ nRF51822	KEYWORD1
 
 BLEConstantCharacteristic	KEYWORD1
 BLEFixedLengthCharacteristic	KEYWORD1
+BLEProgmemConstantCharacteristic	KEYWORD1
 
 BLECharCharacteristic	KEYWORD1
 BLEUnsignedCharCharacteristic	KEYWORD1
