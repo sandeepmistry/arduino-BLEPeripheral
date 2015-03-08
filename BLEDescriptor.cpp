@@ -29,3 +29,6 @@ unsigned char BLEDescriptor::valueLength() const {
   return this->_valueLength;
 }
 
+unsigned char BLEDescriptor::operator[] (int offset) const {
+  return this->_value[offset];
+}

@@ -10,6 +10,7 @@
 #include "BLEDevice.h"
 #include "BLEFixedLengthCharacteristic.h"
 #include "BLELocalAttribute.h"
+#include "BLEProgmemConstantCharacteristic.h"
 #include "BLERemoteAttribute.h"
 #include "BLERemoteCharacteristic.h"
 #include "BLERemoteService.h"

@@ -516,7 +516,9 @@ void nRF8001::begin(unsigned char advertisementDataType,
         memset(setupMsgData->data, 0x00, chunkSize);
 
         if (valueCopySize > 0) {
-          memcpy(setupMsgData->data, characteristic->value() + valueOffset, valueCopySize);
+          for (int j = 0; j < chunkSize; j++) {
+            setupMsgData->data[j] = (*characteristic)[j + valueOffset];
+          }
         }
 
         this->sendSetupMessage(&setupMsg, 0x2, gattSetupMsgOffset);
@@ -579,7 +581,9 @@ void nRF8001::begin(unsigned char advertisementDataType,
 
         setupMsgData->length = 3 + chunkSize;
 
-        memcpy(setupMsgData->data, descriptor->value() + valueOffset, chunkSize);
+        for (int j = 0; j < chunkSize; j++) {
+          setupMsgData->data[j] = (*descriptor)[j + valueOffset];
+        }
 
         this->sendSetupMessage(&setupMsg, 0x2, gattSetupMsgOffset);
 
@@ -935,6 +939,7 @@ void nRF8001::poll() {
 
                 lib_aci_write_dynamic_data(this->_dynamicDataSequenceNo, chunkData, chunkSize);
               } else if (aciEvt->params.cmd_rsp.cmd_status == ACI_STATUS_TRANSACTION_COMPLETE) {
+                delay(20);
                 this->startAdvertising();
               }
               break;

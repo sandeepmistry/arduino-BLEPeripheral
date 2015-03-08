@@ -12,8 +12,6 @@ class BLEConstantCharacteristic : public BLEFixedLengthCharacteristic {
 
     virtual ~BLEConstantCharacteristic();
 
-    virtual bool constantValue() const;
-
     virtual bool setValue(const unsigned char value[], unsigned char length);
     virtual bool setValue(const char* value);
 };
