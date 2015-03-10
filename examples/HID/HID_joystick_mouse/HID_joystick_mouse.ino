@@ -85,5 +85,9 @@ void loop() {
 }
 
 int readJoystickAxis(int pin) {
-  return (map(analogRead(pin), 0, 1023, 0, JOYSTICK_RANGE) - (JOYSTICK_RANGE / 2)) * -1;
+  int rawValue = analogRead(pin);
+  int mappedValue = map(rawValue, 0, 1023, 0, JOYSTICK_RANGE);
+  int centeredValue = mappedValue - (JOYSTICK_RANGE / 2);
+  
+  return (centeredValue * -1); // reverse direction
 }
