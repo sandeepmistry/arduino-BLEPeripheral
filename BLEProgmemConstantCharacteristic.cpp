@@ -6,7 +6,11 @@ BLEProgmemConstantCharacteristic::BLEProgmemConstantCharacteristic(const char* u
 }
 
 BLEProgmemConstantCharacteristic::BLEProgmemConstantCharacteristic(const char* uuid, const char* value) :
+#if defined(NRF51) || defined(__RFduino__)
+  BLEConstantCharacteristic(uuid, value)
+#else
   BLEConstantCharacteristic(uuid, (const unsigned char *)value, strlen_PF((uint_farptr_t)value))
+#endif
 {
 }
 
