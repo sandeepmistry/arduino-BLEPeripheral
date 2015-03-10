@@ -14,11 +14,11 @@
 }
 #endif
 
-BLEBondStore::BLEBondStore(int offset) :
+BLEBondStore::BLEBondStore(int offset)
 #ifdef __AVR__
-  _offset(offset)
+  : _offset(offset)
 #elif defined(NRF51) || defined(__RFduino__)
-  _flashPageStartAddress((uint32_t *)(NRF_FICR->CODEPAGESIZE * (NRF_FICR->CODESIZE - 1 - (uint32_t)offset)))
+  : _flashPageStartAddress((uint32_t *)(NRF_FICR->CODEPAGESIZE * (NRF_FICR->CODESIZE - 1 - (uint32_t)offset)))
 #endif
 {
 }
