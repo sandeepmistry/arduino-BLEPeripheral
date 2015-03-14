@@ -11,8 +11,13 @@ class URIBeacon
     void begin(unsigned char flags, unsigned char power, const char* uri);
     void loop();
 
+    void setURI(const char* uri);
+
   private:
     unsigned char compressURI(const char* uri, char *compressedUri, unsigned char compressedUriSize);
+
+    unsigned char     _flags;
+    unsigned char     _power;
 
     BLEPeripheral     _blePeripheral;
     BLEService        _bleService;

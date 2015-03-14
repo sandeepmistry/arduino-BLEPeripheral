@@ -48,17 +48,23 @@ URIBeacon::URIBeacon(unsigned char req, unsigned char rdy, unsigned char rst) :
 }
 
 void URIBeacon::begin(unsigned char flags, unsigned char power, const char* uri) {
-  unsigned char serviceData[MAX_SERVICE_DATA_SIZE];
-
-  serviceData[0] = flags;
-  serviceData[1] = power;
-  unsigned char compressedURIlength = this->compressURI(uri, (char *)&serviceData[2], sizeof(serviceData) - 2);
-
-  this->_bleCharacteristic.setValue(serviceData, 2 + compressedURIlength);
+  this->_flags = flags;
+  this->_power = power;
+  this->setURI(uri);
 
   this->_blePeripheral.begin();
 
   this->_bleCharacteristic.broadcast();
+}
+
+void URIBeacon::setURI(const char* uri) {
+  unsigned char serviceData[MAX_SERVICE_DATA_SIZE];
+
+  serviceData[0] = this->_flags;
+  serviceData[1] = this->_power;
+  unsigned char compressedURIlength = this->compressURI(uri, (char *)&serviceData[2], sizeof(serviceData) - 2);
+
+  this->_bleCharacteristic.setValue(serviceData, 2 + compressedURIlength);
 }
 
 unsigned char URIBeacon::compressURI(const char* uri, char *compressedUri, unsigned char compressedUriSize) {

@@ -105,6 +105,8 @@ requestAddress	KEYWORD2
 requestTemperature	KEYWORD2
 requestBatteryLevel	KEYWORD2
 
+setURI	KEYWORD2
+
 clearBondStoreData	KEYWORD2
 addHID	KEYWORD2
 click	KEYWORD2
