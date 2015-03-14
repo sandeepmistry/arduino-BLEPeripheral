@@ -18,13 +18,19 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
- 
+
  /** @file
  * @brief Declaration of assert()
  */
- 
- #ifndef BLE_ASSERT_H__
- #define BLE_ASSERT_H__
+
+#ifndef BLE_ASSERT_H__
+#define BLE_ASSERT_H__
+
+#ifdef BLE_ASSERT
+
+#define ble_assert(expr)
+
+#else
 
 extern void __ble_assert(const char *file, uint16_t line);
 
@@ -32,5 +38,7 @@ extern void __ble_assert(const char *file, uint16_t line);
   ((expr)                             \
   ? ((void) 0)                        \
   : __ble_assert (__FILE__, __LINE__))
+
+#endif
 
 #endif /* BLE_ASSERT_H__ */

@@ -83,16 +83,6 @@ static const hal_aci_data_t baseSetupMsgs[NB_BASE_SETUP_MESSAGES] /*PROGMEM*/ =
   },\
 };
 
-void __ble_assert(const char *file, uint16_t line)
-{
-  Serial.print(F("ERROR "));
-  Serial.print(file);
-  Serial.print(F(": "));
-  Serial.print(line);
-  Serial.print(F("\n"));
-  while(1);
-}
-
 /** crc function to re-calulate the CRC after making changes to the setup data.
 */
 uint16_t crc_16_ccitt(uint16_t crc, uint8_t * data_in, uint16_t data_len) {
