@@ -58,19 +58,29 @@ typedef struct {
 void aci_queue_init(aci_queue_t *aci_q);
 
 bool aci_queue_dequeue(aci_queue_t *aci_q, hal_aci_data_t *p_data);
+#ifdef HAL_ACI_TL_INTERRUPT
 bool aci_queue_dequeue_from_isr(aci_queue_t *aci_q, hal_aci_data_t *p_data);
+#endif
 
 bool aci_queue_enqueue(aci_queue_t *aci_q, hal_aci_data_t *p_data);
+#ifdef HAL_ACI_TL_INTERRUPT
 bool aci_queue_enqueue_from_isr(aci_queue_t *aci_q, hal_aci_data_t *p_data);
+#endif
 
 bool aci_queue_is_empty(aci_queue_t *aci_q);
+#ifdef HAL_ACI_TL_INTERRUPT
 bool aci_queue_is_empty_from_isr(aci_queue_t *aci_q);
+#endif
 
 bool aci_queue_is_full(aci_queue_t *aci_q);
+#ifdef HAL_ACI_TL_INTERRUPT
 bool aci_queue_is_full_from_isr(aci_queue_t *aci_q);
+#endif
 
 bool aci_queue_peek(aci_queue_t *aci_q, hal_aci_data_t *p_data);
+#ifdef HAL_ACI_TL_INTERRUPT
 bool aci_queue_peek_from_isr(aci_queue_t *aci_q, hal_aci_data_t *p_data);
+#endif
 
 #endif /* ACI_QUEUE_H__ */
 /** @} */

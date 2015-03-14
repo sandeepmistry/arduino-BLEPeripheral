@@ -60,6 +60,7 @@ bool aci_queue_dequeue(aci_queue_t *aci_q, hal_aci_data_t *p_data)
   return true;
 }
 
+#ifdef HAL_ACI_TL_INTERRUPT
 bool aci_queue_dequeue_from_isr(aci_queue_t *aci_q, hal_aci_data_t *p_data)
 {
   ble_assert(NULL != aci_q);
@@ -75,6 +76,7 @@ bool aci_queue_dequeue_from_isr(aci_queue_t *aci_q, hal_aci_data_t *p_data)
 
   return true;
 }
+#endif
 
 bool aci_queue_enqueue(aci_queue_t *aci_q, hal_aci_data_t *p_data)
 {
@@ -95,6 +97,7 @@ bool aci_queue_enqueue(aci_queue_t *aci_q, hal_aci_data_t *p_data)
   return true;
 }
 
+#ifdef HAL_ACI_TL_INTERRUPT
 bool aci_queue_enqueue_from_isr(aci_queue_t *aci_q, hal_aci_data_t *p_data)
 {
   const uint8_t length = p_data->buffer[0];
@@ -113,6 +116,7 @@ bool aci_queue_enqueue_from_isr(aci_queue_t *aci_q, hal_aci_data_t *p_data)
 
   return true;
 }
+#endif
 
 bool aci_queue_is_empty(aci_queue_t *aci_q)
 {
@@ -120,13 +124,17 @@ bool aci_queue_is_empty(aci_queue_t *aci_q)
 
   ble_assert(NULL != aci_q);
 
+#ifdef HAL_ACI_TL_INTERRUPT
   //Critical section
   noInterrupts();
+#endif
   if (aci_q->head == aci_q->tail)
   {
     state = true;
   }
+#ifdef HAL_ACI_TL_INTERRUPT
   interrupts();
+#endif
 
   return state;
 }
@@ -144,13 +152,17 @@ bool aci_queue_is_full(aci_queue_t *aci_q)
 
   ble_assert(NULL != aci_q);
 
+#ifdef HAL_ACI_TL_INTERRUPT
   //This should be done in a critical section
   noInterrupts();
+#endif
 
   state = (aci_q->tail == aci_q->head + ACI_QUEUE_SIZE);
 
+#ifdef HAL_ACI_TL_INTERRUPT
   interrupts();
   //end
+#endif
 
   return state;
 }
