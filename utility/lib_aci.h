@@ -51,22 +51,6 @@ typedef struct {
 
 ACI_ASSERT_SIZE(hal_aci_evt_t, 34);
 
-// typedef struct
-// {
-//   uint8_t  location; /**< enum aci_pipe_store_t */
-//   aci_pipe_type_t   pipe_type;
-// } services_pipe_type_mapping_t;
-//
-// typedef struct aci_setup_info_t
-// {
-//   services_pipe_type_mapping_t *services_pipe_type_mapping;
-//   uint8_t                       number_of_pipes;
-//   hal_aci_data_t               *setup_msgs;
-//   uint8_t                       num_setup_msgs;
-// } aci_setup_info_t;
-
-
-
 // aci_struct that will contain
 // total initial credits
 // current credit
@@ -81,7 +65,6 @@ ACI_ASSERT_SIZE(hal_aci_evt_t, 34);
 typedef struct aci_state_t
 {
   aci_pins_t                    aci_pins;                               /* Pins on the MCU used to connect to the nRF8001 */
-  // aci_setup_info_t              aci_setup_info;                         /* Data structures that are created from nRFgo Studio */
   uint8_t                       bonded;                                 /* ( aci_bond_status_code_t ) Is the nRF8001 bonded to a peer device */
   uint8_t                       data_credit_total;                      /* Total data credit available for the specific version of the nRF8001, total equals available when a link is established */
   aci_device_operation_mode_t   device_state;                           /* Operating mode of the nRF8001 */

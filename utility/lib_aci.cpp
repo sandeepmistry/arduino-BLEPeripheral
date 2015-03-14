@@ -44,22 +44,6 @@ Global additionally used used in aci_setup
 */
 hal_aci_data_t  msg_to_send;
 
-
-// static services_pipe_type_mapping_t * p_services_pipe_type_map;
-// static hal_aci_data_t *               p_setup_msgs;
-
-
-
-
-// static bool is_request_operation_pending;
-// static bool is_indicate_operation_pending;
-// static bool is_open_remote_pipe_pending;
-// static bool is_close_remote_pipe_pending;
-
-// static uint8_t request_operation_pipe = 0;
-// static uint8_t indicate_operation_pipe = 0;
-
-
 // The following structure (aci_cmd_params_open_adv_pipe) will be used to store the complete command
 // including the pipes to be opened.
 static aci_cmd_params_open_adv_pipe_t aci_cmd_params_open_adv_pipe;
@@ -190,28 +174,6 @@ void lib_aci_init(aci_state_t *aci_stat, bool debug)
     aci_cmd_params_open_adv_pipe.pipes[i]   = 0;
   }
 
-
-
-
-  // is_request_operation_pending     = false;
-  // is_indicate_operation_pending    = false;
-  // is_open_remote_pipe_pending      = false;
-  // is_close_remote_pipe_pending     = false;
-
-
-
-
-
-  // request_operation_pipe           = 0;
-  // indicate_operation_pipe          = 0;
-
-
-
-  // p_services_pipe_type_map = aci_stat->aci_setup_info.services_pipe_type_mapping;
-
-  // p_setup_msgs             = aci_stat->aci_setup_info.setup_msgs;
-
-
   hal_aci_tl_init(&aci_stat->aci_pins, debug);
 
   lib_aci_board_init(aci_stat);
@@ -300,13 +262,6 @@ bool lib_aci_device_version()
 bool lib_aci_set_local_data(aci_state_t *aci_stat, uint8_t pipe, uint8_t *p_value, uint8_t size)
 {
   aci_cmd_params_set_local_data_t aci_cmd_params_set_local_data;
-
-  // if ((p_services_pipe_type_map[pipe-1].location != ACI_STORE_LOCAL)
-  //     ||
-  //     (size > ACI_PIPE_TX_DATA_MAX_LEN))
-  // {
-  //   return false;
-  // }
 
   aci_cmd_params_set_local_data.tx_data.pipe_number = pipe;
   memcpy(&(aci_cmd_params_set_local_data.tx_data.aci_data[0]), p_value, size);
@@ -401,13 +356,6 @@ bool lib_aci_send_data(uint8_t pipe, uint8_t *p_value, uint8_t size)
   bool ret_val = false;
   aci_cmd_params_send_data_t aci_cmd_params_send_data;
 
-
-  // if(!((p_services_pipe_type_map[pipe-1].pipe_type == ACI_TX) ||
-  //     (p_services_pipe_type_map[pipe-1].pipe_type == ACI_TX_ACK)))
-  // {
-  //   return false;
-  // }
-
   if (size > ACI_PIPE_TX_DATA_MAX_LEN)
   {
     return false;
@@ -427,12 +375,6 @@ bool lib_aci_request_data(aci_state_t *aci_stat, uint8_t pipe)
 {
   bool ret_val = false;
   aci_cmd_params_request_data_t aci_cmd_params_request_data;
-
-  // if(!((p_services_pipe_type_map[pipe-1].location == ACI_STORE_REMOTE)&&(p_services_pipe_type_map[pipe-1].pipe_type == ACI_RX_REQ)))
-  // {
-  //   return false;
-  // }
-
 
   {
 
@@ -474,15 +416,6 @@ bool lib_aci_open_remote_pipe(aci_state_t *aci_stat, uint8_t pipe)
   bool ret_val = false;
   aci_cmd_params_open_remote_pipe_t aci_cmd_params_open_remote_pipe;
 
-  // if(!((p_services_pipe_type_map[pipe-1].location == ACI_STORE_REMOTE)&&
-  //               ((p_services_pipe_type_map[pipe-1].pipe_type == ACI_RX)||
-  //               (p_services_pipe_type_map[pipe-1].pipe_type == ACI_RX_ACK_AUTO)||
-  //               (p_services_pipe_type_map[pipe-1].pipe_type == ACI_RX_ACK))))
-  // {
-  //   return false;
-  // }
-
-
   {
 
     // is_request_operation_pending = true;
@@ -500,15 +433,6 @@ bool lib_aci_close_remote_pipe(aci_state_t *aci_stat, uint8_t pipe)
 {
   bool ret_val = false;
   aci_cmd_params_close_remote_pipe_t aci_cmd_params_close_remote_pipe;
-
-  // if(!((p_services_pipe_type_map[pipe-1].location == ACI_STORE_REMOTE)&&
-  //       ((p_services_pipe_type_map[pipe-1].pipe_type == ACI_RX)||
-  //        (p_services_pipe_type_map[pipe-1].pipe_type == ACI_RX_ACK_AUTO)||
-  //        (p_services_pipe_type_map[pipe-1].pipe_type == ACI_RX_ACK))))
-  // {
-  //   return false;
-  // }
-
 
   {
 
