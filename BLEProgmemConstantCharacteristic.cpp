@@ -7,7 +7,7 @@ BLEProgmemConstantCharacteristic::BLEProgmemConstantCharacteristic(const char* u
 
 BLEProgmemConstantCharacteristic::BLEProgmemConstantCharacteristic(const char* uuid, const char* value) :
 #ifdef __AVR__
-  BLEConstantCharacteristic(uuid, (const unsigned char *)value, strlen_PF((uint_farptr_t)value))
+  BLEConstantCharacteristic(uuid, (const unsigned char *)value, strlen_P(value))
 #else
   BLEConstantCharacteristic(uuid, value)
 #endif
