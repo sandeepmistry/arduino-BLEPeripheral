@@ -45,19 +45,19 @@ Global additionally used used in aci_setup
 hal_aci_data_t  msg_to_send;
 
 
-static services_pipe_type_mapping_t * p_services_pipe_type_map;
-static hal_aci_data_t *               p_setup_msgs;
+// static services_pipe_type_mapping_t * p_services_pipe_type_map;
+// static hal_aci_data_t *               p_setup_msgs;
 
 
 
 
-static bool is_request_operation_pending;
-static bool is_indicate_operation_pending;
-static bool is_open_remote_pipe_pending;
-static bool is_close_remote_pipe_pending;
+// static bool is_request_operation_pending;
+// static bool is_indicate_operation_pending;
+// static bool is_open_remote_pipe_pending;
+// static bool is_close_remote_pipe_pending;
 
-static uint8_t request_operation_pipe = 0;
-static uint8_t indicate_operation_pipe = 0;
+// static uint8_t request_operation_pipe = 0;
+// static uint8_t indicate_operation_pipe = 0;
 
 
 // The following structure (aci_cmd_params_open_adv_pipe) will be used to store the complete command
@@ -105,6 +105,7 @@ void lib_aci_board_init(aci_state_t *aci_stat)
 	hal_aci_evt_t *aci_data = NULL;
 	aci_data = (hal_aci_evt_t *)&msg_to_send;
 
+#ifdef SUPPORT_REDBEARLAB_SHIELD_V1_1
 	if (REDBEARLAB_SHIELD_V1_1 == aci_stat->aci_pins.board_name)
 	{
 	  /*
@@ -174,6 +175,7 @@ void lib_aci_board_init(aci_state_t *aci_stat)
 		}
 	  }
 	}
+#endif
 }
 
 
@@ -191,23 +193,23 @@ void lib_aci_init(aci_state_t *aci_stat, bool debug)
 
 
 
-  is_request_operation_pending     = false;
-  is_indicate_operation_pending    = false;
-  is_open_remote_pipe_pending      = false;
-  is_close_remote_pipe_pending     = false;
+  // is_request_operation_pending     = false;
+  // is_indicate_operation_pending    = false;
+  // is_open_remote_pipe_pending      = false;
+  // is_close_remote_pipe_pending     = false;
 
 
 
 
 
-  request_operation_pipe           = 0;
-  indicate_operation_pipe          = 0;
+  // request_operation_pipe           = 0;
+  // indicate_operation_pipe          = 0;
 
 
 
-  p_services_pipe_type_map = aci_stat->aci_setup_info.services_pipe_type_mapping;
+  // p_services_pipe_type_map = aci_stat->aci_setup_info.services_pipe_type_mapping;
 
-  p_setup_msgs             = aci_stat->aci_setup_info.setup_msgs;
+  // p_setup_msgs             = aci_stat->aci_setup_info.setup_msgs;
 
 
   hal_aci_tl_init(&aci_stat->aci_pins, debug);
@@ -483,9 +485,9 @@ bool lib_aci_open_remote_pipe(aci_state_t *aci_stat, uint8_t pipe)
 
   {
 
-    is_request_operation_pending = true;
-    is_open_remote_pipe_pending = true;
-    request_operation_pipe = pipe;
+    // is_request_operation_pending = true;
+    // is_open_remote_pipe_pending = true;
+    // request_operation_pipe = pipe;
     aci_cmd_params_open_remote_pipe.pipe_number = pipe;
     acil_encode_cmd_open_remote_pipe(&(msg_to_send.buffer[0]), &aci_cmd_params_open_remote_pipe);
     ret_val = hal_aci_tl_send(&msg_to_send);
@@ -510,9 +512,9 @@ bool lib_aci_close_remote_pipe(aci_state_t *aci_stat, uint8_t pipe)
 
   {
 
-    is_request_operation_pending = true;
-    is_close_remote_pipe_pending = true;
-    request_operation_pipe = pipe;
+    // is_request_operation_pending = true;
+    // is_close_remote_pipe_pending = true;
+    // request_operation_pipe = pipe;
     aci_cmd_params_close_remote_pipe.pipe_number = pipe;
     acil_encode_cmd_close_remote_pipe(&(msg_to_send.buffer[0]), &aci_cmd_params_close_remote_pipe);
     ret_val = hal_aci_tl_send(&msg_to_send);

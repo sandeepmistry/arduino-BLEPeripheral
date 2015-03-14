@@ -125,11 +125,7 @@ nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
   this->_aciState.aci_pins.miso_pin               = MISO;
   this->_aciState.aci_pins.sck_pin                = SCK;
 
-  if (rst == UNUSED) {
-    this->_aciState.aci_pins.board_name           = REDBEARLAB_SHIELD_V1_1;
-  } else {
-    this->_aciState.aci_pins.board_name           = BOARD_DEFAULT;
-  }
+  this->_aciState.aci_pins.board_name             = BOARD_DEFAULT;
 
 #if defined(__SAM3X8E__)
   this->_aciState.aci_pins.spi_clock_divider      = 42;

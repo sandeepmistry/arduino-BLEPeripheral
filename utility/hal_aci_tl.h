@@ -52,6 +52,7 @@ and the received ACI event is placed in the tail of the event queue.
 
 // #define HAL_ACI_TL_DEBUG
 // #define HAL_ACI_TL_INTERRUPT
+// #define SUPPORT_REDBEARLAB_SHIELD_V1_1
 
 /************************************************************************/
 /* Unused nRF8001 pin                                                    */

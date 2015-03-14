@@ -277,7 +277,7 @@ void hal_aci_tl_pin_reset(void)
     if (UNUSED != a_pins_local_ptr->reset_pin)
     {
         pinMode(a_pins_local_ptr->reset_pin, OUTPUT);
-
+#ifdef SUPPORT_REDBEARLAB_SHIELD_V1_1
         if ((REDBEARLAB_SHIELD_V1_1     == a_pins_local_ptr->board_name) ||
             (REDBEARLAB_SHIELD_V2012_07 == a_pins_local_ptr->board_name))
         {
@@ -288,6 +288,7 @@ void hal_aci_tl_pin_reset(void)
             digitalWrite(a_pins_local_ptr->reset_pin, 0);
         }
         else
+#endif
         {
             digitalWrite(a_pins_local_ptr->reset_pin, 1);
             digitalWrite(a_pins_local_ptr->reset_pin, 0);
@@ -404,14 +405,14 @@ void hal_aci_tl_init(aci_pins_t *a_pins, bool debug)
   hal_aci_tl_pin_reset();
 
   /* Set the nRF8001 to a known state as required by the datasheet*/
-#if defined (__AVR__)
-  digitalWrite(a_pins->miso_pin, 0);
-  digitalWrite(a_pins->mosi_pin, 0);
-#endif
+// #if defined (__AVR__)
+//   digitalWrite(a_pins->miso_pin, 0);
+//   digitalWrite(a_pins->mosi_pin, 0);
+// #endif
   digitalWrite(a_pins->reqn_pin, 1);
-#if defined (__AVR__)
-  digitalWrite(a_pins->sck_pin,  0);
-#endif
+// #if defined (__AVR__)
+//   digitalWrite(a_pins->sck_pin,  0);
+// #endif
 
   delay(30); //Wait for the nRF8001 to get hold of its lines - the lines float for a few ms after the reset
 
