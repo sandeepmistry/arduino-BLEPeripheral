@@ -3,6 +3,7 @@
 BLEFixedLengthCharacteristic::BLEFixedLengthCharacteristic(const char* uuid, unsigned char properties, unsigned char valueSize) :
   BLECharacteristic(uuid, properties, valueSize)
 {
+  this->_valueLength = valueSize;
 }
 
 BLEFixedLengthCharacteristic::BLEFixedLengthCharacteristic(const char* uuid, unsigned char properties, const char* value) :
