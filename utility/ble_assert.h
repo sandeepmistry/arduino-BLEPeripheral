@@ -26,7 +26,7 @@
 #ifndef BLE_ASSERT_H__
 #define BLE_ASSERT_H__
 
-#ifdef BLE_ASSERT
+#ifndef BLE_ASSERT
 
 #define ble_assert(expr)
 
