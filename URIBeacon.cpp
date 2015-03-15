@@ -67,6 +67,22 @@ void URIBeacon::setURI(const char* uri) {
   this->_bleCharacteristic.setValue(serviceData, 2 + compressedURIlength);
 }
 
+void URIBeacon::setLocalName(const char *localName) {
+  this->_blePeripheral.setLocalName(localName);
+}
+
+void URIBeacon::setConnectable(bool connectable) {
+  this->_blePeripheral.setConnectable(connectable);
+}
+
+void URIBeacon::addAttribute(BLELocalAttribute& attribute) {
+  this->_blePeripheral.addAttribute(attribute);
+}
+
+void URIBeacon::setEventHandler(BLEPeripheralEvent event, BLEPeripheralEventHandler eventHandler) {
+  this->_blePeripheral.setEventHandler(event, eventHandler);
+}
+
 unsigned char URIBeacon::compressURI(const char* uri, char *compressedUri, unsigned char compressedUriSize) {
   String uriString = uri;
 

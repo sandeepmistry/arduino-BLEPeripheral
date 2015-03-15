@@ -13,6 +13,11 @@ class URIBeacon
 
     void setURI(const char* uri);
 
+    void setLocalName(const char *localName);
+    void setConnectable(bool connectable);
+    void addAttribute(BLELocalAttribute& attribute);
+    void setEventHandler(BLEPeripheralEvent event, BLEPeripheralEventHandler eventHandler);
+
   private:
     unsigned char compressURI(const char* uri, char *compressedUri, unsigned char compressedUriSize);
 
