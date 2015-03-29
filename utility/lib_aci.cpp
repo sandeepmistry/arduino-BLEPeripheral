@@ -159,6 +159,12 @@ void lib_aci_board_init(aci_state_t *aci_stat)
 		}
 	  }
 	}
+#else
+  if (aci_stat->aci_pins.reset_pin == UNUSED) {
+    delay(100);
+
+    lib_aci_radio_reset();
+  }
 #endif
 }
 

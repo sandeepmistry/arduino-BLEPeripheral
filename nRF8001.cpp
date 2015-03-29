@@ -1422,6 +1422,10 @@ void nRF8001::waitForSetupMode()
               break;
           }
         }
+
+        case ACI_EVT_CMD_RSP:
+          setupMode = true;
+          break;
       }
     } else {
       delay(1);
