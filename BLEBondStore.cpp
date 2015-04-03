@@ -15,7 +15,7 @@
 #endif
 
 BLEBondStore::BLEBondStore(int offset)
-#ifdef __AVR__
+#if defined(__AVR__) || defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MKL26Z64__)
   : _offset(offset)
 #elif defined(NRF51) || defined(__RFduino__)
   : _flashPageStartAddress((uint32_t *)(NRF_FICR->CODEPAGESIZE * (NRF_FICR->CODESIZE - 1 - (uint32_t)offset)))
@@ -24,7 +24,7 @@ BLEBondStore::BLEBondStore(int offset)
 }
 
 bool BLEBondStore::hasData() {
-#ifdef __AVR__
+#if defined(__AVR__) || defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MKL26Z64__)
   return (eeprom_read_byte((unsigned char *)this->_offset) == 0x01);
 #elif defined(NRF51) || defined(__RFduino__)
   return (*this->_flashPageStartAddress != 0xFFFFFFFF);
@@ -34,7 +34,7 @@ bool BLEBondStore::hasData() {
 }
 
 void BLEBondStore::clearData() {
-#ifdef __AVR__
+#if defined(__AVR__) || defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MKL26Z64__)
   eeprom_write_byte((unsigned char *)this->_offset, 0x00);
 #elif defined(NRF51) || defined(__RFduino__)
   // turn on flash erase enable
@@ -58,7 +58,7 @@ void BLEBondStore::clearData() {
 }
 
 void BLEBondStore::putData(const unsigned char* data, unsigned int offset, unsigned int length) {
-#ifdef __AVR__
+#if defined(__AVR__) || defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MKL26Z64__)
   eeprom_write_byte((unsigned char *)this->_offset, 0x01);
 
   for (unsigned int i = 0; i < length; i++) {
@@ -95,7 +95,7 @@ void BLEBondStore::putData(const unsigned char* data, unsigned int offset, unsig
 }
 
 void BLEBondStore::getData(unsigned char* data, unsigned int offset, unsigned int length) {
-#ifdef __AVR__
+#if defined(__AVR__) || defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MKL26Z64__)
   for (unsigned int i = 0; i < length; i++) {
     data[i] = eeprom_read_byte((unsigned char *)this->_offset + offset + i + 1);
   }

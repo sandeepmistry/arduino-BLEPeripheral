@@ -1009,7 +1009,7 @@ void nRF8001::poll() {
 #endif
         bool discoveryFinished = lib_aci_is_discovery_finished(&this->_aciState);
 
-        if (*closedPipes == 0 && !discoveryFinished) {
+        if ((unsigned long)*closedPipes == 0 && !discoveryFinished) {
           this->_closedPipesCleared = true;
         }
 

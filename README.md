@@ -58,6 +58,11 @@ Enables you to create more customized BLE Peripheral's compared to the basic UAR
    * AVR
    * SAM3X8E
    * SAMD21G18A
+ * [Teensy](https://www.pjrc.com/teensy/) (via [Teensyduino](https://www.pjrc.com/teensy/td_download.html))
+   * 2.0
+   * 3.0
+   * 3.1
+   * LC
  * [MPIDE](http://chipkit.net/started/install-chipkit-software/) ([ChipKit](http://chipkit.net))
    * PIC32MX
 
