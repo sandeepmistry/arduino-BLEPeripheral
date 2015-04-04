@@ -121,16 +121,13 @@ nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
 {
   this->_aciState.aci_pins.reqn_pin               = req;
   this->_aciState.aci_pins.rdyn_pin               = rdy;
-  this->_aciState.aci_pins.mosi_pin               = MOSI;
-  this->_aciState.aci_pins.miso_pin               = MISO;
-  this->_aciState.aci_pins.sck_pin                = SCK;
 
-  this->_aciState.aci_pins.board_name             = BOARD_DEFAULT;
-
+#ifndef SPI_HAS_TRANSACTION
 #if defined(__SAM3X8E__)
   this->_aciState.aci_pins.spi_clock_divider      = 42;
 #else
   this->_aciState.aci_pins.spi_clock_divider      = SPI_CLOCK_DIV8;
+#endif
 #endif
 
   this->_aciState.aci_pins.reset_pin              = rst;

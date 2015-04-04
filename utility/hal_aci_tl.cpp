@@ -207,10 +207,16 @@ static void m_aci_pins_set(aci_pins_t *a_pins_ptr)
 static inline void m_aci_reqn_disable (void)
 {
   digitalWrite(a_pins_local_ptr->reqn_pin, 1);
+#ifdef SPI_HAS_TRANSACTION
+  SPI.endTransaction();
+#endif
 }
 
 static inline void m_aci_reqn_enable (void)
 {
+#ifdef SPI_HAS_TRANSACTION
+  SPI.beginTransaction(SPISettings(2000000, LSBFIRST, SPI_MODE0));
+#endif
   digitalWrite(a_pins_local_ptr->reqn_pin, 0);
 }
 
@@ -344,6 +350,9 @@ bool hal_aci_tl_event_get(hal_aci_data_t *p_aci_data)
 	  {
       /* Enable RDY line interrupt again */
       attachInterrupt(a_pins_local_ptr->interrupt_number, m_aci_isr, LOW);
+#ifdef SPI_HAS_TRANSACTION
+      SPI.usingInterrupt(a_pins->interrupt_number);
+#endif
     }
 #endif
 
@@ -376,6 +385,7 @@ void hal_aci_tl_init(aci_pins_t *a_pins, bool debug)
   The SPI library assumes that the hardware pins are used
   */
   SPI.begin();
+#ifndef SPI_HAS_TRANSACTION
   //Board dependent defines
   #if defined (__AVR__) || defined(__SAM3X8E__) || defined(__SAMD21G18A__) || defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MKL26Z64__)
     //For Arduino use the LSB first
@@ -388,6 +398,7 @@ void hal_aci_tl_init(aci_pins_t *a_pins, bool debug)
   #endif
   SPI.setClockDivider(a_pins->spi_clock_divider);
   SPI.setDataMode(SPI_MODE0);
+#endif
 
   /* Initialize the ACI Command queue. This must be called after the delay above. */
   aci_queue_init(&aci_tx_q);
