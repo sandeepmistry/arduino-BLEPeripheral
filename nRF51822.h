@@ -4,9 +4,11 @@
 #ifdef __RFduino__
   #include <utility/nrf51822/s110/ble_gatts.h>
   #include <utility/nrf51822/s110/ble_gattc.h>
+  #include <utility/nrf51822/s110/nrf_soc.h>
 #else
   #include <s110/ble_gatts.h>
   #include <s110/ble_gattc.h>
+  #include <s110/nrf_soc.h>
 #endif
 
 #include "BLEDevice.h"
