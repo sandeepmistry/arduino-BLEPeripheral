@@ -8,7 +8,7 @@
 // define pins (varies per shield/board)
 #define BLE_REQ     9
 #define BLE_RDY     8
-#define BLE_RST     4
+#define BLE_RST     7
 
 #define IR_SEND_PIN 13 // pin 3 on Uno
 #define IR_RECV_PIN 2
