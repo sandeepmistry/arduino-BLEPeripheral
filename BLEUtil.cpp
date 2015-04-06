@@ -3,13 +3,21 @@
 #include "BLEUtil.h"
 
 void BLEUtil::addressToString(const unsigned char *in, char* out) {
-  sprintf(out, "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x",
-    in[5],
-    in[4],
-    in[3],
-    in[2],
-    in[1],
-    in[0]);
+  String address = "";
+
+  for (int i = 5; i >= 0; i--) {
+    if (in[i] < 0x10) {
+      address += "0";
+    }
+
+    address += String(in[i], 16);
+
+    if (i > 0) {
+      address += ":";
+    }
+  }
+
+  address.toCharArray(out, 18);
 }
 
 void BLEUtil::printBuffer(const unsigned char* buffer, unsigned char length) {
