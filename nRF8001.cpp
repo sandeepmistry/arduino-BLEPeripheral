@@ -1236,11 +1236,11 @@ bool nRF8001::broadcastCharacteristic(BLECharacteristic& characteristic) {
 }
 
 bool nRF8001::canNotifyCharacteristic(BLECharacteristic& characteristic) {
-  return (lib_aci_get_nb_available_credits(&this->_aciState) > 0);
+  return (this->_aciState.data_credit_available > 0);
 }
 
 bool nRF8001::canIndicateCharacteristic(BLECharacteristic& characteristic) {
-  return (lib_aci_get_nb_available_credits(&this->_aciState) > 0);
+  return (this->_aciState.data_credit_available > 0);
 }
 
 bool nRF8001::canReadRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
