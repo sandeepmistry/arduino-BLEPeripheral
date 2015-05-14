@@ -11,7 +11,7 @@
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #endif
 
-#ifdef NRF51
+#if defined(NRF51) || defined(__RFduino__)
 
 #define BLE_ADVERTISEMENT_DATA_MAX_VALUE_LENGTH    26
 #define BLE_SCAN_DATA_MAX_VALUE_LENGTH             29
