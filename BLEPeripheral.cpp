@@ -23,6 +23,11 @@ BLEPeripheral::BLEPeripheral(unsigned char req, unsigned char rdy, unsigned char
   _manufacturerData(NULL),
   _manufacturerDataLength(0),
 
+  _iBeaconUuid(NULL),
+  _iBeaconMajor(0),
+  _iBeaconMinor(0),
+  _iBeaconMeasuredPower(0),
+
   _localAttributes(NULL),
   _numLocalAttributes(0),
   _remoteAttributes(NULL),
@@ -97,6 +102,30 @@ void BLEPeripheral::begin() {
     advertisementDataType = 0xff;
 
     memcpy(advertisementData, this->_manufacturerData, advertisementDataLength);
+  } else if (this->_iBeaconUuid) {
+    BLEUuid uuid(this->_iBeaconUuid);
+    int i = 0;
+
+    // 0x004c = Apple, see https://www.bluetooth.org/en-us/specification/assigned-numbers/company-identifiers
+    advertisementData[i++] = 0x4c; // Apple Company Identifier LE (16 bit)
+    advertisementData[i++] = 0x00;
+
+    // See "Beacon type" in "Building Applications with IBeacon".
+    advertisementData[i++] = 0x02;
+    advertisementData[i++] = uuid.length() + 5;
+
+    for (int j = (uuid.length() - 1); j >= 0; j--) {
+      advertisementData[i++] = uuid.data()[j];
+    }
+
+    advertisementData[i++] = this->_iBeaconMajor >> 8;
+    advertisementData[i++] = this->_iBeaconMajor;
+    advertisementData[i++] = this->_iBeaconMinor >> 8;
+    advertisementData[i++] = this->_iBeaconMinor;
+    advertisementData[i++] = this->_iBeaconMeasuredPower;
+
+    advertisementDataLength = i;
+    advertisementDataType = 0xff;
   }
 
   if (this->_localName){
@@ -163,6 +192,15 @@ void BLEPeripheral::setManufacturerData(const unsigned char manufacturerData[], 
   this->_manufacturerData = manufacturerData;
   this->_manufacturerDataLength = manufacturerDataLength;
 }
+
+#ifdef NRF51
+void BLEPeripheral::setIBeaconData(const char* iBeaconUuid, uint16_t iBeaconMajor, uint16_t iBeaconMinor, int8_t iBeaconMeasuredPower) {
+  this->_iBeaconUuid = iBeaconUuid;
+  this->_iBeaconMajor = iBeaconMajor;
+  this->_iBeaconMinor = iBeaconMinor;
+  this->_iBeaconMeasuredPower = iBeaconMeasuredPower;
+}
+#endif
 
 void BLEPeripheral::setLocalName(const char* localName) {
   this->_localName = localName;

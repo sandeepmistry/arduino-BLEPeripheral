@@ -47,6 +47,9 @@ class BLEPeripheral : public BLEDeviceEventListener,
     void setAdvertisedServiceUuid(const char* advertisedServiceUuid);
     void setServiceSolicitationUuid(const char* serviceSolicitationUuid);
     void setManufacturerData(const unsigned char manufacturerData[], unsigned char manufacturerDataLength);
+#ifdef NRF51
+    void setIBeaconData(const char* iBeaconUuid, uint16_t iBeaconMajor, uint16_t iBeaconMinor, int8_t iBeaconMeasuredPower);
+#endif
     void setLocalName(const char *localName);
 
     void setAdvertisingInterval(unsigned short advertisingInterval);
@@ -113,6 +116,10 @@ class BLEPeripheral : public BLEDeviceEventListener,
     const char*                    _serviceSolicitationUuid;
     const unsigned char*           _manufacturerData;
     unsigned char                  _manufacturerDataLength;
+    const char*                    _iBeaconUuid;
+    uint16_t                       _iBeaconMajor;
+    uint16_t                       _iBeaconMinor;
+    int8_t                         _iBeaconMeasuredPower;
     const char*                    _localName;
 
     BLELocalAttribute**            _localAttributes;
