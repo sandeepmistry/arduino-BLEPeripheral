@@ -11,7 +11,7 @@
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #endif
 
-#ifdef NRF_51
+#ifdef NRF51
 
 #define BLE_ADVERTISEMENT_DATA_MAX_VALUE_LENGTH    26
 #define BLE_SCAN_DATA_MAX_VALUE_LENGTH             29
