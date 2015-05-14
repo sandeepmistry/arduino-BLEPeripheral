@@ -14,16 +14,16 @@ class BLERemoteCharacteristic;
 class BLERemoteCharacteristicValueChangeListener
 {
   public:
-    virtual bool canReadRemoteCharacteristic(BLERemoteCharacteristic& characteristic) = 0;
-    virtual bool readRemoteCharacteristic(BLERemoteCharacteristic& characteristic) = 0;
+    virtual bool canReadRemoteCharacteristic(BLERemoteCharacteristic& characteristic) { }
+    virtual bool readRemoteCharacteristic(BLERemoteCharacteristic& characteristic) { }
 
-    virtual bool canWriteRemoteCharacteristic(BLERemoteCharacteristic& characteristic) = 0;
-    virtual bool writeRemoteCharacteristic(BLERemoteCharacteristic& characteristic, const unsigned char value[], unsigned char length) = 0;
+    virtual bool canWriteRemoteCharacteristic(BLERemoteCharacteristic& characteristic) { }
+    virtual bool writeRemoteCharacteristic(BLERemoteCharacteristic& characteristic, const unsigned char value[], unsigned char length) { }
 
-    virtual bool canSubscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) = 0;
-    virtual bool subscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) = 0;
-    virtual bool canUnsubscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) = 0;
-    virtual bool unsubcribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) = 0;
+    virtual bool canSubscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) { }
+    virtual bool subscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) { }
+    virtual bool canUnsubscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) { }
+    virtual bool unsubcribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) { }
 };
 
 typedef void (*BLERemoteCharacteristicEventHandler)(BLECentral& central, BLERemoteCharacteristic& characteristic);
