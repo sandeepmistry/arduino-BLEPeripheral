@@ -20,8 +20,8 @@ class BLEHID
     void sendData(BLECharacteristic& characteristic, unsigned char data[], unsigned char dataLength);
 
     virtual void setReportId(unsigned char reportId);
-    virtual unsigned char numAttributes() = 0;
-    virtual BLELocalAttribute** attributes() = 0;
+    virtual unsigned char numAttributes() { }
+    virtual BLELocalAttribute** attributes() { }
 
   private:
     static unsigned char _numHids;
