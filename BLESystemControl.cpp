@@ -54,10 +54,10 @@ unsigned char BLESystemControl::numAttributes() {
 }
 
 BLELocalAttribute** BLESystemControl::attributes() {
-  static BLELocalAttribute* attributes[] = {
-    &this->_reportCharacteristic,
-    &this->_reportReferenceDescriptor
-  };
+  static BLELocalAttribute* attributes[2];
+
+  attributes[0] = &this->_reportCharacteristic;
+  attributes[1] = &this->_reportReferenceDescriptor;
 
   return attributes;
 }
