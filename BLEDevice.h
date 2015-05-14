@@ -13,20 +13,20 @@ class BLEDevice;
 class BLEDeviceEventListener
 {
   public:
-    virtual void BLEDeviceConnected(BLEDevice& device, const unsigned char* address) = 0;
-    virtual void BLEDeviceDisconnected(BLEDevice& device) = 0;
-    virtual void BLEDeviceBonded(BLEDevice& device) = 0;
-    virtual void BLEDeviceRemoteServicesDiscovered(BLEDevice& device) = 0;
+    virtual void BLEDeviceConnected(BLEDevice& device, const unsigned char* address) { }
+    virtual void BLEDeviceDisconnected(BLEDevice& device) { }
+    virtual void BLEDeviceBonded(BLEDevice& device) { }
+    virtual void BLEDeviceRemoteServicesDiscovered(BLEDevice& device) { }
 
-    virtual void BLEDeviceCharacteristicValueChanged(BLEDevice& device, BLECharacteristic& characteristic, const unsigned char* value, unsigned char valueLength) = 0;
-    virtual void BLEDeviceCharacteristicSubscribedChanged(BLEDevice& device, BLECharacteristic& characteristic, bool subscribed) = 0;
+    virtual void BLEDeviceCharacteristicValueChanged(BLEDevice& device, BLECharacteristic& characteristic, const unsigned char* value, unsigned char valueLength) { }
+    virtual void BLEDeviceCharacteristicSubscribedChanged(BLEDevice& device, BLECharacteristic& characteristic, bool subscribed) { }
 
-    virtual void BLEDeviceRemoteCharacteristicValueChanged(BLEDevice& device, BLERemoteCharacteristic& remoteCharacteristic, const unsigned char* value, unsigned char valueLength) = 0;
+    virtual void BLEDeviceRemoteCharacteristicValueChanged(BLEDevice& device, BLERemoteCharacteristic& remoteCharacteristic, const unsigned char* value, unsigned char valueLength) { }
 
 
-    virtual void BLEDeviceAddressReceived(BLEDevice& device, const unsigned char* address) = 0;
-    virtual void BLEDeviceTemperatureReceived(BLEDevice& device, float temperature) = 0;
-    virtual void BLEDeviceBatteryLevelReceived(BLEDevice& device, float batteryLevel) = 0;
+    virtual void BLEDeviceAddressReceived(BLEDevice& device, const unsigned char* address) { }
+    virtual void BLEDeviceTemperatureReceived(BLEDevice& device, float temperature) { }
+    virtual void BLEDeviceBatteryLevelReceived(BLEDevice& device, float batteryLevel) { }
 };
 
 
@@ -54,30 +54,30 @@ class BLEDevice
                 BLELocalAttribute** localAttributes,
                 unsigned char numLocalAttributes,
                 BLERemoteAttribute** remoteAttributes,
-                unsigned char numRemoteAttributes) = 0;
+                unsigned char numRemoteAttributes) { }
 
-    virtual void poll() = 0;
+    virtual void poll() { }
 
-    virtual void startAdvertising() = 0;
-    virtual void disconnect() = 0;
+    virtual void startAdvertising() { }
+    virtual void disconnect() { }
 
-    virtual bool updateCharacteristicValue(BLECharacteristic& characteristic) = 0;
-    virtual bool broadcastCharacteristic(BLECharacteristic& characteristic) = 0;
-    virtual bool canNotifyCharacteristic(BLECharacteristic& characteristic) = 0;
-    virtual bool canIndicateCharacteristic(BLECharacteristic& characteristic) = 0;
+    virtual bool updateCharacteristicValue(BLECharacteristic& characteristic) { }
+    virtual bool broadcastCharacteristic(BLECharacteristic& characteristic) { }
+    virtual bool canNotifyCharacteristic(BLECharacteristic& characteristic) { }
+    virtual bool canIndicateCharacteristic(BLECharacteristic& characteristic) { }
 
-    virtual bool canReadRemoteCharacteristic(BLERemoteCharacteristic& characteristic) = 0;
-    virtual bool readRemoteCharacteristic(BLERemoteCharacteristic& remoteCharacteristic) = 0;
-    virtual bool canWriteRemoteCharacteristic(BLERemoteCharacteristic& characteristic) = 0;
-    virtual bool writeRemoteCharacteristic(BLERemoteCharacteristic& characteristic, const unsigned char value[], unsigned char length) = 0;
-    virtual bool canSubscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) = 0;
-    virtual bool subscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) = 0;
-    virtual bool canUnsubscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) = 0;
-    virtual bool unsubcribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) = 0;
+    virtual bool canReadRemoteCharacteristic(BLERemoteCharacteristic& characteristic) { }
+    virtual bool readRemoteCharacteristic(BLERemoteCharacteristic& remoteCharacteristic) { }
+    virtual bool canWriteRemoteCharacteristic(BLERemoteCharacteristic& characteristic) { }
+    virtual bool writeRemoteCharacteristic(BLERemoteCharacteristic& characteristic, const unsigned char value[], unsigned char length) { }
+    virtual bool canSubscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) { }
+    virtual bool subscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) { }
+    virtual bool canUnsubscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) { }
+    virtual bool unsubcribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) { }
 
-    virtual void requestAddress() = 0;
-    virtual void requestTemperature() = 0;
-    virtual void requestBatteryLevel() = 0;
+    virtual void requestAddress() { }
+    virtual void requestTemperature() { }
+    virtual void requestBatteryLevel() { }
 
   protected:
     unsigned short                _advertisingInterval;
