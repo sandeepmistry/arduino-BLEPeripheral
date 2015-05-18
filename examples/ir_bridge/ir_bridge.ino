@@ -31,9 +31,9 @@ IRValue                          irValue;
 BLEPeripheral                    blePeripheral               = BLEPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
 
 // create service and characteristics
-BLEService                       irService                   = BLEService("4952");
-BLEFixedLengthCharacteristic     irOutputCharacteristic      = BLEFixedLengthCharacteristic("4953", BLEWrite, sizeof(irValue));
-BLEFixedLengthCharacteristic     irInputCharacteristic       = BLEFixedLengthCharacteristic("4954", BLENotify, sizeof(irValue));
+BLEService                       irService                   = BLEService("00004952-0000-bbbb-0123-456789abcdef");
+BLEFixedLengthCharacteristic     irOutputCharacteristic      = BLEFixedLengthCharacteristic("00004953-0000-bbbb-0123-456789abcdef", BLEWrite, sizeof(irValue));
+BLEFixedLengthCharacteristic     irInputCharacteristic       = BLEFixedLengthCharacteristic("00004954-0000-bbbb-0123-456789abcdef", BLENotify, sizeof(irValue));
 
 
 void setup() {
