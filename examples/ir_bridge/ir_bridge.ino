@@ -6,14 +6,14 @@
 #include <IRremote.h>
 
 // define pins (varies per shield/board)
-#define BLE_REQ     9
-#define BLE_RDY     8
-#define BLE_RST     7
+#define BLE_REQ     10
+#define BLE_RDY     9
+#define BLE_RST     2
 
-#define IR_SEND_PIN 13 // pin 3 on Uno
-#define IR_RECV_PIN 2
+#define IR_SEND_PIN 3
+#define IR_RECV_PIN 4
 
-#define LED_PIN     3
+#define LED_PIN     5
 
 struct IRValue {
   char type;
