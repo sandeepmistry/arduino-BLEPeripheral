@@ -7,8 +7,8 @@
 
 // define pins (varies per shield/board)
 #define BLE_REQ     10
-#define BLE_RDY     9
-#define BLE_RST     2
+#define BLE_RDY     2
+#define BLE_RST     9
 
 #define IR_SEND_PIN 3
 #define IR_RECV_PIN 4
@@ -38,9 +38,6 @@ BLEFixedLengthCharacteristic     irInputCharacteristic       = BLEFixedLengthCha
 
 void setup() {
   Serial.begin(115200);
-#ifdef __AVR_ATmega32U4__
-//  while(!Serial);
-#endif
 
   // set advertised local name and service UUID
   blePeripheral.setLocalName("IR");
