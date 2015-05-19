@@ -979,7 +979,7 @@ void nRF8001::poll() {
       case ACI_EVT_CONNECTED:
 #ifdef NRF_8001_DEBUG
         char address[18];
-        BLEUtil::addressToString(aciEvt->params.cmd_rsp.params.get_device_address.bd_addr_own, address);
+        BLEUtil::addressToString(aciEvt->params.connected.dev_addr, address);
 
         Serial.print(F("Evt Connected "));
         Serial.println(address);
