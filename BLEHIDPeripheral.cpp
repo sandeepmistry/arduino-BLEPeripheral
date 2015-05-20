@@ -13,6 +13,8 @@ BLEHIDPeripheral::BLEHIDPeripheral(unsigned char req, unsigned char rdy, unsigne
   _hidControlPointCharacteristic("2a4c", BLEWriteWithoutResponse),
   _hidReportMapCharacteristic(),
 
+  _reportIdOffset(0),
+
   _hids(NULL),
   _numHids(0)
 {
@@ -72,6 +74,10 @@ void BLEHIDPeripheral::setAppearance(unsigned short appearance) {
   this->_blePeripheral.setAppearance(appearance);
 }
 
+void BLEHIDPeripheral::setReportIdOffset(unsigned char reportIdOffset) {
+  this->_reportIdOffset = reportIdOffset;
+}
+
 BLECentral BLEHIDPeripheral::central() {
   return this->_blePeripheral.central();
 }
@@ -89,7 +95,7 @@ void BLEHIDPeripheral::addHID(BLEHID& hid) {
     this->_hids = (BLEHID**)malloc(sizeof(BLEHID*) * BLEHID::numHids());
   }
 
-  hid.setReportId(this->_numHids);
+  hid.setReportId(this->_numHids + this->_reportIdOffset);
 
   this->_hids[this->_numHids] = &hid;
   this->_numHids++;

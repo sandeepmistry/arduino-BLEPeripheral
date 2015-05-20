@@ -19,6 +19,7 @@ class BLEHIDPeripheral
     void setLocalName(const char *localName);
     void setDeviceName(const char* deviceName);
     void setAppearance(unsigned short appearance);
+    void setReportIdOffset(unsigned char reportIdOffset);
 
     BLECentral central();
     bool connected();
@@ -40,6 +41,8 @@ class BLEHIDPeripheral
     BLEHIDReportMapCharacteristic       _hidReportMapCharacteristic;
     BLEProgmemConstantCharacteristic    _hidInformationCharacteristic;
     BLEUnsignedCharCharacteristic       _hidControlPointCharacteristic;
+
+    unsigned char                       _reportIdOffset;
 
     BLEHID**                            _hids;
     unsigned char                       _numHids;
