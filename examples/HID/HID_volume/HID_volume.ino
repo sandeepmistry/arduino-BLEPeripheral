@@ -3,32 +3,33 @@
 #include <BLEHIDPeripheral.h>
 #include <BLEMultimedia.h>
 
+// http://www.pjrc.com/teensy/td_libs_Encoder.html
+#include <Encoder.h>
+
 // define pins (varies per shield/board)
-#define BLE_REQ   9
-#define BLE_RDY   8
-#define BLE_RST   4
+#define BLE_REQ   10
+#define BLE_RDY   2
+#define BLE_RST   9
 
 #define BUTTON_PIN 5
 
-#define ENC_A_PIN 6
-#define ENC_B_PIN 7
+#define ENC_RIGHT_PIN 3
+#define ENC_LEFT_PIN  4
+
+//#define ANDROID_CENTRAL
 
 BLEHIDPeripheral bleHIDPeripheral = BLEHIDPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
 BLEMultimedia bleMultimedia;
 
+Encoder encoder(ENC_RIGHT_PIN, ENC_LEFT_PIN);
+
 int buttonState;
 
 void setup() {
-  Serial.begin(9600);
-#if defined (__AVR_ATmega32U4__)
-  while(!Serial);
-#endif
+  Serial.begin(115200);
 
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   buttonState = digitalRead(BUTTON_PIN);
-  
-  pinMode(ENC_A_PIN, INPUT_PULLUP);
-  pinMode(ENC_B_PIN, INPUT_PULLUP);
 
   if (buttonState == LOW) {
     Serial.println(F("BLE HID Peripheral - clearing bond data"));
@@ -36,6 +37,12 @@ void setup() {
     // clear bond store data
     bleHIDPeripheral.clearBondStoreData();
   }
+  
+  encoder.write(0);
+  
+#ifdef ANDROID_CENTRAL
+  bleHIDPeripheral.setReportIdOffset(1);
+#endif
   
   bleHIDPeripheral.setLocalName("HID Volume");
   bleHIDPeripheral.addHID(bleMultimedia);
@@ -54,28 +61,9 @@ void loop() {
     Serial.println(central.address());
 
     while (bleHIDPeripheral.connected()) {
+      pollButton();
       
-      // check the button
-      int tempButtonState = digitalRead(BUTTON_PIN);
-      if (tempButtonState != buttonState) {
-        buttonState = tempButtonState;
-        
-        if (buttonState == LOW) {
-          Serial.println(F("Mute"));
-          bleMultimedia.write(MMKEY_MUTE);
-        }
-      }
-      
-      // check the encoder
-      int encoderState = readEncoder();
-  
-      if (encoderState == -1) {
-        Serial.println(F("Volume down"));
-        bleMultimedia.write(MMKEY_VOL_DOWN);
-      } else if (encoderState == 1) {
-        Serial.println(F("Volume up"));
-        bleMultimedia.write(MMKEY_VOL_UP);
-      }
+      pollEncoder();
     }
 
     // central disconnected
@@ -84,21 +72,35 @@ void loop() {
   }
 }
 
-//
-// Based off of: http://www.circuitsathome.com/mcu/programming/reading-rotary-encoder-on-arduino
-//
-
-int8_t encStates[] = { 0, -1, 1, 0, 1, 0, 0, -1, -1, 0, 0, 1, 0, 1, -1, 0 };
-uint8_t oldAB = 0;
-
-int8_t readEncoder()
-{
-  oldAB <<= 1;
-  oldAB |= digitalRead(ENC_A_PIN);
+void pollButton() {
+  // check the button
+  int tempButtonState = digitalRead(BUTTON_PIN);
   
-  oldAB <<= 1;
-  oldAB |= digitalRead(ENC_B_PIN);
-  
-  return ( encStates[( oldAB & 0x0f )]);
+  if (tempButtonState != buttonState) {
+    buttonState = tempButtonState;
+    
+    if (buttonState == LOW) {
+      Serial.println(F("Mute"));
+      bleMultimedia.write(MMKEY_MUTE);
+    }
+  }
 }
+
+void pollEncoder() {
+  // check the encoder
+  int encoderState = encoder.read();
+  
+  if (encoderState != 0) {
+      if (encoderState > 0) {
+        Serial.println(F("Volume up"));
+        bleMultimedia.write(MMKEY_VOL_UP);
+      } else {
+        Serial.println(F("Volume down"));
+        bleMultimedia.write(MMKEY_VOL_DOWN);
+      }
+    
+    encoder.write(0);
+  }
+}
+
 
