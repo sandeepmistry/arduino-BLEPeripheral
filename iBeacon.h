@@ -8,7 +8,13 @@
 class iBeacon
 {
   public:
-    static void setData(BLEPeripheral& peripheral, const char* uuidString, uint16_t major, uint16_t minor, int8_t measuredPower);
+    iBeacon();
+
+    void begin(const char* uuidString, unsigned short major, unsigned short minor, char measuredPower);
+    void loop();
+
+  private:
+    BLEPeripheral _blePeripheral;
 };
 
 #endif

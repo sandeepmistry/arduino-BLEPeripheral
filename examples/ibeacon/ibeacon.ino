@@ -5,19 +5,17 @@
 #error "This example only works with nRF51 boards"
 #endif
 
-static BLEPeripheral blePeripheral(0, 0, 0);
+iBeacon beacon;
 
 void setup() {
-  char* uuid = "a196c876-de8c-4c47-ab5a-d7afd5ae7127";
-  uint16_t major = 0;
-  uint16_t minor = 0;
-  int8_t measuredPower = -55;
-  
-  iBeacon::setData(blePeripheral, uuid, major, minor, measuredPower);
+  char* uuid                   = "a196c876-de8c-4c47-ab5a-d7afd5ae7127";
+  unsigned short major         = 0;
+  unsigned short minor         = 0;
+  unsigned short measuredPower = -55;
 
-  blePeripheral.begin();
+  beacon.begin(uuid, major, minor, measuredPower);
 }
 
 void loop() {
-  blePeripheral.poll();
+  beacon.loop();
 }
