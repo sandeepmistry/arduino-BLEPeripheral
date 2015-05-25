@@ -44,7 +44,7 @@ Enables you to create more customized BLE Peripheral's compared to the basic UAR
 | | Bluefruit LE | 10 | 2 | 9 |
 | | BLE Shield 1.x | 9 | 8 | UNUSED |
 | | BLE Shield 2.x | 9 | 8 | UNUSED or 4/7 via jumper|
-| | Blend | 9 | 8 | UNUSED or 5/6 via jumper |
+| | Blend | 9 | 8 | UNUSED or 4/5 via jumper |
 | | Blend Micro | 6 | 7 | UNUSED or 4 |
 | | IMUduino BTLE | 10 | 7 | 9 |
 | nRF51822 |
