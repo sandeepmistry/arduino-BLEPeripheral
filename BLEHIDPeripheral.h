@@ -5,7 +5,7 @@
 #include "BLEHIDReportMapCharacteristic.h"
 #include "BLEPeripheral.h"
 
-class BLEHIDPeripheral
+class BLEHIDPeripheral : public BLEPeripheral
 {
   friend class BLEHID;
 
@@ -16,17 +16,11 @@ class BLEHIDPeripheral
     void begin();
 
     void clearBondStoreData();
-    void setLocalName(const char *localName);
-    void setDeviceName(const char* deviceName);
-    void setAppearance(unsigned short appearance);
     void setReportIdOffset(unsigned char reportIdOffset);
 
-    BLECentral central();
-    bool connected();
     void poll();
 
     void addHID(BLEHID& hid);
-    void addAttribute(BLELocalAttribute& attribute);
 
   protected:
     static BLEHIDPeripheral* instance();
@@ -34,7 +28,6 @@ class BLEHIDPeripheral
   private:
     static BLEHIDPeripheral*            _instance;
 
-    BLEPeripheral                       _blePeripheral;
     BLEBondStore                        _bleBondStore;
 
     BLEService                          _hidService;

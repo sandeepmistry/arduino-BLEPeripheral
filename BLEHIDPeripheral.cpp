@@ -5,7 +5,7 @@ static const PROGMEM unsigned char hidInformationCharacteriticValue[]   = { 0x11
 BLEHIDPeripheral* BLEHIDPeripheral::_instance = NULL;
 
 BLEHIDPeripheral::BLEHIDPeripheral(unsigned char req, unsigned char rdy, unsigned char rst) :
-  _blePeripheral(req, rdy, rst),
+  BLEPeripheral(req, rdy, rst),
   _bleBondStore(),
 
   _hidService("1812"),
@@ -32,14 +32,14 @@ BLEHIDPeripheral* BLEHIDPeripheral::instance() {
 }
 
 void BLEHIDPeripheral::begin() {
-  this->_blePeripheral.setBondStore(this->_bleBondStore);
+  this->setBondStore(this->_bleBondStore);
 
-  this->_blePeripheral.setAdvertisedServiceUuid(this->_hidService.uuid());
+  this->setAdvertisedServiceUuid(this->_hidService.uuid());
 
-  this->_blePeripheral.addAttribute(this->_hidService);
-  this->_blePeripheral.addAttribute(this->_hidInformationCharacteristic);
-  this->_blePeripheral.addAttribute(this->_hidControlPointCharacteristic);
-  this->_blePeripheral.addAttribute(this->_hidReportMapCharacteristic);
+  this->addAttribute(this->_hidService);
+  this->addAttribute(this->_hidInformationCharacteristic);
+  this->addAttribute(this->_hidControlPointCharacteristic);
+  this->addAttribute(this->_hidReportMapCharacteristic);
 
   for (int i = 0; i < this->_numHids; i++) {
     BLEHID *hid = this->_hids[i];
@@ -48,46 +48,22 @@ void BLEHIDPeripheral::begin() {
     BLELocalAttribute** attributes = hid->attributes();
 
     for (int j = 0; j < numAttributes; j++) {
-      this->_blePeripheral.addAttribute(*attributes[j]);
+      this->addAttribute(*attributes[j]);
     }
   }
 
   this->_hidReportMapCharacteristic.setHids(this->_hids, this->_numHids);
 
   // begin initialization
-  this->_blePeripheral.begin();
+  BLEPeripheral::begin();
 }
 
 void BLEHIDPeripheral::clearBondStoreData() {
   this->_bleBondStore.clearData();
 }
 
-void BLEHIDPeripheral::setLocalName(const char *localName) {
-  this->_blePeripheral.setLocalName(localName);
-}
-
-void BLEHIDPeripheral::setDeviceName(const char* deviceName) {
-  this->_blePeripheral.setDeviceName(deviceName);
-}
-
-void BLEHIDPeripheral::setAppearance(unsigned short appearance) {
-  this->_blePeripheral.setAppearance(appearance);
-}
-
-void BLEHIDPeripheral::setReportIdOffset(unsigned char reportIdOffset) {
-  this->_reportIdOffset = reportIdOffset;
-}
-
-BLECentral BLEHIDPeripheral::central() {
-  return this->_blePeripheral.central();
-}
-
-bool BLEHIDPeripheral::connected() {
-  return this->_blePeripheral.connected();
-}
-
 void BLEHIDPeripheral::poll() {
-  this->_blePeripheral.poll();
+  BLEPeripheral::poll();
 }
 
 void BLEHIDPeripheral::addHID(BLEHID& hid) {
@@ -99,8 +75,4 @@ void BLEHIDPeripheral::addHID(BLEHID& hid) {
 
   this->_hids[this->_numHids] = &hid;
   this->_numHids++;
-}
-
-void BLEHIDPeripheral::addAttribute(BLELocalAttribute& attribute) {
-  this->_blePeripheral.addAttribute(attribute);
 }
