@@ -32,19 +32,19 @@ static const char* URI_BEACON_SUFFIX_SUBSTITUTIONS[] = {
 };
 
 URIBeacon::URIBeacon(unsigned char req, unsigned char rdy, unsigned char rst) :
-  _blePeripheral(req, rdy, rst),
+  BLEPeripheral(req, rdy, rst),
   _bleService("fed8"),
   _bleCharacteristic("fed9", BLERead | BLEBroadcast, MAX_SERVICE_DATA_SIZE)
 {
-//  this->_blePeripheral.setLocalName(uri);
-//  this->_blePeripheral.setLocalName("uri-beacon");
+//  this->setLocalName(uri);
+//  this->setLocalName("uri-beacon");
 
-  this->_blePeripheral.setAdvertisedServiceUuid(this->_bleService.uuid());
+  this->setAdvertisedServiceUuid(this->_bleService.uuid());
 
-  this->_blePeripheral.setConnectable(false);
+  this->setConnectable(false);
 
-  this->_blePeripheral.addAttribute(this->_bleService);
-  this->_blePeripheral.addAttribute(this->_bleCharacteristic);
+  this->addAttribute(this->_bleService);
+  this->addAttribute(this->_bleCharacteristic);
 }
 
 void URIBeacon::begin(unsigned char flags, unsigned char power, const char* uri) {
@@ -52,7 +52,7 @@ void URIBeacon::begin(unsigned char flags, unsigned char power, const char* uri)
   this->_power = power;
   this->setURI(uri);
 
-  this->_blePeripheral.begin();
+  BLEPeripheral::begin();
 
   this->_bleCharacteristic.broadcast();
 }
@@ -65,22 +65,6 @@ void URIBeacon::setURI(const char* uri) {
   unsigned char compressedURIlength = this->compressURI(uri, (char *)&serviceData[2], sizeof(serviceData) - 2);
 
   this->_bleCharacteristic.setValue(serviceData, 2 + compressedURIlength);
-}
-
-void URIBeacon::setLocalName(const char *localName) {
-  this->_blePeripheral.setLocalName(localName);
-}
-
-void URIBeacon::setConnectable(bool connectable) {
-  this->_blePeripheral.setConnectable(connectable);
-}
-
-void URIBeacon::addAttribute(BLELocalAttribute& attribute) {
-  this->_blePeripheral.addAttribute(attribute);
-}
-
-void URIBeacon::setEventHandler(BLEPeripheralEvent event, BLEPeripheralEventHandler eventHandler) {
-  this->_blePeripheral.setEventHandler(event, eventHandler);
 }
 
 unsigned char URIBeacon::compressURI(const char* uri, char *compressedUri, unsigned char compressedUriSize) {
@@ -111,5 +95,5 @@ unsigned char URIBeacon::compressURI(const char* uri, char *compressedUri, unsig
 }
 
 void URIBeacon::loop() {
-  this->_blePeripheral.poll();
+  this->poll();
 }
