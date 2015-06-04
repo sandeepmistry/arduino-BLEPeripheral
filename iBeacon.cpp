@@ -5,9 +5,9 @@
 #include "iBeacon.h"
 
 iBeacon::iBeacon() :
-  _blePeripheral(0, 0, 0)
+  BLEPeripheral(0, 0, 0)
 {
-  this->_blePeripheral.setConnectable(false);
+  this->setConnectable(false);
 }
 
 void iBeacon::begin(const char* uuidString, unsigned short major, unsigned short minor, char measuredPower) {
@@ -33,13 +33,13 @@ void iBeacon::begin(const char* uuidString, unsigned short major, unsigned short
   manufacturerData[i++] = minor;
   manufacturerData[i++] = measuredPower;
 
-  this->_blePeripheral.setManufacturerData(manufacturerData, i);
+  this->setManufacturerData(manufacturerData, i);
 
-  this->_blePeripheral.begin();
+  BLEPeripheral::begin();
 }
 
 void iBeacon::loop() {
-  this->_blePeripheral.poll();
+  this->poll();
 }
 
 #endif

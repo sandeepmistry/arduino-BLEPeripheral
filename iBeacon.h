@@ -5,16 +5,13 @@
 
 #include "BLEPeripheral.h"
 
-class iBeacon
+class iBeacon : public BLEPeripheral
 {
   public:
     iBeacon();
 
     void begin(const char* uuidString, unsigned short major, unsigned short minor, char measuredPower);
     void loop();
-
-  private:
-    BLEPeripheral _blePeripheral;
 };
 
 #endif
