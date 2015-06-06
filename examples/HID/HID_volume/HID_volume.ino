@@ -33,17 +33,17 @@ void setup() {
 
   if (buttonState == LOW) {
     Serial.println(F("BLE HID Peripheral - clearing bond data"));
-    
+
     // clear bond store data
     bleHIDPeripheral.clearBondStoreData();
   }
-  
+
   encoder.write(0);
-  
+
 #ifdef ANDROID_CENTRAL
   bleHIDPeripheral.setReportIdOffset(1);
 #endif
-  
+
   bleHIDPeripheral.setLocalName("HID Volume");
   bleHIDPeripheral.addHID(bleMultimedia);
 
@@ -62,7 +62,7 @@ void loop() {
 
     while (bleHIDPeripheral.connected()) {
       pollButton();
-      
+
       pollEncoder();
     }
 
@@ -75,10 +75,10 @@ void loop() {
 void pollButton() {
   // check the button
   int tempButtonState = digitalRead(BUTTON_PIN);
-  
+
   if (tempButtonState != buttonState) {
     buttonState = tempButtonState;
-    
+
     if (buttonState == LOW) {
       Serial.println(F("Mute"));
       bleMultimedia.write(MMKEY_MUTE);
@@ -89,18 +89,17 @@ void pollButton() {
 void pollEncoder() {
   // check the encoder
   int encoderState = encoder.read();
-  
+
   if (encoderState != 0) {
-      if (encoderState > 0) {
-        Serial.println(F("Volume up"));
-        bleMultimedia.write(MMKEY_VOL_UP);
-      } else {
-        Serial.println(F("Volume down"));
-        bleMultimedia.write(MMKEY_VOL_DOWN);
-      }
-    
+    if (encoderState > 0) {
+      Serial.println(F("Volume up"));
+      bleMultimedia.write(MMKEY_VOL_UP);
+    } else {
+      Serial.println(F("Volume down"));
+      bleMultimedia.write(MMKEY_VOL_DOWN);
+    }
+
     encoder.write(0);
   }
 }
-
 
