@@ -71,6 +71,15 @@ Enables you to create more customized BLE Peripheral's compared to the basic UAR
 ### Download Library
 
 #### Arduino
+
+#### Using the Arduino IDE Library Manager
+
+1. Choose ```Sketch``` -> ```Include Library``` -> ```Manage Libraries...```
+2. Type ```BLEPeripheral``` into the search box.
+3. Click the row to select the library.
+4. Click the ```Install``` button to install the library.
+
+#### Using Git
 ```sh
 cd ~/Documents/Arduino/libraries/
 git clone https://github.com/sandeepmistry/arduino-BLEPeripheral BLEPeripheral
