@@ -62,6 +62,10 @@ void BLEHIDPeripheral::clearBondStoreData() {
   this->_bleBondStore.clearData();
 }
 
+void BLEHIDPeripheral::setReportIdOffset(unsigned char reportIdOffset) {
+  this->_reportIdOffset = reportIdOffset;
+}
+
 void BLEHIDPeripheral::poll() {
   BLEPeripheral::poll();
 }
