@@ -8,6 +8,8 @@
 #define BLE_RDY   7
 #define BLE_RST   4
 
+//#define ANDROID_CENTRAL
+
 // create peripheral instance, see pinouts above
 BLEHIDPeripheral bleHIDPeripheral = BLEHIDPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
 BLEKeyboard bleKeyboard;
@@ -18,9 +20,13 @@ void setup() {
   while(!Serial);
 #endif
 
-   // clear bond store data
+  // clear bond store data
   bleHIDPeripheral.clearBondStoreData();
-  
+
+#ifdef ANDROID_CENTRAL
+  bleHIDPeripheral.setReportIdOffset(1);
+#endif
+
   bleHIDPeripheral.setLocalName("HID Keyboard");
   bleHIDPeripheral.addHID(bleKeyboard);
 
@@ -44,7 +50,7 @@ void loop() {
 
         Serial.print(F("c = "));
         Serial.println(c);
-        
+
         bleKeyboard.print(c);
       }
     }
