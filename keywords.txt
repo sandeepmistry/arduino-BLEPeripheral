@@ -44,6 +44,7 @@ BLEMultimedia	KEYWORD1
 BLESystemControl	KEYWORD1
 URIBeacon	KEYWORD1
 iBeacon	KEYWORD1
+EddystoneBeacon	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
