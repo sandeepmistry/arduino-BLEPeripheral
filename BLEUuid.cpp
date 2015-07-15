@@ -22,14 +22,14 @@ BLEUuid::BLEUuid(const char * str)
   }
 }
 
-const char* BLEUuid::str() {
+const char* BLEUuid::str() const {
   return this->_str;
 }
 
-const unsigned char* BLEUuid::data() {
+const unsigned char* BLEUuid::data() const {
   return this->_data;
 }
 
-unsigned char BLEUuid::length() {
+unsigned char BLEUuid::length() const {
   return this->_length;
 }

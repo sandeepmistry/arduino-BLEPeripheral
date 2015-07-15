@@ -8,9 +8,9 @@ class BLEUuid
   public:
     BLEUuid(const char * str);
 
-    const char* str();
-    const unsigned char* data();
-    unsigned char length();
+    const char* str() const;
+    const unsigned char* data() const;
+    unsigned char length() const;
 
   private:
     const char*    _str;
