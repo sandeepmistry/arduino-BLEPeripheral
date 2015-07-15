@@ -113,13 +113,12 @@ void nRF51822::begin(unsigned char advertisementDataType,
 
   this->_advDataLen = 0;
 
-  if (this->_connectable) {
-    this->_advData[this->_advDataLen + 0] = 2;
-    this->_advData[this->_advDataLen + 1] = 0x01;
-    this->_advData[this->_advDataLen + 2] = 0x06;
+  // flags
+  this->_advData[this->_advDataLen + 0] = 2;
+  this->_advData[this->_advDataLen + 1] = 0x01;
+  this->_advData[this->_advDataLen + 2] = 0x06;
 
-    this->_advDataLen += 3;
-  }
+  this->_advDataLen += 3;
 
   if (advertisementDataType && advertisementDataLength && advertisementData) {
     this->_advData[this->_advDataLen + 0] = advertisementDataLength + 1;
