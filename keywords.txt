@@ -42,7 +42,6 @@ BLEMouse	KEYWORD1
 BLEKeyboard	KEYWORD1
 BLEMultimedia	KEYWORD1
 BLESystemControl	KEYWORD1
-URIBeacon	KEYWORD1
 iBeacon	KEYWORD1
 EddystoneBeacon	KEYWORD1
 
