@@ -16,6 +16,8 @@
 #define ENC_RIGHT_PIN 3
 #define ENC_LEFT_PIN  4
 
+#define INPUT_POLL_INTERVAL 100
+
 //#define ANDROID_CENTRAL
 
 BLEHIDPeripheral bleHIDPeripheral = BLEHIDPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
@@ -24,6 +26,7 @@ BLEMultimedia bleMultimedia;
 Encoder encoder(ENC_RIGHT_PIN, ENC_LEFT_PIN);
 
 int buttonState;
+unsigned long lastInputPollTime = 0;
 
 void setup() {
   Serial.begin(115200);
@@ -61,14 +64,23 @@ void loop() {
     Serial.println(central.address());
 
     while (bleHIDPeripheral.connected()) {
-      pollButton();
-
-      pollEncoder();
+      pollInputs();
     }
 
     // central disconnected
     Serial.print(F("Disconnected from central: "));
     Serial.println(central.address());
+  }
+}
+
+void pollInputs() {
+  // only poll the input every 100ms
+  if (millis() - lastInputPollTime > INPUT_POLL_INTERVAL) {
+    pollButton();
+
+    pollEncoder();
+
+    lastInputPollTime = millis();
   }
 }
 
@@ -102,4 +114,3 @@ void pollEncoder() {
     encoder.write(0);
   }
 }
-
