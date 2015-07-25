@@ -995,18 +995,21 @@ void nRF8001::poll() {
         break;
 
       case ACI_EVT_PIPE_STATUS: {
-        uint64_t* openPipes = (uint64_t*)&aciEvt->params.pipe_status.pipes_open_bitmap;
-        uint64_t* closedPipes = (uint64_t*)&aciEvt->params.pipe_status.pipes_closed_bitmap;
-
 #ifdef NRF_8001_DEBUG
         Serial.println(F("Evt Pipe Status "));
+#endif
+        uint64_t closedPipes;
+        memcpy(&closedPipes, aciEvt->params.pipe_status.pipes_closed_bitmap, sizeof(closedPipes));
 
-        Serial.println((unsigned long)*openPipes, HEX);
-        Serial.println((unsigned long)*closedPipes, HEX);
+#ifdef NRF_8001_DEBUG
+        uint64_t openPipes;
+        memcpy(&openPipes, aciEvt->params.pipe_status.pipes_open_bitmap, sizeof(openPipes));
+
+        Serial.println((unsigned long)openPipes, HEX);
+        Serial.println((unsigned long)closedPipes, HEX);
 #endif
         bool discoveryFinished = lib_aci_is_discovery_finished(&this->_aciState);
-
-        if ((unsigned long)*closedPipes == 0 && !discoveryFinished) {
+        if (closedPipes == 0 && !discoveryFinished) {
           this->_closedPipesCleared = true;
         }
 
