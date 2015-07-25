@@ -1,14 +1,6 @@
 #ifndef _BLE_ATTRIBUTE_H_
 #define _BLE_ATTRIBUTE_H_
 
-#ifndef max
-#define max(a,b) (((a) > (b)) ? (a) : (b))
-#endif
-
-#ifndef min
-#define min(a,b) (((a) < (b)) ? (a) : (b))
-#endif
-
 enum BLEAttributeType {
   BLETypeService        = 0x2800,
   BLETypeCharacteristic = 0x2803,
