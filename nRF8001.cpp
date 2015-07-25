@@ -122,7 +122,7 @@ nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
   this->_aciState.aci_pins.reqn_pin               = req;
   this->_aciState.aci_pins.rdyn_pin               = rdy;
 
-#ifndef SPI_HAS_TRANSACTION
+#if !defined(SPI_HAS_TRANSACTION) || defined(__SAMD21G18A__)
 #if defined(__SAM3X8E__)
   this->_aciState.aci_pins.spi_clock_divider      = 42;
 #else

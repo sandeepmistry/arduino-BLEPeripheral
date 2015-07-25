@@ -72,7 +72,7 @@ typedef struct aci_pins_t
 {
 	uint8_t	reqn_pin;				//Required
 	uint8_t	rdyn_pin;				//Required
-#ifndef SPI_HAS_TRANSACTION
+#if !defined(SPI_HAS_TRANSACTION) || defined(__SAMD21G18A__)
 	uint8_t spi_clock_divider;      //Required : Clock divider on the SPI clock : nRF8001 supports a maximum clock of 3MHz
 #endif
 	uint8_t	reset_pin;				//Recommended but optional - Set it to UNUSED when not connected
