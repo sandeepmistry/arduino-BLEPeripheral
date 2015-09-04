@@ -29,7 +29,7 @@ int buttonState;
 unsigned long lastInputPollTime = 0;
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
 
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   buttonState = digitalRead(BUTTON_PIN);
