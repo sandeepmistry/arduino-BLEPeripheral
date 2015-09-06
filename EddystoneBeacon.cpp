@@ -44,7 +44,7 @@ EddystoneBeacon::EddystoneBeacon(unsigned char req, unsigned char rdy, unsigned 
   this->addAttribute(this->_bleCharacteristic);
 }
 
-void EddystoneBeacon::begin(unsigned char power, const BLEUuid& uid) {
+void EddystoneBeacon::begin(char power, const BLEUuid& uid) {
   unsigned char serviceData[MAX_SERVICE_DATA_SIZE];
 
   this->_power = power;
@@ -68,7 +68,7 @@ void EddystoneBeacon::begin(unsigned char power, const BLEUuid& uid) {
   this->_bleCharacteristic.broadcast();
 }
 
-void EddystoneBeacon::begin(unsigned char power, const char* uri) {
+void EddystoneBeacon::begin(char power, const char* uri) {
   this->_power = power;
   this->setURI(uri);
 

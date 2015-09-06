@@ -9,8 +9,8 @@ class EddystoneBeacon : public BLEPeripheral
   public:
     EddystoneBeacon(unsigned char req, unsigned char rdy, unsigned char rst);
 
-    void begin(unsigned char power, const BLEUuid& uid);
-    void begin(unsigned char power, const char* uri);
+    void begin(char power, const BLEUuid& uid);
+    void begin(char power, const char* uri);
     void loop();
 
     void setURI(const char* uri);
@@ -18,7 +18,7 @@ class EddystoneBeacon : public BLEPeripheral
   private:
     unsigned char compressURI(const char* uri, char *compressedUri, unsigned char compressedUriSize);
 
-    unsigned char     _power;
+    char              _power;
 
     BLEService        _bleService;
     BLECharacteristic _bleCharacteristic;
