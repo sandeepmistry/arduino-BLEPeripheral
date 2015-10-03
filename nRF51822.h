@@ -2,13 +2,11 @@
 #define _NRF_51822_H_
 
 #ifdef __RFduino__
-  #include <utility/nrf51822/s110/ble_gatts.h>
-  #include <utility/nrf51822/s110/ble_gattc.h>
-  #include <utility/nrf51822/s110/nrf_soc.h>
+  #include <utility/RFduino/ble_gatts.h>
+  #include <utility/RFduino/ble_gattc.h>
 #else
   #include <s110/ble_gatts.h>
   #include <s110/ble_gattc.h>
-  #include <s110/nrf_soc.h>
 #endif
 
 #include "BLEDevice.h"

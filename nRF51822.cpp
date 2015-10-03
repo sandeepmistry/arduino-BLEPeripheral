@@ -1,19 +1,13 @@
 #if defined(NRF51) || defined(__RFduino__)
 
 #ifdef __RFduino__
-  #include <utility/nrf51822/s110/ble_gatts.h>
-  #include <utility/nrf51822/s110/ble_hci.h>
-  #include <utility/nrf51822/sd_common/ble_stack_handler_types.h>
-  #include <utility/nrf51822/nordic_common.h>
-  #include <utility/nrf51822/s110/nrf_sdm.h>
-  #include <utility/nrf51822/s110/nrf_soc.h>
+  #include <utility/RFduino/ble.h>
+  #include <utility/RFduino/ble_hci.h>
+  #include <utility/RFduino/nrf_sdm.h>
 #else
-  #include <s110/ble_gatts.h>
+  #include <s110/ble.h>
   #include <s110/ble_hci.h>
-  #include <sd_common/ble_stack_handler_types.h>
-  #include <nordic_common.h>
   #include <s110/nrf_sdm.h>
-  #include <s110/nrf_soc.h>
 #endif
 
 #include "Arduino.h"
@@ -28,6 +22,8 @@
 #include "nRF51822.h"
 
 // #define NRF_51822_DEBUG
+
+#define BLE_STACK_EVT_MSG_BUF_SIZE       (sizeof(ble_evt_t) + (GATT_MTU_SIZE_DEFAULT))
 
 nRF51822::nRF51822() :
   BLEDevice(),
