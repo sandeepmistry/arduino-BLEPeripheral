@@ -38,7 +38,7 @@ class BLEPeripheral : public BLEDeviceEventListener,
                         public BLERemoteCharacteristicValueChangeListener
 {
   public:
-    BLEPeripheral(unsigned char req, unsigned char rdy, unsigned char rst);
+    BLEPeripheral(BLE_Tx_Power_Level tx_power_level, unsigned char req, unsigned char rdy, unsigned char rst);
     virtual ~BLEPeripheral();
 
     void begin();

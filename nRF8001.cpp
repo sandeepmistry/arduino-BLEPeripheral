@@ -101,7 +101,7 @@ uint16_t crc_16_ccitt(uint16_t crc, uint8_t * data_in, uint16_t data_len) {
   return crc;
 }
 
-nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
+nRF8001::nRF8001(BLE_Tx_Power_Level power_level, unsigned char req, unsigned char rdy, unsigned char rst) :
   BLEDevice(),
 
   _localPipeInfo(NULL),
@@ -117,7 +117,9 @@ nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
   _dynamicDataSequenceNo(0),
   _storeDynamicData(false),
 
-  _crcSeed(0xFFFF)
+  _crcSeed(0xFFFF),
+  _tx_power_level(power_level)
+  
 {
   this->_aciState.aci_pins.reqn_pin               = req;
   this->_aciState.aci_pins.rdyn_pin               = rdy;
@@ -805,6 +807,43 @@ void nRF8001::begin(unsigned char advertisementDataType,
   setupMsgData->data[0]  = 3;
 
   this->sendSetupMessage(&setupMsg, 0xf, crcOffset, true);
+  
+  // Set BLE RF output power
+  // Patch added by Arne Brune Olsen (https://github.com/linuxdevel/arduino-BLEPeripheral)
+  // 2015
+  {
+	aci_device_output_power_t device_tx_power;
+	switch (this->_tx_power_level) {
+		case BLE_OUTPUT_POWER_MINUS_18DBM:
+			device_tx_power = ACI_DEVICE_OUTPUT_POWER_MINUS_18DBM;
+		break;
+		
+		case BLE_OUTPUT_POWER_MINUS_12DBM:
+			device_tx_power = ACI_DEVICE_OUTPUT_POWER_MINUS_12DBM;
+		break;
+		
+		case BLE_OUTPUT_POWER_MINUS_6DBM:
+			device_tx_power = ACI_DEVICE_OUTPUT_POWER_MINUS_6DBM;
+		break;
+		
+		case BLE_OUTPUT_POWER_0DBM:
+		default:
+			device_tx_power = ACI_DEVICE_OUTPUT_POWER_0DBM;
+		break;
+	}
+	
+	if (!lib_aci_set_tx_power(device_tx_power)) {
+#ifdef NRF_8001_DEBUG
+		Serial.println("FAILED lib_aci_set_tx_power"); 
+#endif
+	} else {
+#ifdef NRF_8001_DEBUG
+		Serial.println("lib_aci_set_tx_power SUCCESS");
+#endif
+	}
+	
+  }
+  
 }
 
 void nRF8001::poll() {

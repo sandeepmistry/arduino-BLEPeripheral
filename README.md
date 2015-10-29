@@ -1,4 +1,5 @@
 # Arduino BLEPeripheral
+Linuxdevel fork in order to add some missing functionality.
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sandeepmistry/arduino-BLEPeripheral?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 

@@ -31,8 +31,8 @@ static const char* EDDYSTONE_URL_BEACON_SUFFIX_SUBSTITUTIONS[] = {
   ".gov"
 };
 
-EddystoneBeacon::EddystoneBeacon(unsigned char req, unsigned char rdy, unsigned char rst) :
-  BLEPeripheral(req, rdy, rst),
+EddystoneBeacon::EddystoneBeacon(BLE_Tx_Power_Level tx_power_level, unsigned char req, unsigned char rdy, unsigned char rst) :
+  BLEPeripheral(tx_power_level, req, rdy, rst),
   _bleService("feaa"),
   _bleCharacteristic("feab", BLERead | BLEBroadcast, MAX_SERVICE_DATA_SIZE)
 {

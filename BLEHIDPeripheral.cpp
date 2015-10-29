@@ -4,8 +4,8 @@ static const PROGMEM unsigned char hidInformationCharacteriticValue[]   = { 0x11
 
 BLEHIDPeripheral* BLEHIDPeripheral::_instance = NULL;
 
-BLEHIDPeripheral::BLEHIDPeripheral(unsigned char req, unsigned char rdy, unsigned char rst) :
-  BLEPeripheral(req, rdy, rst),
+BLEHIDPeripheral::BLEHIDPeripheral(BLE_Tx_Power_Level tx_power_level, unsigned char req, unsigned char rdy, unsigned char rst) :
+  BLEPeripheral(tx_power_level, req, rdy, rst),
   _bleBondStore(),
 
   _hidService("1812"),
