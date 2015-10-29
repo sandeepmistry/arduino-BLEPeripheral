@@ -65,6 +65,9 @@ Enables you to create more customized BLE Peripheral's compared to the basic UAR
    * LC
  * [MPIDE](http://chipkit.net/started/install-chipkit-software/) ([ChipKit](http://chipkit.net))
    * PIC32MX
+ * [Arduino](https://www.arduino.cc/en/Main/arduinoBoardMega) ([Arduino Mega](https://www.arduino.cc/en/Main/arduinoBoardMega))
+   * Arduino MEGA
+   * You may experience memory problems on Arduino boards with 32kb flash storage (e.g. Uno,Leonardo)
 
 ## Usage
 
