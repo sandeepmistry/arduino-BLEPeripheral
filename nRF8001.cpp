@@ -807,6 +807,39 @@ void nRF8001::begin(unsigned char advertisementDataType,
   setupMsgData->data[0]  = 3;
 
   this->sendSetupMessage(&setupMsg, 0xf, crcOffset, true);
+  
+  // Set BLE RF output power
+  // Patch added by Arne Brune Olsen (https://github.com/linuxdevel/arduino-BLEPeripheral)
+  // 2015
+  {
+	aci_device_output_power_t device_tx_power;
+	switch (this->_tx_power_level) {
+		case BLE_OUTPUT_POWER_MINUS_18DBM:
+			device_tx_power = ACI_DEVICE_OUTPUT_POWER_MINUS_18DBM;
+		break;
+		
+		case BLE_OUTPUT_POWER_MINUS_12DBM:
+			device_tx_power = ACI_DEVICE_OUTPUT_POWER_MINUS_12DBM;
+		break;
+		
+		case BLE_OUTPUT_POWER_MINUS_6DBM:
+			device_tx_power = ACI_DEVICE_OUTPUT_POWER_MINUS_6DBM;
+		break;
+		
+		case BLE_OUTPUT_POWER_0DBM:
+		default:
+			device_tx_power = ACI_DEVICE_OUTPUT_POWER_0DBM;
+		break;
+	}
+	
+	if (!lib_aci_set_tx_power(device_tx_power)) {
+		Serial.println("FAILED lib_aci_set_tx_power"); 
+	} else {
+		Serial.println("lib_aci_set_tx_power SUCCESS");
+	}
+	
+  }
+  
 }
 
 void nRF8001::poll() {
