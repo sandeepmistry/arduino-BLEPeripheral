@@ -833,9 +833,13 @@ void nRF8001::begin(unsigned char advertisementDataType,
 	}
 	
 	if (!lib_aci_set_tx_power(device_tx_power)) {
+#ifdef NRF_8001_DEBUG
 		Serial.println("FAILED lib_aci_set_tx_power"); 
+#endif
 	} else {
+#ifdef NRF_8001_DEBUG
 		Serial.println("lib_aci_set_tx_power SUCCESS");
+#endif
 	}
 	
   }
