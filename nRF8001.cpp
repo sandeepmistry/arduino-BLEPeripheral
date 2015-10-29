@@ -101,7 +101,7 @@ uint16_t crc_16_ccitt(uint16_t crc, uint8_t * data_in, uint16_t data_len) {
   return crc;
 }
 
-nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
+nRF8001::nRF8001(BLE_Tx_Power_Level power_level, unsigned char req, unsigned char rdy, unsigned char rst) :
   BLEDevice(),
 
   _localPipeInfo(NULL),
@@ -117,7 +117,9 @@ nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
   _dynamicDataSequenceNo(0),
   _storeDynamicData(false),
 
-  _crcSeed(0xFFFF)
+  _crcSeed(0xFFFF),
+  _tx_power_level(power_level)
+  
 {
   this->_aciState.aci_pins.reqn_pin               = req;
   this->_aciState.aci_pins.rdyn_pin               = rdy;

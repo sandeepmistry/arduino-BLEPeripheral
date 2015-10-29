@@ -39,7 +39,7 @@ class nRF8001 : protected BLEDevice
       unsigned char             rxReqPipe;
     };
 
-    nRF8001(unsigned char req, unsigned char rdy, unsigned char rst);
+    nRF8001(BLE_Tx_Power_Level power_level, unsigned char req, unsigned char rdy, unsigned char rst);
 
     virtual ~nRF8001();
 
@@ -103,6 +103,8 @@ class nRF8001 : protected BLEDevice
     bool                        _storeDynamicData;
 
     unsigned short              _crcSeed;
+	
+	BLE_Tx_Power_Level 			_tx_power_level;
 };
 
 #endif

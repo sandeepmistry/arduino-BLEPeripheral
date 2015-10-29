@@ -10,6 +10,13 @@
 
 class BLEDevice;
 
+typedef enum {
+		BLE_OUTPUT_POWER_MINUS_18DBM = 0x00, /**< Output power set to -18dBm */
+		BLE_OUTPUT_POWER_MINUS_12DBM = 0x01, /**< Output power set to -12dBm */
+		BLE_OUTPUT_POWER_MINUS_6DBM  = 0x02, /**< Output power set to -6dBm  */
+		BLE_OUTPUT_POWER_0DBM  = 0x03  /**< Output power set to 0dBm   - DEFAULT*/
+  } BLE_Tx_Power_Level;
+
 class BLEDeviceEventListener
 {
   public:
@@ -32,8 +39,8 @@ class BLEDeviceEventListener
 
 class BLEDevice
 {
-  friend class BLEPeripheral;
-
+  friend class BLEPeripheral; 
+  
   protected:
     BLEDevice();
 
