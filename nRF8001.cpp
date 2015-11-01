@@ -1366,6 +1366,22 @@ bool nRF8001::unsubcribeRemoteCharacteristic(BLERemoteCharacteristic& characteri
   return success;
 }
 
+bool nRF8001::setTxPower(int txPower) {
+  aci_device_output_power_t outputPower;
+
+  if (txPower <= -18) {
+    outputPower = ACI_DEVICE_OUTPUT_POWER_MINUS_18DBM;
+  } else if (txPower <= -12) {
+    outputPower = ACI_DEVICE_OUTPUT_POWER_MINUS_12DBM;
+  } else if (txPower <= -6) {
+    outputPower = ACI_DEVICE_OUTPUT_POWER_MINUS_6DBM;
+  } else {
+    outputPower = ACI_DEVICE_OUTPUT_POWER_0DBM;
+  }
+
+  return lib_aci_set_tx_power(outputPower);
+}
+
 void nRF8001::startAdvertising() {
   uint16_t advertisingInterval = (this->_advertisingInterval * 16) / 10;
 
