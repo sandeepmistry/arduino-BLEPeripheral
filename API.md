@@ -37,6 +37,18 @@ void setAdvertisingInterval(unsigned short advertisingInterval);
 
  * set advertising interval in ms, default is 100ms
 
+## Set TX Power
+
+```c
+bool setTxPower(int txPower);
+```
+
+ * set TX power in dBm, default value is 0 dBm, must be called after ```begin```. Returns ``true`` on success, ``false`` otherwise.
+
+ **Note**: only certain values can be set with exactly, otherwise the next settable value is used
+   * nRF8001: -18, -12, -6, 0
+   * nRF51822: -40, -30, -20, -16, -12, -8, -4, 0, 4
+
 ## Connectable
 
 ```c

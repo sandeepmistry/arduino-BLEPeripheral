@@ -1075,6 +1075,30 @@ bool nRF51822::unsubcribeRemoteCharacteristic(BLERemoteCharacteristic& character
   return success;
 }
 
+bool nRF51822::setTxPower(int txPower) {
+  if (txPower <= -40) {
+    txPower = -40;
+  } else if (txPower <= -30) {
+    txPower = -30;
+  } else if (txPower <= -20) {
+    txPower = -20;
+  } else if (txPower <= -16) {
+    txPower = -16;
+  } else if (txPower <= -12) {
+    txPower = -12;
+  } else if (txPower <= -8) {
+    txPower = -8;
+  } else if (txPower <= -4) {
+    txPower = -4;
+  } else if (txPower <= 0) {
+    txPower = 0;
+  } else {
+    txPower = 4;
+  }
+
+  return (sd_ble_gap_tx_power_set(txPower) == NRF_SUCCESS);
+}
+
 void nRF51822::startAdvertising() {
 #ifdef NRF_51822_DEBUG
   Serial.println(F("Start advertisement"));
