@@ -100,7 +100,7 @@ void BLEBondStore::getData(unsigned char* data, unsigned int offset, unsigned in
     data[i] = eeprom_read_byte((unsigned char *)this->_offset + offset + i + 1);
   }
 #elif defined(NRF51) || defined(__RFduino__) // ignores offset
-  uint32_t *in = (this->_flashPageStartAddress + 1);
+  uint32_t *in = this->_flashPageStartAddress;
   uint32_t *out  = (uint32_t*)data;
 
   for(int i = 0; i < length; i += 4) { // assumes length is multiple of 4
