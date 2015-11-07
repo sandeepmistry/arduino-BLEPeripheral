@@ -55,9 +55,9 @@ Enables you to create more customized BLE Peripheral's compared to the basic UAR
 ## Compatible IDE's and MCU's
 
  * [Arduino IDE](http://arduino.cc/en/Main/Software#toc1)
-   * AVR
-   * SAM3X8E
-   * SAMD21G18A
+   * AVR (Uno, Lenoardo, Mega, etc.)
+   * SAM3X8E (Due)
+   * SAMD21G18A (Zero)
  * [Teensy](https://www.pjrc.com/teensy/) (via [Teensyduino](https://www.pjrc.com/teensy/td_download.html))
    * 2.0
    * 3.0
