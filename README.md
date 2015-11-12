@@ -26,6 +26,8 @@ Enables you to create more customized BLE Peripheral's compared to the basic UAR
    * [OLIMEXINO-NANO-BLE](https://www.olimex.com/Products/Duino/AVR/OLIMEXINO-NANO-BLE/)
  * [Jaycon Systems](http://www.jayconsystems.com)
    * [nRF8001 Bluetooth Breakout Board](http://www.jayconsystems.com/nrf8001-breakout-board.html)
+ * [TinyCircuits](https://www.tiny-circuits.com)
+  * [TinyShield Bluetooth Low Energy - Nordic](https://www.tiny-circuits.com/tiny-shield-bluetooth-low-energy-nordic.html)
 
 **Note:** Does not require use of [nRFgo Studio](http://www.nordicsemi.com/chi/node_176/2.4GHz-RF/nRFgo-Studio)! However, uses more code space.
 
