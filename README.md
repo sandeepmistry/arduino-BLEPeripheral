@@ -49,6 +49,7 @@ Enables you to create more customized BLE Peripheral's compared to the basic UAR
 | | Blend | 9 | 8 | UNUSED or 4/5 via jumper |
 | | Blend Micro | 6 | 7 | UNUSED or 4 |
 | | IMUduino BTLE | 10 | 7 | 9 |
+| | TinyShield Bluetooth Low Energy | 10 | 2 | 9 |
 | nRF51822 |
 | | RedBearLab nRF51822 | UNUSED | UNUSED | UNUSED |
 | | BLE Nano | UNUSED | UNUSED | UNUSED |
