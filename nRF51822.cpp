@@ -29,7 +29,6 @@ nRF51822::nRF51822() :
   BLEDevice(),
 
   _connectionHandle(BLE_CONN_HANDLE_INVALID),
-  _storeAuthStatus(false),
 
   _advDataLen(0),
   _broadcastCharacteristic(NULL),
@@ -442,7 +441,6 @@ void nRF51822::poll() {
 #endif
 
         this->_connectionHandle = bleEvt->evt.gap_evt.conn_handle;
-        this->_storeAuthStatus = false;
 
         if (this->_eventListener) {
           this->_eventListener->BLEDeviceConnected(*this, bleEvt->evt.gap_evt.params.connected.peer_addr.addr);
@@ -485,15 +483,6 @@ void nRF51822::poll() {
         }
 
         this->_remoteRequestInProgress = false;
-
-        if (this->_bondStore && this->_storeAuthStatus) {
-#ifdef NRF_51822_DEBUG
-          Serial.println(F("Storing bond data"));
-#endif
-          this->_bondStore->putData(this->_authStatusBuffer, 0, sizeof(this->_authStatusBuffer));
-
-          this->_storeAuthStatus = false;
-        }
 
         this->startAdvertising();
         break;
@@ -575,8 +564,14 @@ void nRF51822::poll() {
 #ifdef NRF_51822_DEBUG
         Serial.println(F("Evt Auth Status"));
 #endif
-        this->_storeAuthStatus = true;
         *this->_authStatus = bleEvt->evt.gap_evt.params.auth_status;
+
+        if (this->_bondStore) {
+#ifdef NRF_51822_DEBUG
+          Serial.println(F("Storing bond data"));
+#endif
+          this->_bondStore->putData(this->_authStatusBuffer, 0, sizeof(this->_authStatusBuffer));
+        }
 
         if (this->_eventListener) {
           this->_eventListener->BLEDeviceBonded(*this);

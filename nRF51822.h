@@ -87,7 +87,6 @@ class nRF51822 : public BLEDevice
     BLECharacteristic*                _broadcastCharacteristic;
 
     uint16_t                          _connectionHandle;
-    bool                              _storeAuthStatus;
     uint8_t                           _authStatusBuffer[((sizeof(ble_gap_evt_auth_status_t) + 3) / 4) * 4]  __attribute__ ((__aligned__(4)));
     ble_gap_evt_auth_status_t*        _authStatus;
 
