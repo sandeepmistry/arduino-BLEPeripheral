@@ -446,7 +446,9 @@ void nRF51822::poll() {
           this->_eventListener->BLEDeviceConnected(*this, bleEvt->evt.gap_evt.params.connected.peer_addr.addr);
         }
 
-        sd_ble_gattc_primary_services_discover(this->_connectionHandle, 1, NULL);
+        if (this->_numRemoteServices > 0) {
+          sd_ble_gattc_primary_services_discover(this->_connectionHandle, 1, NULL);
+        }
         break;
 
       case BLE_GAP_EVT_DISCONNECTED:
