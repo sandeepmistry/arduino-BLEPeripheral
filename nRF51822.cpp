@@ -292,7 +292,7 @@ void nRF51822::begin(unsigned char advertisementDataType,
           for (int j = 0; j < valueLength; j++) {
             value[j] = (*characteristic)[j];
           }
-Serial.println(valueLength);
+
           sd_ble_gatts_value_set(this->_localCharacteristicInfo[localCharacteristicIndex].handles.value_handle, 0, &valueLength, value);
         }
 
