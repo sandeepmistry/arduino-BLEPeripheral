@@ -257,7 +257,7 @@ void nRF51822::begin(unsigned char advertisementDataType,
         characteristicValueAttributeMetaData.vloc       = BLE_GATTS_VLOC_STACK;
         characteristicValueAttributeMetaData.rd_auth    = 0;
         characteristicValueAttributeMetaData.wr_auth    = 0;
-        characteristicValueAttributeMetaData.vlen       = 0;
+        characteristicValueAttributeMetaData.vlen       = !characteristic->fixedLength();
 
         for (int j = (i + 1); j < numLocalAttributes; j++) {
           localAttribute = localAttributes[j];
