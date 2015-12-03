@@ -2,7 +2,8 @@
 
 #include "BLEUuid.h"
 
-BLEUuid::BLEUuid(const char * str)
+BLEUuid::BLEUuid(const char * str) :
+  _str(str)
 {
   char temp[] = {0, 0, 0};
 
