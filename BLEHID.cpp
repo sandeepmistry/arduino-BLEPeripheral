@@ -22,7 +22,7 @@ unsigned char BLEHID::getDescriptorLength() {
 }
 
 unsigned char BLEHID::getDescriptorValueAtOffset(unsigned char offset) {
-  if (offset == this->_reportIdOffset) {
+  if (offset == this->_reportIdOffset && this->_reportIdOffset) {
     return this->_reportId;
   } else {
     return pgm_read_byte_near(&this->_descriptor[offset]);
