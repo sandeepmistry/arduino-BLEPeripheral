@@ -1,9 +1,13 @@
 #ifndef _NRF_51822_H_
 #define _NRF_51822_H_
 
-#ifdef __RFduino__
+#if defined(__RFduino__)
   #include <utility/RFduino/ble_gatts.h>
   #include <utility/RFduino/ble_gattc.h>
+#elif defined(NRF51_S130)
+  #include <ble_gatts.h>
+  #include <ble_gattc.h>
+  #include <nrf_soc.h>
 #else
   #include <s110/ble_gatts.h>
   #include <s110/ble_gattc.h>
@@ -87,8 +91,13 @@ class nRF51822 : public BLEDevice
     BLECharacteristic*                _broadcastCharacteristic;
 
     uint16_t                          _connectionHandle;
+#ifdef NRF51_S130
+    uint8_t                           _bondData[((sizeof(ble_gap_enc_key_t) + 3) / 4) * 4]  __attribute__ ((__aligned__(4)));
+    ble_gap_enc_key_t*                _encKey;
+#else
     uint8_t                           _authStatusBuffer[((sizeof(ble_gap_evt_auth_status_t) + 3) / 4) * 4]  __attribute__ ((__aligned__(4)));
     ble_gap_evt_auth_status_t*        _authStatus;
+#endif
 
     unsigned char                     _numLocalCharacteristics;
     struct localCharacteristicInfo*   _localCharacteristicInfo;
