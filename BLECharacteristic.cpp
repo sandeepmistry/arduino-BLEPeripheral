@@ -89,7 +89,7 @@ bool BLECharacteristic::broadcast() {
   bool success = false;
 
   if (this->_listener) {
-    success = this-_listener->broadcastCharacteristic(*this);
+    success = this->_listener->broadcastCharacteristic(*this);
   }
 
   return success;
