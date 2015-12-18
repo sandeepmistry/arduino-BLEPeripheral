@@ -10,6 +10,11 @@
   * broadcast [physical web](http://physical-web.org) beacon
 * [test](test)
   * read/write/notify characteristic for counter
+* [uart](uart)
+  * serial port service compatible with following applications:
+    - nRF Toolbox - [iOS](https://itunes.apple.com/us/app/nrf-toolbox/id820906058?mt=8) | [Android](https://play.google.com/store/apps/details?id=no.nordicsemi.android.nrftoolbox)
+    - nRF UART - [iOS](https://itunes.apple.com/us/app/nrf-uart/id614594903?mt=8) | [Android](https://play.google.com/store/apps/details?id=com.nordicsemi.nrfUARTv2)
+    - Bluefruit LE - [iOS](https://itunes.apple.com/us/app/adafruit-bluefruit-le-connect/id830125974?mt=8) | [Android](https://play.google.com/store/apps/details?id=com.adafruit.bluefruit.le.connect)
 
 # RedBearLab - BLE Controller App
 
