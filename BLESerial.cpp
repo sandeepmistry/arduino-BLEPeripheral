@@ -1,6 +1,7 @@
 #include "BLESerial.h"
 
-//#define BLE_SERIAL_DEBUG
+// #define BLE_SERIAL_DEBUG
+
 BLESerial* BLESerial::_instance = NULL;
 
 BLESerial::BLESerial(unsigned char req, unsigned char rdy, unsigned char rst) :
@@ -19,12 +20,9 @@ BLESerial::BLESerial(unsigned char req, unsigned char rdy, unsigned char rst) :
   this->_rxCharacteristic.setEventHandler(BLEWritten, BLESerial::_received);
   addAttribute(this->_txCharacteristic);
   addAttribute(this->_txNameDescriptor);
-  #ifdef BLE_SERIAL_DEBUG
-    Serial.println(F("BLESerial::constructor()"));
-  #endif
 }
 
-void BLESerial::begin() {
+void BLESerial::begin(...) {
   BLEPeripheral::begin();
   #ifdef BLE_SERIAL_DEBUG
     Serial.println(F("BLESerial::begin()"));
@@ -32,8 +30,15 @@ void BLESerial::begin() {
 }
 
 void BLESerial::poll() {
-  BLEPeripheral::poll();
+  this->_connected = BLEPeripheral::connected();
   if (millis() > this->_flushed + 100) flush();
+}
+
+void BLESerial::end() {
+  this->_rxCharacteristic.setEventHandler(BLEWritten, NULL);
+  this->_rxHead = this->_rxTail = 0;
+  flush();
+  BLEPeripheral::disconnect();
 }
 
 int BLESerial::available(void) {
@@ -72,7 +77,7 @@ int BLESerial::read(void) {
 
 void BLESerial::flush(void) {
   if (this->_txCount == 0) return;
-  this->_txCharacteristic.setValue(this->_txBuffer, this->_txCount);
+  if (this->_connected) this->_txCharacteristic.setValue(this->_txBuffer, this->_txCount);
   this->_flushed = millis();
   this->_txCount = 0;
   #ifdef BLE_SERIAL_DEBUG
@@ -94,7 +99,7 @@ size_t BLESerial::write(uint8_t byte) {
 }
 
 BLESerial::operator bool() {
-  bool retval = this->_txCharacteristic.subscribed();
+  bool retval = this->_connected = BLEPeripheral::connected();
   #ifdef BLE_SERIAL_DEBUG
     Serial.print(F("BLESerial::operator bool() = "));
     Serial.println(retval);

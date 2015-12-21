@@ -9,8 +9,9 @@ class BLESerial : public BLEPeripheral, public Stream
   public:
     BLESerial(unsigned char req, unsigned char rdy, unsigned char rst);
 
-    void begin();
+    void begin(...);
     void poll();
+    void end();
 
     virtual int available(void);
     virtual int peek(void);
@@ -21,8 +22,9 @@ class BLESerial : public BLEPeripheral, public Stream
     virtual operator bool();
 
   private:
-    static BLESerial* _instance;
+    bool _connected;
     unsigned long _flushed;
+    static BLESerial* _instance;
 
     size_t _rxHead;
     size_t _rxTail;
