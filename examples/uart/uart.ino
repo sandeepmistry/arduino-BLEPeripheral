@@ -1,7 +1,6 @@
 /*
  * BLESerial - UART
- * Provide UART service compatible with Nordic's *nRF Toolbox*, *nRF UART* and Adafruit's *Bluefruit LE*
- * iOS/Android apps.
+ * Create UART service compatible with Nordic's *nRF Toolbox* and Adafruit's *Bluefruit LE* iOS/Android apps.
  *
  * BLESerial class implements same protocols as Serial port and can be used as it's wireless replacement.
  * Data transfers are routed through BLE UART service with TX and RX characteristics. To make the UART
@@ -12,10 +11,11 @@
  * strengths everything works well.
  */
 
+
 // Import libraries (BLEPeripheral depends on SPI)
 #include <SPI.h>
 #include <BLEPeripheral.h>
-#include <BLESerial.h>
+#include "BLESerial.h"
 
 // define pins (varies per shield/board)
 #define BLE_REQ   10
@@ -27,7 +27,7 @@ BLESerial BLESerial(BLE_REQ, BLE_RDY, BLE_RST);
 
 
 void setup() {
-  // custom services or characteristics can be added too
+  // custom services and characteristics can be added too
   BLESerial.setLocalName("UART");
 
   Serial.begin(115200);
