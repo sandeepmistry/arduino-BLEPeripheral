@@ -36,8 +36,6 @@ EddystoneBeacon::EddystoneBeacon(unsigned char req, unsigned char rdy, unsigned 
   _bleService("feaa"),
   _bleCharacteristic("feab", BLERead | BLEBroadcast, MAX_SERVICE_DATA_SIZE)
 {
-  this->setAdvertisedServiceUuid(this->_bleService.uuid());
-
   this->setConnectable(false);
 
   this->addAttribute(this->_bleService);
@@ -62,6 +60,8 @@ void EddystoneBeacon::begin(char power, const BLEUuid& uid) {
   serviceData[19] = 0x00; // Reserved for future use, must be: 0x00
 
   this->_bleCharacteristic.setValue(serviceData, sizeof(serviceData));
+
+  this->setAdvertisedServiceUuid(this->_bleService.uuid());
 
   BLEPeripheral::begin();
 
