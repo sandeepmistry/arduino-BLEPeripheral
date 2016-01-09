@@ -52,7 +52,7 @@ int BLESerial::available(void) {
 
 int BLESerial::peek(void) {
   if (this->_rxTail == this->_rxHead) return -1;
-  unsigned char byte = this->_rxBuffer[this->_rxTail];
+  uint8_t byte = this->_rxBuffer[this->_rxTail];
   #ifdef BLE_SERIAL_DEBUG
     Serial.print(F("BLESerial::peek() = "));
     Serial.print((char) byte);
@@ -65,7 +65,7 @@ int BLESerial::peek(void) {
 int BLESerial::read(void) {
   if (this->_rxTail == this->_rxHead) return -1;
   this->_rxTail = (this->_rxTail + 1) % sizeof(this->_rxBuffer);
-  unsigned char byte = this->_rxBuffer[this->_rxTail];
+  uint8_t byte = this->_rxBuffer[this->_rxTail];
   #ifdef BLE_SERIAL_DEBUG
     Serial.print(F("BLESerial::read() = "));
     Serial.print((char) byte);
@@ -107,14 +107,14 @@ BLESerial::operator bool() {
   return retval;
 }
 
-void BLESerial::_received(const unsigned char* data, size_t size) {
+void BLESerial::_received(const uint8_t* data, size_t size) {
   for (int i = 0; i < size; i++) {
     this->_rxHead = (this->_rxHead + 1) % sizeof(this->_rxBuffer);
     this->_rxBuffer[this->_rxHead] = data[i];
   }
   #ifdef BLE_SERIAL_DEBUG
     Serial.print(F("BLESerial::received("));
-    for (int i = 0; i < size; i++) Serial.print((char)data[i]);
+    for (int i = 0; i < size; i++) Serial.print((char) data[i]);
     Serial.println(F(")"));
   #endif
 }

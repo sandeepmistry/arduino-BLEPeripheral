@@ -1,13 +1,13 @@
 /*
- * BLESerial - UART
+ * Serial Port over BLE
  * Create UART service compatible with Nordic's *nRF Toolbox* and Adafruit's *Bluefruit LE* iOS/Android apps.
  *
- * BLESerial class implements same protocols as Serial port and can be used as it's wireless replacement.
- * Data transfers are routed through BLE UART service with TX and RX characteristics. To make the UART
+ * BLESerial class implements same protocols as Arduino's built-in Serial class and can be used as it's wireless
+ * replacement. Data transfers are routed through a BLE service with TX and RX characteristics. To make the 
  * service discoverable all UUIDs are NUS (Nordic UART Service) compatible.
  *
  * Please note that TX and RX characteristics use Notify and WriteWithoutResponse, so there's no guarantee
- * that the data will make it to the other end. Hovewer, under normal circumstances and resonable signal
+ * that the data will make it to the other end. However, under normal circumstances and reasonable signal
  * strengths everything works well.
  */
 
@@ -22,12 +22,12 @@
 #define BLE_RDY   2
 #define BLE_RST   9
 
-// create uart instance, see pinouts above
+// create ble serial instance, see pinouts above
 BLESerial BLESerial(BLE_REQ, BLE_RDY, BLE_RST);
 
 
 void setup() {
-  // custom services and characteristics can be added too
+  // custom services and characteristics can be added as well
   BLESerial.setLocalName("UART");
 
   Serial.begin(115200);

@@ -29,9 +29,9 @@ class BLESerial : public BLEPeripheral, public Stream
     size_t _rxHead;
     size_t _rxTail;
     size_t _rxCount() const;
-    unsigned char _rxBuffer[256];
+    uint8_t _rxBuffer[256];
     size_t _txCount;
-    unsigned char _txBuffer[BLE_ATTRIBUTE_MAX_VALUE_LENGTH];
+    uint8_t _txBuffer[BLE_ATTRIBUTE_MAX_VALUE_LENGTH];
 
     BLEService _uartService = BLEService("6E400001-B5A3-F393-E0A9-E50E24DCCA9E");
     BLEDescriptor _uartNameDescriptor = BLEDescriptor("2901", "UART");
@@ -40,7 +40,7 @@ class BLESerial : public BLEPeripheral, public Stream
     BLECharacteristic _txCharacteristic = BLECharacteristic("6E400003-B5A3-F393-E0A9-E50E24DCCA9E", BLENotify, BLE_ATTRIBUTE_MAX_VALUE_LENGTH);
     BLEDescriptor _txNameDescriptor = BLEDescriptor("2901", "TX - Transfer Data (Notify)");
 
-    void _received(const unsigned char* data, size_t size);
+    void _received(const uint8_t* data, size_t size);
     static void _received(BLECentral& /*central*/, BLECharacteristic& rxCharacteristic);
 };
 
