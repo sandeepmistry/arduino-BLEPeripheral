@@ -30,8 +30,11 @@ void BLESerial::begin(...) {
 }
 
 void BLESerial::poll() {
-  this->_connected = BLEPeripheral::connected();
-  if (millis() > this->_flushed + 100) flush();
+  if (millis() < this->_flushed + 100) {
+    BLEPeripheral::poll();
+  } else {
+    flush();
+  }
 }
 
 void BLESerial::end() {
@@ -42,6 +45,7 @@ void BLESerial::end() {
 }
 
 int BLESerial::available(void) {
+  BLEPeripheral::poll();
   int retval = (this->_rxHead - this->_rxTail + sizeof(this->_rxBuffer)) % sizeof(this->_rxBuffer);
   #ifdef BLE_SERIAL_DEBUG
     Serial.print(F("BLESerial::available() = "));
@@ -51,6 +55,7 @@ int BLESerial::available(void) {
 }
 
 int BLESerial::peek(void) {
+  BLEPeripheral::poll();
   if (this->_rxTail == this->_rxHead) return -1;
   uint8_t byte = this->_rxBuffer[this->_rxTail];
   #ifdef BLE_SERIAL_DEBUG
@@ -63,6 +68,7 @@ int BLESerial::peek(void) {
 }
 
 int BLESerial::read(void) {
+  BLEPeripheral::poll();
   if (this->_rxTail == this->_rxHead) return -1;
   this->_rxTail = (this->_rxTail + 1) % sizeof(this->_rxBuffer);
   uint8_t byte = this->_rxBuffer[this->_rxTail];
@@ -77,15 +83,18 @@ int BLESerial::read(void) {
 
 void BLESerial::flush(void) {
   if (this->_txCount == 0) return;
-  if (this->_connected) this->_txCharacteristic.setValue(this->_txBuffer, this->_txCount);
+  this->_txCharacteristic.setValue(this->_txBuffer, this->_txCount);
   this->_flushed = millis();
   this->_txCount = 0;
+  BLEPeripheral::poll();
   #ifdef BLE_SERIAL_DEBUG
     Serial.println(F("BLESerial::flush()"));
   #endif
 }
 
 size_t BLESerial::write(uint8_t byte) {
+  BLEPeripheral::poll();
+  if (this->_txCharacteristic.subscribed() == false) return 0;
   this->_txBuffer[this->_txCount++] = byte;
   if (this->_txCount == sizeof(this->_txBuffer)) flush();
   #ifdef BLE_SERIAL_DEBUG
@@ -99,7 +108,7 @@ size_t BLESerial::write(uint8_t byte) {
 }
 
 BLESerial::operator bool() {
-  bool retval = this->_connected = BLEPeripheral::connected();
+  bool retval = BLEPeripheral::connected();
   #ifdef BLE_SERIAL_DEBUG
     Serial.print(F("BLESerial::operator bool() = "));
     Serial.println(retval);

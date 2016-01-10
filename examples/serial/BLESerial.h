@@ -22,7 +22,6 @@ class BLESerial : public BLEPeripheral, public Stream
     virtual operator bool();
 
   private:
-    bool _connected;
     unsigned long _flushed;
     static BLESerial* _instance;
 
