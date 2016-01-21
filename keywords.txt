@@ -44,6 +44,7 @@ BLEMultimedia	KEYWORD1
 BLESystemControl	KEYWORD1
 iBeacon	KEYWORD1
 EddystoneBeacon	KEYWORD1
+BLESerial KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
@@ -143,4 +144,3 @@ BLEBonded	LITERAL1
 BLERemoteServicesDiscovered	LITERAL1
 
 BLEValueUpdated	LITERAL1
-
