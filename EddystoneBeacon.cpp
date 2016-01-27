@@ -7,17 +7,17 @@
 #define FLAGS_TLM 0x20
 
 static const char* EDDYSTONE_URL_BEACON_PREFIX_SUBSTITUTIONS[] = {
-  "w.",
-  "ws.",
+  "w.",//for http://www.
+  "ws.", //for https://www.
   "http://",
   "https://",
   "urn:uuid:",
-  "http//localhost:"
+  "http//localhost:" //additional url prefix for connecting to localhost.
 };
 
 static const char* EDDYSTONE_URL_BEACON_SUFFIX_SUBSTITUTIONS[] = {
-  ".c",
-  ".o",
+  ".c",  //com
+  ".o",  //org
   ".edu/",
   ".net/",
   ".info/",
