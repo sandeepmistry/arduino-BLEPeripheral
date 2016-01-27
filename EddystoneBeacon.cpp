@@ -7,8 +7,8 @@
 #define FLAGS_TLM 0x20
 
 static const char* EDDYSTONE_URL_BEACON_PREFIX_SUBSTITUTIONS[] = {
-  "w.",//for http://www.
-  "ws.", //for https://www.
+  "http://www.",//for http://www.
+  "https://www", //for .
   "http://",
   "https://",
   "urn:uuid:",
