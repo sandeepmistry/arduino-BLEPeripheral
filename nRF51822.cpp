@@ -448,6 +448,10 @@ void nRF51822::begin(unsigned char advertisementDataType,
   }
 
   this->startAdvertising();
+
+#ifdef __RFduino__
+  RFduinoBLE_enabled = 1;
+#endif
 }
 
 void nRF51822::poll() {
