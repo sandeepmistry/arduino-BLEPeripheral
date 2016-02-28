@@ -98,6 +98,7 @@ class nRF51822 : public BLEDevice
     uint8_t                           _authStatusBuffer[((sizeof(ble_gap_evt_auth_status_t) + 3) / 4) * 4]  __attribute__ ((__aligned__(4)));
     ble_gap_evt_auth_status_t*        _authStatus;
 #endif
+    unsigned char                     _txBufferCount;
 
     unsigned char                     _numLocalCharacteristics;
     struct localCharacteristicInfo*   _localCharacteristicInfo;

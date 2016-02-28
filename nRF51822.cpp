@@ -44,6 +44,7 @@ nRF51822::nRF51822() :
   BLEDevice(),
 
   _connectionHandle(BLE_CONN_HANDLE_INVALID),
+  _txBufferCount(0),
 
   _advDataLen(0),
   _broadcastCharacteristic(NULL),
@@ -466,6 +467,7 @@ void nRF51822::poll() {
         Serial.print(F("Evt TX complete "));
         Serial.println(bleEvt->evt.common_evt.params.tx_complete.count);
 #endif
+        this->_txBufferCount++;
         break;
 
       case BLE_GAP_EVT_CONNECTED:
@@ -479,6 +481,8 @@ void nRF51822::poll() {
 #endif
 
         this->_connectionHandle = bleEvt->evt.gap_evt.conn_handle;
+
+        sd_ble_tx_buffer_count_get(&this->_txBufferCount);
 
         if (this->_eventListener) {
           this->_eventListener->BLEDeviceConnected(*this, bleEvt->evt.gap_evt.params.connected.peer_addr.addr);
@@ -494,6 +498,7 @@ void nRF51822::poll() {
         Serial.println(F("Evt Disconnected"));
 #endif
         this->_connectionHandle = BLE_CONN_HANDLE_INVALID;
+        this->_txBufferCount = 0;
 
         for (int i = 0; i < this->_numLocalCharacteristics; i++) {
           struct localCharacteristicInfo* localCharacteristicInfo = &this->_localCharacteristicInfo[i];
@@ -906,6 +911,8 @@ void nRF51822::poll() {
 }
 
 bool nRF51822::updateCharacteristicValue(BLECharacteristic& characteristic) {
+  bool success = true;
+
   for (int i = 0; i < this->_numLocalCharacteristics; i++) {
     struct localCharacteristicInfo* localCharacteristicInfo = &this->_localCharacteristicInfo[i];
 
@@ -928,20 +935,32 @@ bool nRF51822::updateCharacteristicValue(BLECharacteristic& characteristic) {
       hvxParams.p_len  = &valueLength;
 
       if (localCharacteristicInfo->notifySubscribed) {
-        hvxParams.type = BLE_GATT_HVX_NOTIFICATION;
+        if (this->_txBufferCount > 0) {
+          this->_txBufferCount--;
 
-        sd_ble_gatts_hvx(this->_connectionHandle, &hvxParams);
+          hvxParams.type = BLE_GATT_HVX_NOTIFICATION;
+
+          sd_ble_gatts_hvx(this->_connectionHandle, &hvxParams);
+        } else {
+          success = false;
+        }
       }
 
       if (localCharacteristicInfo->indicateSubscribed) {
-        hvxParams.type = BLE_GATT_HVX_INDICATION;
+        if (this->_txBufferCount > 0) {
+          this->_txBufferCount--;
 
-        sd_ble_gatts_hvx(this->_connectionHandle, &hvxParams);
+          hvxParams.type = BLE_GATT_HVX_INDICATION;
+
+          sd_ble_gatts_hvx(this->_connectionHandle, &hvxParams);
+        } else {
+          success = false;
+        }
       }
     }
   }
 
-  return true;
+  return success;
 }
 
 bool nRF51822::broadcastCharacteristic(BLECharacteristic& characteristic) {
@@ -983,19 +1002,11 @@ bool nRF51822::broadcastCharacteristic(BLECharacteristic& characteristic) {
 }
 
 bool nRF51822::canNotifyCharacteristic(BLECharacteristic& characteristic) {
-  uint8_t count = 0;
-
-  sd_ble_tx_buffer_count_get(&count);
-
-  return (count > 0);
+  return (this->_txBufferCount > 0);
 }
 
 bool nRF51822::canIndicateCharacteristic(BLECharacteristic& characteristic) {
-  uint8_t count = 0;
-
-  sd_ble_tx_buffer_count_get(&count);
-
-  return (count > 0);
+  return (this->_txBufferCount > 0);
 }
 
 bool nRF51822::canReadRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
@@ -1038,11 +1049,7 @@ bool nRF51822::canWriteRemoteCharacteristic(BLERemoteCharacteristic& characteris
         if (this->_remoteCharacteristicInfo[i].properties.write) {
           success = !this->_remoteRequestInProgress;
         } else if (this->_remoteCharacteristicInfo[i].properties.write_wo_resp) {
-          uint8_t count = 0;
-
-          sd_ble_tx_buffer_count_get(&count);
-
-          success = (count > 0);
+          success = (this->_txBufferCount > 0);
         }
       }
       break;
@@ -1058,7 +1065,8 @@ bool nRF51822::writeRemoteCharacteristic(BLERemoteCharacteristic& characteristic
   for (int i = 0; i < this->_numRemoteCharacteristics; i++) {
     if (this->_remoteCharacteristicInfo[i].characteristic == &characteristic) {
       if (this->_remoteCharacteristicInfo[i].valueHandle &&
-                  (this->_remoteCharacteristicInfo[i].properties.write_wo_resp || this->_remoteCharacteristicInfo[i].properties.write)) {
+                  (this->_remoteCharacteristicInfo[i].properties.write_wo_resp || this->_remoteCharacteristicInfo[i].properties.write) &&
+                  (this->_txBufferCount > 0)) {
 
         ble_gattc_write_params_t writeParams;
 
@@ -1072,6 +1080,8 @@ bool nRF51822::writeRemoteCharacteristic(BLERemoteCharacteristic& characteristic
         writeParams.p_value = (uint8_t*)value;
 
         this->_remoteRequestInProgress = true;
+
+        this->_txBufferCount--;
 
         success = (sd_ble_gattc_write(this->_connectionHandle, &writeParams) == NRF_SUCCESS);
       }
