@@ -80,6 +80,7 @@ setLocalName	KEYWORD2
 setDeviceName	KEYWORD2
 setAppearance	KEYWORD2
 setAdvertisingInterval	KEYWORD2
+setConnectionInterval	KEYWORD2
 setConnectable	KEYWORD2
 setBondStore	KEYWORD2
 addAttribute	KEYWORD2

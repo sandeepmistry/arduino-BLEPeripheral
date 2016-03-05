@@ -94,6 +94,7 @@ class nRF8001 : protected BLEDevice
     unsigned char               _numLocalPipeInfo;
     unsigned char               _broadcastPipe;
 
+    bool                        _timingChanged;
     bool                        _closedPipesCleared;
     bool                        _remoteServicesDiscovered;
     struct remotePipeInfo*      _remotePipeInfo;

@@ -8,6 +8,8 @@
 BLEDevice::BLEDevice() :
   _eventListener(NULL),
   _advertisingInterval(DEFAULT_ADVERTISING_INTERVAL),
+  _minimumConnectionInterval(0),
+  _maximumConnectionInterval(0),
   _connectable(DEFAULT_CONNECTABLE),
   _bondStore(NULL)
 {
@@ -22,6 +24,15 @@ void BLEDevice::setEventListener(BLEDeviceEventListener* eventListener) {
 
 void BLEDevice::setAdvertisingInterval(unsigned short advertisingInterval) {
   this->_advertisingInterval = advertisingInterval;
+}
+
+void BLEDevice::setConnectionInterval(unsigned short minimumConnectionInterval, unsigned short maximumConnectionInterval) {
+  if (maximumConnectionInterval < minimumConnectionInterval) {
+    maximumConnectionInterval = minimumConnectionInterval;
+  }
+
+  this->_minimumConnectionInterval = minimumConnectionInterval;
+  this->_maximumConnectionInterval = maximumConnectionInterval;
 }
 
 void BLEDevice::setConnectable(bool connectable) {

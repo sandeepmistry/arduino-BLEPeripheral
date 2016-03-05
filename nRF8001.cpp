@@ -108,6 +108,7 @@ nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
   _numLocalPipeInfo(0),
   _broadcastPipe(0),
 
+  _timingChanged(false),
   _closedPipesCleared(false),
   _remoteServicesDiscovered(false),
   _remotePipeInfo(NULL),
@@ -984,6 +985,7 @@ void nRF8001::poll() {
         Serial.print(F("Evt Connected "));
         Serial.println(address);
 #endif
+        this->_timingChanged = false;
         this->_closedPipesCleared = false;
         this->_remoteServicesDiscovered = false;
 
@@ -998,16 +1000,24 @@ void nRF8001::poll() {
 #ifdef NRF_8001_DEBUG
         Serial.println(F("Evt Pipe Status "));
 #endif
+        uint64_t openPipes;
         uint64_t closedPipes;
+
+        memcpy(&openPipes, aciEvt->params.pipe_status.pipes_open_bitmap, sizeof(openPipes));
         memcpy(&closedPipes, aciEvt->params.pipe_status.pipes_closed_bitmap, sizeof(closedPipes));
 
 #ifdef NRF_8001_DEBUG
-        uint64_t openPipes;
-        memcpy(&openPipes, aciEvt->params.pipe_status.pipes_open_bitmap, sizeof(openPipes));
-
         Serial.println((unsigned long)openPipes, HEX);
         Serial.println((unsigned long)closedPipes, HEX);
 #endif
+        if (this->_minimumConnectionInterval >= ACI_PPCP_MIN_CONN_INTVL_MIN &&
+            this->_maximumConnectionInterval <= ACI_PPCP_MAX_CONN_INTVL_MAX &&
+            openPipes & 0x03 &&
+            !this->_timingChanged) {
+          this->_timingChanged = true;
+          lib_aci_change_timing(this->_minimumConnectionInterval, this->_maximumConnectionInterval, 0, 4000 / 10);
+        }
+
         bool discoveryFinished = lib_aci_is_discovery_finished(&this->_aciState);
         if (closedPipes == 0 && !discoveryFinished) {
           this->_closedPipesCleared = true;

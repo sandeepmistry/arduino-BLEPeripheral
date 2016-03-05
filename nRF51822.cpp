@@ -488,6 +488,18 @@ void nRF51822::poll() {
           this->_eventListener->BLEDeviceConnected(*this, bleEvt->evt.gap_evt.params.connected.peer_addr.addr);
         }
 
+        if (this->_minimumConnectionInterval >= BLE_GAP_CP_MIN_CONN_INTVL_MIN &&
+            this->_maximumConnectionInterval <= BLE_GAP_CP_MAX_CONN_INTVL_MAX) {
+          ble_gap_conn_params_t gap_conn_params;
+
+          gap_conn_params.min_conn_interval = this->_minimumConnectionInterval;  // in 1.25ms units
+          gap_conn_params.max_conn_interval = this->_maximumConnectionInterval;  // in 1.25ms unit
+          gap_conn_params.slave_latency     = 0;
+          gap_conn_params.conn_sup_timeout  = 4000 / 10; // in 10ms unit
+
+          sd_ble_gap_conn_param_update(this->_connectionHandle, &gap_conn_params);
+        }
+
         if (this->_numRemoteServices > 0) {
           sd_ble_gattc_primary_services_discover(this->_connectionHandle, 1, NULL);
         }

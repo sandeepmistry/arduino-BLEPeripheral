@@ -214,6 +214,10 @@ void BLEPeripheral::setAdvertisingInterval(unsigned short advertisingInterval) {
   this->_device->setAdvertisingInterval(advertisingInterval);
 }
 
+bool BLEPeripheral::setConnectionInterval(unsigned short minimumConnectionInterval, unsigned short maximumConnectionInterval) {
+  this->_device->setConnectionInterval(minimumConnectionInterval, maximumConnectionInterval);
+}
+
 void BLEPeripheral::disconnect() {
   this->_device->disconnect();
 }

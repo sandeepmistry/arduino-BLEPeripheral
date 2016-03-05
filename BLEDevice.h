@@ -42,6 +42,7 @@ class BLEDevice
     void setEventListener(BLEDeviceEventListener* eventListener);
 
     void setAdvertisingInterval(unsigned short advertisingInterval);
+    void setConnectionInterval(unsigned short minimumConnectionInterval, unsigned short maximumConnectionInterval);
     void setConnectable(bool connectable);
     void setBondStore(BLEBondStore& bondStore);
 
@@ -83,6 +84,8 @@ class BLEDevice
 
   protected:
     unsigned short                _advertisingInterval;
+    unsigned short                _minimumConnectionInterval;
+    unsigned short                _maximumConnectionInterval;
     bool                          _connectable;
     BLEBondStore*                 _bondStore;
     BLEDeviceEventListener*       _eventListener;
