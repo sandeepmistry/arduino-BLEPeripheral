@@ -23,6 +23,20 @@
   #include "nRF8001.h"
 #endif
 
+#if defined(NRF51) || defined(__RFduino__)
+  #define BLE_DEFAULT_REQ   -1
+  #define BLE_DEFAULT_RDY   -1
+  #define BLE_DEFAULT_RST   -1
+#elif defined(BLEND_MICRO)
+  #define BLE_DEFAULT_REQ   6
+  #define BLE_DEFAULT_RDY   7
+  #define BLE_DEFAULT_RST   4
+#else
+  #define BLE_DEFAULT_REQ   10
+  #define BLE_DEFAULT_RDY   2
+  #define BLE_DEFAULT_RST   9
+#endif
+
 enum BLEPeripheralEvent {
   BLEConnected = 0,
   BLEDisconnected = 1,
@@ -38,7 +52,7 @@ class BLEPeripheral : public BLEDeviceEventListener,
                         public BLERemoteCharacteristicValueChangeListener
 {
   public:
-    BLEPeripheral(unsigned char req, unsigned char rdy, unsigned char rst);
+    BLEPeripheral(unsigned char req = BLE_DEFAULT_REQ, unsigned char rdy = BLE_DEFAULT_RDY, unsigned char rst = BLE_DEFAULT_RST);
     virtual ~BLEPeripheral();
 
     void begin();

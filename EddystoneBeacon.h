@@ -7,7 +7,7 @@
 class EddystoneBeacon : public BLEPeripheral
 {
   public:
-    EddystoneBeacon(unsigned char req, unsigned char rdy, unsigned char rst);
+    EddystoneBeacon(unsigned char req = BLE_DEFAULT_REQ, unsigned char rdy = BLE_DEFAULT_RDY, unsigned char rst = BLE_DEFAULT_RST);
 
     void begin(char power, const BLEUuid& uid);
     void begin(char power, const char* uri);

@@ -10,7 +10,7 @@ class BLEHIDPeripheral : public BLEPeripheral
   friend class BLEHID;
 
   public:
-    BLEHIDPeripheral(unsigned char req, unsigned char rdy, unsigned char rst);
+    BLEHIDPeripheral(unsigned char req = BLE_DEFAULT_REQ, unsigned char rdy = BLE_DEFAULT_RDY, unsigned char rst = BLE_DEFAULT_RST);
     ~BLEHIDPeripheral();
 
     void begin();

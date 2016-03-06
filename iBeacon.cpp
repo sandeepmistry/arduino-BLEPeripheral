@@ -3,7 +3,7 @@
 #include "iBeacon.h"
 
 iBeacon::iBeacon() :
-  BLEPeripheral(0, 0, 0)
+  BLEPeripheral()
 {
   this->setConnectable(false);
 }
