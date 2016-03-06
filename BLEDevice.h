@@ -59,6 +59,8 @@ class BLEDevice
 
     virtual void poll() { }
 
+    virtual void end() { }
+
     virtual bool setTxPower(int /*txPower*/) { return false; }
 
     virtual void startAdvertising() { }

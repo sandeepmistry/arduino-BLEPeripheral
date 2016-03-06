@@ -137,13 +137,7 @@ nRF8001::nRF8001(unsigned char req, unsigned char rdy, unsigned char rst) :
 }
 
 nRF8001::~nRF8001() {
-  if (this->_localPipeInfo) {
-    free(this->_localPipeInfo);
-  }
-
-  if (this->_remotePipeInfo) {
-    free(this->_remotePipeInfo);
-  }
+  this->end();
 }
 
 void nRF8001::begin(unsigned char advertisementDataType,
@@ -159,6 +153,8 @@ void nRF8001::begin(unsigned char advertisementDataType,
 {
   unsigned char numLocalPipedCharacteristics = 0;
   unsigned char numLocalPipes = 0;
+
+  this->_crcSeed = 0xFFFF;
 
   for (int i = 0; i < numLocalAttributes; i++) {
     BLELocalAttribute* localAttribute = localAttributes[i];
@@ -1194,6 +1190,21 @@ void nRF8001::poll() {
     // Arduino can go to sleep now
     // Wakeup from sleep from the RDYN line
   }
+}
+
+void nRF8001::end() {
+  lib_aci_pin_reset();
+
+  if (this->_localPipeInfo) {
+    free(this->_localPipeInfo);
+  }
+
+  if (this->_remotePipeInfo) {
+    free(this->_remotePipeInfo);
+  }
+
+  this->_numLocalPipeInfo = 0;
+  this->_numRemotePipeInfo = 0;
 }
 
 bool nRF8001::updateCharacteristicValue(BLECharacteristic& characteristic) {

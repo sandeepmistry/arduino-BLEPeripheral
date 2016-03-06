@@ -56,6 +56,8 @@ class nRF8001 : protected BLEDevice
 
     virtual void poll();
 
+    virtual void end();
+
     virtual bool setTxPower(int txPower);
     virtual void startAdvertising();
     virtual void disconnect();

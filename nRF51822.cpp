@@ -70,17 +70,7 @@ nRF51822::nRF51822() :
 }
 
 nRF51822::~nRF51822() {
-  if (this->_remoteCharacteristicInfo) {
-    free(this->_remoteCharacteristicInfo);
-  }
-
-  if (this->_remoteServiceInfo) {
-    free(this->_remoteServiceInfo);
-  }
-
-  if (this->_localCharacteristicInfo) {
-    free(this->_localCharacteristicInfo);
-  }
+  this->end();
 }
 
 void nRF51822::begin(unsigned char advertisementDataType,
@@ -922,6 +912,26 @@ void nRF51822::poll() {
   }
 
   // sd_app_evt_wait();
+}
+
+void nRF51822::end() {
+  sd_softdevice_disable();
+
+  if (this->_remoteCharacteristicInfo) {
+    free(this->_remoteCharacteristicInfo);
+  }
+
+  if (this->_remoteServiceInfo) {
+    free(this->_remoteServiceInfo);
+  }
+
+  if (this->_localCharacteristicInfo) {
+    free(this->_localCharacteristicInfo);
+  }
+
+  this->_numLocalCharacteristics = 0;
+  this->_numRemoteServices = 0;
+  this->_numRemoteCharacteristics = 0;
 }
 
 bool nRF51822::updateCharacteristicValue(BLECharacteristic& characteristic) {

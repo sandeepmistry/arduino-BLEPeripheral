@@ -54,6 +54,8 @@ BLEPeripheral::BLEPeripheral(unsigned char req, unsigned char rdy, unsigned char
 }
 
 BLEPeripheral::~BLEPeripheral() {
+  this->end();
+
   if (this->_remoteAttributes) {
     free(this->_remoteAttributes);
   }
@@ -149,6 +151,10 @@ void BLEPeripheral::begin() {
 
 void BLEPeripheral::poll() {
   this->_device->poll();
+}
+
+void BLEPeripheral::end() {
+  this->_device->end();
 }
 
 void BLEPeripheral::setAdvertisedServiceUuid(const char* advertisedServiceUuid) {

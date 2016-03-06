@@ -57,6 +57,7 @@ class BLEPeripheral : public BLEDeviceEventListener,
 
     void begin();
     void poll();
+    void end();
 
     void setAdvertisedServiceUuid(const char* advertisedServiceUuid);
     void setServiceSolicitationUuid(const char* serviceSolicitationUuid);
