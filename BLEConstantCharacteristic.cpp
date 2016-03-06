@@ -18,10 +18,10 @@ BLEConstantCharacteristic::~BLEConstantCharacteristic() {
   this->_value = NULL; // null so super destructor doesn't try to free
 }
 
-bool BLEConstantCharacteristic::setValue(const unsigned char value[], unsigned char length) {
+bool BLEConstantCharacteristic::setValue(const unsigned char /*value*/[], unsigned char /*length*/) {
   return false;
 }
 
-bool BLEConstantCharacteristic::setValue(const char* value) {
+bool BLEConstantCharacteristic::setValue(const char* /*value*/) {
   return false;
 }

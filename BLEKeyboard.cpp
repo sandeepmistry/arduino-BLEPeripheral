@@ -62,7 +62,7 @@ size_t BLEKeyboard::press(uint8_t code, uint8_t modifiers) {
   size_t written = 0;
 
   if (code != 0) {
-    for (int i = 2; i < sizeof(this->_value); i++) {
+    for (unsigned int i = 2; i < sizeof(this->_value); i++) {
       if (this->_value[i] == 0) {
         this->_value[0] |= modifiers;
         this->_value[i] = code;
@@ -87,7 +87,7 @@ size_t BLEKeyboard::release(uint8_t code, uint8_t modifiers) {
   size_t cleared = 0;
 
   if (code != 0) {
-    for (int i = 2; i < sizeof(this->_value); i++) {
+    for (unsigned int i = 2; i < sizeof(this->_value); i++) {
       if (this->_value[i] == code) {
         this->_value[0] &= ~modifiers;
         this->_value[i] = 0;

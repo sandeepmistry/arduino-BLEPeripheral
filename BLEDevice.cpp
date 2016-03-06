@@ -6,12 +6,12 @@
 #define DEFAULT_CONNECTABLE          true
 
 BLEDevice::BLEDevice() :
-  _eventListener(NULL),
   _advertisingInterval(DEFAULT_ADVERTISING_INTERVAL),
   _minimumConnectionInterval(0),
   _maximumConnectionInterval(0),
   _connectable(DEFAULT_CONNECTABLE),
-  _bondStore(NULL)
+  _bondStore(NULL),
+  _eventListener(NULL)
 {
 }
 

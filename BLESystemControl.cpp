@@ -41,6 +41,8 @@ size_t BLESystemControl::write(uint8_t k) {
     // send cleared code
     sysCtrlKeyPress[0] = 0x00;
   }
+
+  return 1;
 }
 
 void BLESystemControl::setReportId(unsigned char reportId) {

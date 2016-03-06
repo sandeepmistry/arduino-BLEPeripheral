@@ -17,10 +17,10 @@ typedef void (*BLECharacteristicEventHandler)(BLECentral& central, BLECharacteri
 class BLECharacteristicValueChangeListener
 {
   public:
-    virtual bool characteristicValueChanged(BLECharacteristic& characteristic) { }
-    virtual bool broadcastCharacteristic(BLECharacteristic& characteristic) { }
-    virtual bool canNotifyCharacteristic(BLECharacteristic& characteristic) { }
-    virtual bool canIndicateCharacteristic(BLECharacteristic& characteristic) { }
+    virtual bool characteristicValueChanged(BLECharacteristic& /*characteristic*/) { return false; }
+    virtual bool broadcastCharacteristic(BLECharacteristic& /*characteristic*/) { return false; }
+    virtual bool canNotifyCharacteristic(BLECharacteristic& /*characteristic*/) { return false; }
+    virtual bool canIndicateCharacteristic(BLECharacteristic& /*characteristic*/) { return false; }
 };
 
 class BLECharacteristic : public BLELocalAttribute

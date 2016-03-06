@@ -333,8 +333,6 @@ void nRF8001::begin(unsigned char advertisementDataType,
     unsigned char uuidLength = uuid.length();
 
     if (localAttributeType == BLETypeService) {
-      BLEService* service = (BLEService *)localAttribute;
-
       setupMsgData->length  = 12 + uuidLength;
 
       setupMsgData->data[0] = 0x04;
@@ -595,8 +593,6 @@ void nRF8001::begin(unsigned char advertisementDataType,
     unsigned char uuidLength = uuid.length();
 
     if (remoteAttribute->type() == BLETypeService) {
-      BLERemoteService *remoteService = (BLERemoteService*)remoteAttributes[i];
-
       unsigned char numRemoteCharacteristics = 0;
       setupMsgData->data[3]    = (pipe - 1);
 
@@ -854,6 +850,9 @@ void nRF8001::poll() {
               this->startAdvertising();
             }
             break;
+
+          default:
+            break;
         }
       }
       break; //ACI Device Started Event
@@ -973,6 +972,9 @@ void nRF8001::poll() {
               }
               break;
             }
+
+            default:
+              break;
           }
         }
         break;
@@ -1182,6 +1184,9 @@ void nRF8001::poll() {
 #endif
         this->startAdvertising();
         break;
+
+      default:
+        break;
     }
   } else {
     //Serial.println(F("No ACI Events available"));
@@ -1248,11 +1253,11 @@ bool nRF8001::broadcastCharacteristic(BLECharacteristic& characteristic) {
   return success;
 }
 
-bool nRF8001::canNotifyCharacteristic(BLECharacteristic& characteristic) {
+bool nRF8001::canNotifyCharacteristic(BLECharacteristic& /*characteristic*/) {
   return (this->_aciState.data_credit_available > 0);
 }
 
-bool nRF8001::canIndicateCharacteristic(BLECharacteristic& characteristic) {
+bool nRF8001::canIndicateCharacteristic(BLECharacteristic& /*characteristic*/) {
   return (this->_aciState.data_credit_available > 0);
 }
 
@@ -1446,11 +1451,17 @@ void nRF8001::waitForSetupMode()
 #endif
               setupMode = true;
               break;
+
+            default:
+              break;
           }
         }
 
         case ACI_EVT_CMD_RSP:
           setupMode = true;
+          break;
+
+        default:
           break;
       }
     } else {
@@ -1496,8 +1507,14 @@ void nRF8001::sendSetupMessage(hal_aci_data_t* data, bool withCrc)
 #endif
               setupMsgSent = true;
               break;
+
+            default:
+              break;
           }
         }
+
+        default:
+          break;
       }
     } else {
       delay(1);

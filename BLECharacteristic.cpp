@@ -6,10 +6,10 @@
 
 BLECharacteristic::BLECharacteristic(const char* uuid, unsigned char properties, unsigned char valueSize) :
   BLELocalAttribute(uuid, BLETypeCharacteristic),
-  _properties(properties),
   _valueSize(min(valueSize, BLE_ATTRIBUTE_MAX_VALUE_LENGTH)),
   _value(NULL),
   _valueLength(0),
+  _properties(properties),
   _written(false),
   _subscribed(false),
   _listener(NULL)
@@ -23,10 +23,10 @@ BLECharacteristic::BLECharacteristic(const char* uuid, unsigned char properties,
 
 BLECharacteristic::BLECharacteristic(const char* uuid, unsigned char properties, const char* value) :
   BLELocalAttribute(uuid, BLETypeCharacteristic),
-  _properties(properties),
   _valueSize(min(strlen(value), BLE_ATTRIBUTE_MAX_VALUE_LENGTH)),
   _value(NULL),
   _valueLength(0),
+  _properties(properties),
   _written(false),
   _subscribed(false),
   _listener(NULL)

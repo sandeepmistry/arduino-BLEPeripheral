@@ -3,12 +3,16 @@
 
 #include <stdlib.h>
 
+#ifndef __AVR__
+
 #ifndef max
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 #endif
 
 #ifndef min
 #define min(a,b) (((a) < (b)) ? (a) : (b))
+#endif
+
 #endif
 
 #if defined(NRF51) || defined(__RFduino__)

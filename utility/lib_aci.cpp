@@ -86,10 +86,10 @@ bool lib_aci_is_discovery_finished(aci_state_t *aci_stat)
 
 void lib_aci_board_init(aci_state_t *aci_stat)
 {
-	hal_aci_evt_t *aci_data = NULL;
-	aci_data = (hal_aci_evt_t *)&msg_to_send;
-
 #ifdef SUPPORT_REDBEARLAB_SHIELD_V1_1
+  hal_aci_evt_t *aci_data = NULL;
+  aci_data = (hal_aci_evt_t *)&msg_to_send;
+
 	if (REDBEARLAB_SHIELD_V1_1 == aci_stat->aci_pins.board_name)
 	{
 	  /*
@@ -265,7 +265,7 @@ bool lib_aci_device_version()
 }
 
 
-bool lib_aci_set_local_data(aci_state_t *aci_stat, uint8_t pipe, uint8_t *p_value, uint8_t size)
+bool lib_aci_set_local_data(aci_state_t * /*aci_stat*/, uint8_t pipe, uint8_t *p_value, uint8_t size)
 {
   aci_cmd_params_set_local_data_t aci_cmd_params_set_local_data;
 
@@ -377,7 +377,7 @@ bool lib_aci_send_data(uint8_t pipe, uint8_t *p_value, uint8_t size)
 }
 
 
-bool lib_aci_request_data(aci_state_t *aci_stat, uint8_t pipe)
+bool lib_aci_request_data(aci_state_t * /*aci_stat*/, uint8_t pipe)
 {
   bool ret_val = false;
   aci_cmd_params_request_data_t aci_cmd_params_request_data;
@@ -417,7 +417,7 @@ bool lib_aci_change_timing_GAP_PPCP()
 }
 
 
-bool lib_aci_open_remote_pipe(aci_state_t *aci_stat, uint8_t pipe)
+bool lib_aci_open_remote_pipe(aci_state_t * /*aci_stat*/, uint8_t pipe)
 {
   bool ret_val = false;
   aci_cmd_params_open_remote_pipe_t aci_cmd_params_open_remote_pipe;
@@ -435,7 +435,7 @@ bool lib_aci_open_remote_pipe(aci_state_t *aci_stat, uint8_t pipe)
 }
 
 
-bool lib_aci_close_remote_pipe(aci_state_t *aci_stat, uint8_t pipe)
+bool lib_aci_close_remote_pipe(aci_state_t * /*aci_stat*/, uint8_t pipe)
 {
   bool ret_val = false;
   aci_cmd_params_close_remote_pipe_t aci_cmd_params_close_remote_pipe;
@@ -565,7 +565,7 @@ bool lib_aci_event_get(aci_state_t *aci_stat, hal_aci_evt_t *p_aci_evt_data)
 }
 
 
-bool lib_aci_send_ack(aci_state_t *aci_stat, const uint8_t pipe)
+bool lib_aci_send_ack(aci_state_t * /*aci_stat*/, const uint8_t pipe)
 {
   bool ret_val = false;
   {
@@ -577,7 +577,7 @@ bool lib_aci_send_ack(aci_state_t *aci_stat, const uint8_t pipe)
 }
 
 
-bool lib_aci_send_nack(aci_state_t *aci_stat, const uint8_t pipe, const uint8_t error_code)
+bool lib_aci_send_nack(aci_state_t * /*aci_stat*/, const uint8_t pipe, const uint8_t error_code)
 {
   bool ret_val = false;
 

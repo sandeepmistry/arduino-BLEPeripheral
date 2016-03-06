@@ -271,12 +271,16 @@ static bool m_aci_spi_transfer(hal_aci_data_t * data_to_send, hal_aci_data_t * r
   return (max_bytes > 0);
 }
 
+#ifdef HAL_ACI_TL_DEBUG
 void hal_aci_tl_debug_print(bool enable)
 {
-#ifdef HAL_ACI_TL_DEBUG
-	aci_debug_print = enable;
-#endif
+  aci_debug_print = enable;
 }
+#else
+void hal_aci_tl_debug_print(bool /*enable*/)
+{
+}
+#endif
 
 void hal_aci_tl_pin_reset(void)
 {
@@ -322,7 +326,9 @@ bool hal_aci_tl_event_peek(hal_aci_data_t *p_aci_data)
 
 bool hal_aci_tl_event_get(hal_aci_data_t *p_aci_data)
 {
+#ifdef HAL_ACI_TL_INTERRUPT
   bool was_full;
+#endif
 
 #ifdef HAL_ACI_TL_INTERRUPT
   if (!a_pins_local_ptr->interface_is_interrupt && !aci_queue_is_full(&aci_rx_q))
@@ -333,7 +339,11 @@ bool hal_aci_tl_event_get(hal_aci_data_t *p_aci_data)
     m_aci_event_check();
   }
 
+#ifdef HAL_ACI_TL_DEBUG
   was_full = aci_queue_is_full(&aci_rx_q);
+#else
+  aci_queue_is_full(&aci_rx_q);
+#endif
 
   if (aci_queue_dequeue(&aci_rx_q, p_aci_data))
   {
@@ -368,7 +378,11 @@ bool hal_aci_tl_event_get(hal_aci_data_t *p_aci_data)
   return false;
 }
 
+#ifdef HAL_ACI_TL_DEBUG
 void hal_aci_tl_init(aci_pins_t *a_pins, bool debug)
+#else
+void hal_aci_tl_init(aci_pins_t *a_pins, bool /*debug*/)
+#endif
 {
 #ifdef HAL_ACI_TL_DEBUG
   aci_debug_print = debug;

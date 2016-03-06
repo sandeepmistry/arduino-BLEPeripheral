@@ -9,9 +9,9 @@ BLEHIDPeripheral::BLEHIDPeripheral(unsigned char req, unsigned char rdy, unsigne
   _bleBondStore(),
 
   _hidService("1812"),
+  _hidReportMapCharacteristic(),
   _hidInformationCharacteristic("2a4a", hidInformationCharacteriticValue, sizeof(hidInformationCharacteriticValue)),
   _hidControlPointCharacteristic("2a4c", BLEWriteWithoutResponse),
-  _hidReportMapCharacteristic(),
 
   _reportIdOffset(0),
 

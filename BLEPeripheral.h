@@ -50,7 +50,7 @@ class BLEPeripheral : public BLEDeviceEventListener,
     void setLocalName(const char *localName);
 
     void setAdvertisingInterval(unsigned short advertisingInterval);
-    bool setConnectionInterval(unsigned short minimumConnectionInterval, unsigned short maximumConnectionInterval);
+    void setConnectionInterval(unsigned short minimumConnectionInterval, unsigned short maximumConnectionInterval);
     bool setTxPower(int txPower);
     void setConnectable(bool connectable);
     void setBondStore(BLEBondStore& bondStore);
