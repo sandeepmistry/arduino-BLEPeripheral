@@ -37,6 +37,19 @@ void setAdvertisingInterval(unsigned short advertisingInterval);
 
  * set advertising interval in ms, default is 100ms
 
+## Set Connection Interval
+
+Sets the connection interval to use after a connection has been established.
+
+```c
+void setConnectionInterval(unsigned short minimumConnectionInterval, unsigned short maximumConnectionInterval); 
+```
+
+ * minimumConnectionInterval - minimum connection interval in 1.25 ms increments
+ * maximumConnectionInterval - maximum connection interval in 1.25 ms increments
+
+**Note**: Both parameters must be between 0x0006 (7.5 ms) and 0x0c80 (4 s), values outside of this range will be ignored.
+
 ## Set TX Power
 
 ```c
@@ -173,6 +186,14 @@ const char* address();
 void disconnect();
 ```
 Disconnect central if connected.
+
+### End
+
+```c
+void end();
+```
+
+Disconnects central if connected, stops advertising, and disables radio.
 
 ## Sketch life cycle
 Call from ```loop```, while connected.
