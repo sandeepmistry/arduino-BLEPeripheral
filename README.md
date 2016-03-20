@@ -51,9 +51,9 @@ Enables you to create more customized BLE Peripheral's compared to the basic UAR
 | | IMUduino BTLE | 10 | 7 | 9 |
 | | TinyShield Bluetooth Low Energy | 10 | 2 | 9 |
 | nRF51822 |
-| | RedBearLab nRF51822 | UNUSED | UNUSED | UNUSED |
-| | BLE Nano | UNUSED | UNUSED | UNUSED |
-| | RFduino | UNUSED | UNUSED | UNUSED |
+| | RedBearLab nRF51822 | -1 (UNUSED) | -1 (UNUSED) | -1 (UNUSED) |
+| | BLE Nano | -1 (UNUSED) | -1 (UNUSED) | -1 (UNUSED) |
+| | RFduino | -1 (UNUSED) | -1 (UNUSED) | -1 (UNUSED) |
 
 ## Compatible IDE's and MCU's
 
