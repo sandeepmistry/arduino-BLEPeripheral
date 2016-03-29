@@ -11,6 +11,7 @@ class EddystoneBeacon : public BLEPeripheral
 
     void begin(char power, const BLEUuid& uid);
     void begin(char power, const char* uri);
+    void begin(const unsigned char* temp, unsigned char len); //For TLM
     void loop();
 
     void setURI(const char* uri);
