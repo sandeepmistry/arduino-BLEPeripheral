@@ -7,16 +7,17 @@
 #define FLAGS_TLM 0x20
 
 static const char* EDDYSTONE_URL_BEACON_PREFIX_SUBSTITUTIONS[] = {
-  "http://www.",
-  "https://www.",
+  "http://www.",//for http://www.
+  "https://www", //for .
   "http://",
   "https://",
-  "urn:uuid:"
+  "urn:uuid:",
+  "http//localhost:" //additional url prefix for connecting to localhost.
 };
 
 static const char* EDDYSTONE_URL_BEACON_SUFFIX_SUBSTITUTIONS[] = {
-  ".com/",
-  ".org/",
+  ".c",  //com
+  ".o",  //org
   ".edu/",
   ".net/",
   ".info/",
@@ -28,7 +29,8 @@ static const char* EDDYSTONE_URL_BEACON_SUFFIX_SUBSTITUTIONS[] = {
   ".net",
   ".info",
   ".biz",
-  ".gov"
+  ".gov",
+  ""
 };
 
 EddystoneBeacon::EddystoneBeacon(unsigned char req, unsigned char rdy, unsigned char rst) :
@@ -36,6 +38,8 @@ EddystoneBeacon::EddystoneBeacon(unsigned char req, unsigned char rdy, unsigned 
   _bleService("feaa"),
   _bleCharacteristic("feab", BLERead | BLEBroadcast, MAX_SERVICE_DATA_SIZE)
 {
+  this->setAdvertisedServiceUuid(this->_bleService.uuid());
+
   this->setConnectable(false);
 
   this->addAttribute(this->_bleService);
@@ -61,8 +65,6 @@ void EddystoneBeacon::begin(char power, const BLEUuid& uid) {
 
   this->_bleCharacteristic.setValue(serviceData, sizeof(serviceData));
 
-  this->setAdvertisedServiceUuid(this->_bleService.uuid());
-
   BLEPeripheral::begin();
 
   this->_bleCharacteristic.broadcast();
@@ -75,6 +77,18 @@ void EddystoneBeacon::begin(char power, const char* uri) {
   BLEPeripheral::begin();
 
   this->_bleCharacteristic.broadcast();
+}
+/***Following is the code for broadcasting TLM ****/
+/***Implementation in the examples folder***/
+void EddystoneBeacon::begin(const unsigned char* temp, unsigned char len){
+
+
+  this->_bleCharacteristic.setValue(temp, len);
+
+  BLEPeripheral::begin();
+
+  this->_bleCharacteristic.broadcast();
+
 }
 
 void EddystoneBeacon::setURI(const char* uri) {
