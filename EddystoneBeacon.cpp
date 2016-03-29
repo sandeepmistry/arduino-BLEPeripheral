@@ -78,6 +78,18 @@ void EddystoneBeacon::begin(char power, const char* uri) {
 
   this->_bleCharacteristic.broadcast();
 }
+/***Following is the code for broadcasting TLM ****/
+/***Implementation in the examples folder***/
+void EddystoneBeacon::begin(const unsigned char* temp, unsigned char len){
+
+
+  this->_bleCharacteristic.setValue(temp, len);
+
+  BLEPeripheral::begin();
+
+  this->_bleCharacteristic.broadcast();
+
+}
 
 void EddystoneBeacon::setURI(const char* uri) {
   unsigned char serviceData[MAX_SERVICE_DATA_SIZE];
