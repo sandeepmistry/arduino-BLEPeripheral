@@ -8,5 +8,5 @@
     "url": "https://github.com/sandeepmistry/arduino-BLEPeripheral.git"
   },
   "frameworks": "arduino",
-  "platforms": "nordicnrf51, atmelavr, teensy"
+  "platforms": "nordicnrf51, atmelavr, atmelsam, teensy"
 }
