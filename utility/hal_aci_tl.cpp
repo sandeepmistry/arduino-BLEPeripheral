@@ -23,7 +23,7 @@
 @brief Implementation of the ACI transport layer module
 */
 
-#if !defined(NRF51) && !defined(__RFduino__)
+#if !defined(NRF51) && !defined(NRF52) &&!defined(__RFduino__)
 
 #include <SPI.h>
 #include "hal_platform.h"
