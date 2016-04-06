@@ -1,4 +1,4 @@
-#if defined(NRF51) || defined(__RFduino__)
+#if defined(NRF51) || defined(NRF52) || defined(__RFduino__)
 
 #ifdef __RFduino__
   #include <utility/RFduino/ble.h>
@@ -455,7 +455,7 @@ void nRF51822::begin(unsigned char advertisementDataType,
 #ifdef NRF_51822_DEBUG
     Serial.println(F("Restoring bond data"));
 #endif
-#ifdef NRF51_S130
+#if defined(NRF5) || defined(NRF51_S130)
     this->_bondStore->getData(this->_bondData, 0, sizeof(this->_bondData));
 #else
     this->_bondStore->getData(this->_authStatusBuffer, 0, sizeof(this->_authStatusBuffer));
@@ -757,7 +757,7 @@ void nRF51822::poll() {
         Serial.print(F("Evt Sys Attr Missing "));
         Serial.println(bleEvt->evt.gatts_evt.params.sys_attr_missing.hint);
 #endif
-#ifdef NRF51_S130
+#if defined(NRF5) || defined(NRF51_S130)
         sd_ble_gatts_sys_attr_set(this->_connectionHandle, NULL, 0, 0);
 #else
         sd_ble_gatts_sys_attr_set(this->_connectionHandle, NULL, 0);
