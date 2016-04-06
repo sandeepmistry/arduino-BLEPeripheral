@@ -80,10 +80,25 @@ void EddystoneBeacon::begin(char power, const char* uri) {
 }
 /***Following is the code for broadcasting TLM ****/
 /***Implementation in the examples folder***/
-void EddystoneBeacon::begin(const unsigned char* temp, unsigned char len){
-
-
-  this->_bleCharacteristic.setValue(temp, len);
+uint8_t buffer[14]= {
+  0x20,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x80,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00
+}; //global
+unsigned char len = 14; //global
+void EddystoneBeacon::tlm_begin(){
+  this->_bleCharacteristic.setValue(buffer, len);
 
   BLEPeripheral::begin();
 
@@ -130,4 +145,36 @@ unsigned char EddystoneBeacon::compressURI(const char* uri, char *compressedUri,
 
 void EddystoneBeacon::loop() {
   this->poll();
+}
+/* loop() for TLM below:**/
+float temperature;
+int B=3975;                  //B value of the thermistor
+float resistance;
+unsigned long pdu_count = 0;
+void EddystoneBeacon::tempLoop(int analogPin) {
+  this->poll();
+  pdu_count++;
+  /** temperature **/
+  pinMode(analogPin,INPUT);
+  int a = analogRead(analogPin);
+  resistance=(float)(1023-a)*10000/a; //get the resistance of the sensor;
+  temperature=1/(log(resistance/10000)/B+1/298.15)-273.15;//convert to temperature via datasheet&nbsp;;
+  buffer_1[4] = ((float2fix(temperature))&0x0000FF00)>>8; //LSB
+  buffer_1[5] = (float2fix(temperature))&0x000000FF;  //MSB
+  //temperature
+  
+  unsigned long val = millis()/100;
+  ulong2adv(buffer,10, val);  //UP-TIME SINCE POWER ON OR REBOOT
+  ulong2adv(buffer,6, pdu_count);  //PDU COUNT
+
+  _bleCharacteristic.setValue(buffer, len);
+}
+void EddystoneBeacon::ulong2adv(uint8_t* adv, int off, unsigned long val) {
+  off+=3;
+  for (int i = 0; i < 4; ++i) {
+    uint8_t bval = val & 0xff;
+    adv[off] = bval;
+    val >>= 8;
+    off--;
+  }
 }
