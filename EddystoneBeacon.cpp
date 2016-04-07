@@ -5,19 +5,18 @@
 #define FLAGS_UID 0x00
 #define FLAGS_URL 0x10
 #define FLAGS_TLM 0x20
-
+#define float2fix(a) ((int)((a)*256.0)) //Convert float to fix. a is a float
 static const char* EDDYSTONE_URL_BEACON_PREFIX_SUBSTITUTIONS[] = {
-  "http://www.",//for http://www.
-  "https://www", //for .
+  "http://www.",
+  "https://www.", 
   "http://",
   "https://",
-  "urn:uuid:",
-  "http//localhost:" //additional url prefix for connecting to localhost.
+  "urn:uuid:"
 };
 
 static const char* EDDYSTONE_URL_BEACON_SUFFIX_SUBSTITUTIONS[] = {
-  ".c",  //com
-  ".o",  //org
+  ".com/",
+  ".org/",
   ".edu/",
   ".net/",
   ".info/",
@@ -29,8 +28,7 @@ static const char* EDDYSTONE_URL_BEACON_SUFFIX_SUBSTITUTIONS[] = {
   ".net",
   ".info",
   ".biz",
-  ".gov",
-  ""
+  ".gov"
 };
 
 EddystoneBeacon::EddystoneBeacon(unsigned char req, unsigned char rdy, unsigned char rst) :
