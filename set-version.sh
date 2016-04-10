@@ -4,8 +4,7 @@ function set_version () {
   local VERSION="${1}"
   local FILE="${2}"
   echo "Updating '${FILE}' to '${VERSION}'."
-  sed -i".bak" -e"s|\(version.*\)[0-9]\.[0-9]\.[0-9]|\1${VERSION}|g" "${FILE}"
-  rm -f "${FILE}.bak"
+  sed -i '' -e"s|\(version.*\)[0-9]\.[0-9]\.[0-9]|\1${VERSION}|g" "${FILE}"
 }
 
 function man () {
