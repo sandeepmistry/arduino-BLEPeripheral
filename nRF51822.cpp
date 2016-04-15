@@ -87,7 +87,7 @@ void nRF51822::begin(unsigned char advertisementDataType,
 
 #ifdef __RFduino__
   sd_softdevice_enable(NRF_CLOCK_LFCLKSRC_SYNTH_250_PPM, NULL);
-#elif defined(NRF5)
+#elif defined(NRF5) && !defined(S110)
   nrf_clock_lf_cfg_t cfg = {
     .source        = NRF_CLOCK_LF_SRC_XTAL,
     .rc_ctiv       = 0,
@@ -100,7 +100,7 @@ void nRF51822::begin(unsigned char advertisementDataType,
   sd_softdevice_enable(NRF_CLOCK_LFCLKSRC_XTAL_20_PPM, NULL); // sd_nvic_EnableIRQ(SWI2_IRQn);
 #endif
 
-#if defined(NRF5)
+#if defined(NRF5) && !defined(S110)
   extern uint32_t __data_start__;
   uint32_t app_ram_base = (uint32_t) &__data_start__;
   ble_enable_params_t enableParams;
@@ -114,7 +114,7 @@ void nRF51822::begin(unsigned char advertisementDataType,
   enableParams.gap_enable_params.central_sec_count  = 0;
 
   sd_ble_enable(&enableParams, &app_ram_base);
-#elif defined(NRF51_S130)
+#elif defined(NRF51_S130) || defined(S110)
   ble_enable_params_t enableParams = {
       .gatts_enable_params = {
           .service_changed = true
@@ -496,7 +496,7 @@ void nRF51822::poll() {
 
         this->_connectionHandle = bleEvt->evt.gap_evt.conn_handle;
 
-#if defined(NRF5)
+#if defined(NRF5) && !defined(S110)
         {
           uint8_t count;
 
