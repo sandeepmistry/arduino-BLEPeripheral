@@ -617,6 +617,8 @@ void nRF51822::poll() {
 
           ble_gap_sec_params_t gapSecParams;
 
+          memset(&gapSecParams, 0x00, sizeof(ble_gap_sec_params_t));
+
 #if defined(NRF5) && !defined(S110)
           gapSecParams.kdist_own.enc = 1;
 #elif defined(NRF51_S130)
@@ -877,6 +879,8 @@ void nRF51822::poll() {
             this->_bondStore) {
           ble_gap_sec_params_t gapSecParams;
 
+          memset(&gapSecParams, 0x00, sizeof(ble_gap_sec_params_t));
+
 #if defined(NRF5) && !defined(S110)
           gapSecParams.kdist_own.enc = 1;
 #elif defined(NRF51_S130)
@@ -918,6 +922,8 @@ void nRF51822::poll() {
         if (bleEvt->evt.gattc_evt.gatt_status == BLE_GATT_STATUS_ATTERR_INSUF_AUTHENTICATION &&
             this->_bondStore) {
           ble_gap_sec_params_t gapSecParams;
+
+          memset(&gapSecParams, 0x00, sizeof(ble_gap_sec_params_t));
 
 #if defined(NRF5) && !defined(S110)
           gapSecParams.kdist_own.enc = 1;
