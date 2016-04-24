@@ -490,7 +490,7 @@ void nRF51822::poll() {
         Serial.print(F("Evt TX complete "));
         Serial.println(bleEvt->evt.common_evt.params.tx_complete.count);
 #endif
-        this->_txBufferCount++;
+        this->_txBufferCount += bleEvt->evt.common_evt.params.tx_complete.count;
         break;
 
       case BLE_GAP_EVT_CONNECTED:
