@@ -21,7 +21,7 @@ uint32_t sd_ble_gatts_value_set(uint16_t handle, uint16_t offset, uint16_t* cons
   val.len = *p_len;
   val.offset = offset;
   val.p_value = (uint8_t*)p_value;
-  sd_ble_gatts_value_set(BLE_CONN_HANDLE_INVALID, handle, &val);
+  return sd_ble_gatts_value_set(BLE_CONN_HANDLE_INVALID, handle, &val);
 }
 #endif
 
@@ -594,7 +594,7 @@ void nRF51822::poll() {
       case BLE_GAP_EVT_SEC_PARAMS_REQUEST:
 #ifdef NRF_51822_DEBUG
         Serial.print(F("Evt Sec Params Request "));
-#ifndef NRF51_S130
+#if !defined(NRF51_S130) && !defined(S110)
         Serial.print(bleEvt->evt.gap_evt.params.sec_params_request.peer_params.timeout);
         Serial.print(F(" "));
 #endif
@@ -1294,6 +1294,8 @@ void nRF51822::startAdvertising() {
 #endif
 
   ble_gap_adv_params_t advertisingParameters;
+
+  memset(&advertisingParameters, 0x00, sizeof(advertisingParameters));
 
   advertisingParameters.type        = this->_connectable ? BLE_GAP_ADV_TYPE_ADV_IND : BLE_GAP_ADV_TYPE_ADV_NONCONN_IND;
   advertisingParameters.p_peer_addr = NULL;
