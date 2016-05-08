@@ -1,0 +1,13 @@
+{
+  "name": "BLEPeripheral",
+  "version": "0.2.0",
+  "keywords": "BLE, bluetooth, peripheral",
+  "description": "Arduino library for creating custom BLE peripherals. Supports nRF8001 and nRF51822 based boards/shields.",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/sandeepmistry/arduino-BLEPeripheral.git"
+  },
+  "frameworks": "arduino",
+  "platforms": "nordicnrf51, atmelavr, atmelsam, teensy"
+}
