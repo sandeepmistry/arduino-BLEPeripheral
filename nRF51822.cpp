@@ -88,12 +88,30 @@ void nRF51822::begin(unsigned char advertisementDataType,
 #ifdef __RFduino__
   sd_softdevice_enable(NRF_CLOCK_LFCLKSRC_SYNTH_250_PPM, NULL);
 #elif defined(NRF5) && !defined(S110)
-  nrf_clock_lf_cfg_t cfg = {
-    .source        = NRF_CLOCK_LF_SRC_XTAL,
-    .rc_ctiv       = 0,
-    .rc_temp_ctiv  = 0,
-    .xtal_accuracy = NRF_CLOCK_LF_XTAL_ACCURACY_20_PPM
-  };
+
+  #if defined(USE_LFRC)
+    nrf_clock_lf_cfg_t cfg = {
+      .source        = NRF_CLOCK_LF_SRC_RC,
+      .rc_ctiv       = 8, //16
+      .rc_temp_ctiv  = 2,
+      .xtal_accuracy = NRF_CLOCK_LF_XTAL_ACCURACY_250_PPM
+    };
+  #elif defined(USE_LFSYNT)
+    nrf_clock_lf_cfg_t cfg = {
+      .source        = NRF_CLOCK_LF_SRC_SYNTH,
+      .rc_ctiv       = 0,
+      .rc_temp_ctiv  = 0,
+      .xtal_accuracy = NRF_CLOCK_LF_XTAL_ACCURACY_250_PPM
+    };
+  #else
+    //default USE_LFXO
+    nrf_clock_lf_cfg_t cfg = {
+      .source        = NRF_CLOCK_LF_SRC_XTAL,
+      .rc_ctiv       = 0,
+      .rc_temp_ctiv  = 0,
+      .xtal_accuracy = NRF_CLOCK_LF_XTAL_ACCURACY_20_PPM
+    };
+  #endif
 
   sd_softdevice_enable(&cfg, NULL);
 #else
