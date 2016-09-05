@@ -754,7 +754,7 @@ void nRF51822::poll() {
         Serial.print(bleEvt->evt.gap_evt.params.conn_sec_update.conn_sec.encr_key_size);
         Serial.println();
 #endif
-//         break;
+        break;
 
       case BLE_GATTS_EVT_WRITE: {
 #ifdef NRF_51822_DEBUG
