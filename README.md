@@ -38,6 +38,10 @@ Enables you to create more customized BLE Peripheral's compared to the basic UAR
    * [BLE Nano](http://redbearlab.com/blenano/)
  * [RFduino](http://www.rfduino.com) with [Arduino Add-on](https://github.com/RFduino/RFduino)
 
+### Nordic Semiconductor nRF51 or nRF52 based boards
+
+ * Various, see [arduino-nRF5 supported boards](https://github.com/sandeepmistry/arduino-nRF5#supported-boards) via [nRF5 Arduino Add-on](https://github.com/sandeepmistry/arduino-nRF5)
+
 #### Pinouts
 
 | Chip | Shield/Board | REQ Pin | RDY Pin | RST Pin |
