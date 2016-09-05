@@ -1,4 +1,4 @@
-#if defined(NRF51) || defined(__RFduino__)
+#if defined(NRF51) || defined(NRF52) || defined(__RFduino__)
 
 #include "iBeacon.h"
 

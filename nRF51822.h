@@ -4,7 +4,7 @@
 #if defined(__RFduino__)
   #include <utility/RFduino/ble_gatts.h>
   #include <utility/RFduino/ble_gattc.h>
-#elif defined(NRF51_S130)
+#elif defined(NRF5) || defined(NRF51_S130)
   #include <ble_gatts.h>
   #include <ble_gattc.h>
   #include <nrf_soc.h>
@@ -93,7 +93,7 @@ class nRF51822 : public BLEDevice
     BLECharacteristic*                _broadcastCharacteristic;
 
     uint16_t                          _connectionHandle;
-#ifdef NRF51_S130
+#if defined(NRF5) || defined(NRF51_S130)
     uint8_t                           _bondData[((sizeof(ble_gap_enc_key_t) + 3) / 4) * 4]  __attribute__ ((__aligned__(4)));
     ble_gap_enc_key_t*                _encKey;
 #else

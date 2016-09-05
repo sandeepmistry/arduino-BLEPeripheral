@@ -1,10 +1,10 @@
-#if defined(NRF51) || defined(__RFduino__)
+#if defined(NRF51) || defined(NRF52) || defined(__RFduino__)
 
 #ifdef __RFduino__
   #include <utility/RFduino/ble.h>
   #include <utility/RFduino/ble_hci.h>
   #include <utility/RFduino/nrf_sdm.h>
-#elif defined(NRF51_S130)
+#elif defined(NRF5) || defined(NRF51_S130)
   #include <ble.h>
   #include <ble_hci.h>
   #include <nrf_sdm.h>
@@ -14,14 +14,14 @@
   #include <s110/nrf_sdm.h>
 #endif
 
-#ifdef NRF51_S130
+#if defined(NRF5) || defined(NRF51_S130)
 uint32_t sd_ble_gatts_value_set(uint16_t handle, uint16_t offset, uint16_t* const p_len, uint8_t const * const p_value) {
   ble_gatts_value_t val;
 
   val.len = *p_len;
   val.offset = offset;
   val.p_value = (uint8_t*)p_value;
-  sd_ble_gatts_value_set(BLE_CONN_HANDLE_INVALID, handle, &val);
+  return sd_ble_gatts_value_set(BLE_CONN_HANDLE_INVALID, handle, &val);
 }
 #endif
 
@@ -60,7 +60,7 @@ nRF51822::nRF51822() :
   _remoteCharacteristicInfo(NULL),
   _remoteRequestInProgress(false)
 {
-#ifdef NRF51_S130
+#if defined(NRF5) || defined(NRF51_S130)
   this->_encKey = (ble_gap_enc_key_t*)&this->_bondData;
   memset(&this->_bondData, 0, sizeof(this->_bondData));
 #else
@@ -87,11 +87,61 @@ void nRF51822::begin(unsigned char advertisementDataType,
 
 #ifdef __RFduino__
   sd_softdevice_enable(NRF_CLOCK_LFCLKSRC_SYNTH_250_PPM, NULL);
+#elif defined(NRF5) && !defined(S110)
+
+  #if defined(USE_LFRC)
+    nrf_clock_lf_cfg_t cfg = {
+      .source        = NRF_CLOCK_LF_SRC_RC,
+      .rc_ctiv       = 8, //16
+      .rc_temp_ctiv  = 2,
+      .xtal_accuracy = NRF_CLOCK_LF_XTAL_ACCURACY_250_PPM
+    };
+  #elif defined(USE_LFSYNT)
+    nrf_clock_lf_cfg_t cfg = {
+      .source        = NRF_CLOCK_LF_SRC_SYNTH,
+      .rc_ctiv       = 0,
+      .rc_temp_ctiv  = 0,
+      .xtal_accuracy = NRF_CLOCK_LF_XTAL_ACCURACY_250_PPM
+    };
+  #else
+    //default USE_LFXO
+    nrf_clock_lf_cfg_t cfg = {
+      .source        = NRF_CLOCK_LF_SRC_XTAL,
+      .rc_ctiv       = 0,
+      .rc_temp_ctiv  = 0,
+      .xtal_accuracy = NRF_CLOCK_LF_XTAL_ACCURACY_20_PPM
+    };
+  #endif
+
+  sd_softdevice_enable(&cfg, NULL);
 #else
   sd_softdevice_enable(NRF_CLOCK_LFCLKSRC_XTAL_20_PPM, NULL); // sd_nvic_EnableIRQ(SWI2_IRQn);
 #endif
 
-#ifdef NRF51_S130
+#if defined(NRF5) && !defined(S110)
+  extern uint32_t __data_start__;
+  uint32_t app_ram_base = (uint32_t) &__data_start__;
+  ble_enable_params_t enableParams;
+
+  memset(&enableParams, 0, sizeof(ble_enable_params_t));
+  enableParams.common_enable_params.vs_uuid_count   = 10;
+  enableParams.gatts_enable_params.attr_tab_size    = BLE_GATTS_ATTR_TAB_SIZE_DEFAULT;
+  enableParams.gatts_enable_params.service_changed  = 1;
+  enableParams.gap_enable_params.periph_conn_count  = 1;
+  enableParams.gap_enable_params.central_conn_count = 0;
+  enableParams.gap_enable_params.central_sec_count  = 0;
+
+  sd_ble_enable(&enableParams, &app_ram_base);
+#elif defined(S110)
+  ble_enable_params_t enableParams = {
+      .gatts_enable_params = {
+          .service_changed = true,
+          .attr_tab_size = BLE_GATTS_ATTR_TAB_SIZE_DEFAULT
+      }
+  };
+
+  sd_ble_enable(&enableParams);
+#elif defined(NRF51_S130)
   ble_enable_params_t enableParams = {
       .gatts_enable_params = {
           .service_changed = true
@@ -432,7 +482,7 @@ void nRF51822::begin(unsigned char advertisementDataType,
 #ifdef NRF_51822_DEBUG
     Serial.println(F("Restoring bond data"));
 #endif
-#ifdef NRF51_S130
+#if defined(NRF5) || defined(NRF51_S130)
     this->_bondStore->getData(this->_bondData, 0, sizeof(this->_bondData));
 #else
     this->_bondStore->getData(this->_authStatusBuffer, 0, sizeof(this->_authStatusBuffer));
@@ -458,7 +508,7 @@ void nRF51822::poll() {
         Serial.print(F("Evt TX complete "));
         Serial.println(bleEvt->evt.common_evt.params.tx_complete.count);
 #endif
-        this->_txBufferCount++;
+        this->_txBufferCount += bleEvt->evt.common_evt.params.tx_complete.count;
         break;
 
       case BLE_GAP_EVT_CONNECTED:
@@ -473,7 +523,17 @@ void nRF51822::poll() {
 
         this->_connectionHandle = bleEvt->evt.gap_evt.conn_handle;
 
+#if defined(NRF5) && !defined(S110)
+        {
+          uint8_t count;
+
+          sd_ble_tx_packet_count_get(this->_connectionHandle, &count);
+
+          this->_txBufferCount = count;
+        }
+#else
         sd_ble_tx_buffer_count_get(&this->_txBufferCount);
+#endif
 
         if (this->_eventListener) {
           this->_eventListener->BLEDeviceConnected(*this, bleEvt->evt.gap_evt.params.connected.peer_addr.addr);
@@ -552,7 +612,7 @@ void nRF51822::poll() {
       case BLE_GAP_EVT_SEC_PARAMS_REQUEST:
 #ifdef NRF_51822_DEBUG
         Serial.print(F("Evt Sec Params Request "));
-#ifndef NRF51_S130
+#if !defined(NRF51_S130) && !defined(S110)
         Serial.print(bleEvt->evt.gap_evt.params.sec_params_request.peer_params.timeout);
         Serial.print(F(" "));
 #endif
@@ -575,9 +635,13 @@ void nRF51822::poll() {
 
           ble_gap_sec_params_t gapSecParams;
 
-#ifdef NRF51_S130
+          memset(&gapSecParams, 0x00, sizeof(ble_gap_sec_params_t));
+
+#if defined(NRF5) && !defined(S110)
+          gapSecParams.kdist_own.enc = 1;
+#elif defined(NRF51_S130)
           gapSecParams.kdist_periph.enc = 1;
-#else
+#elif !defined(NRF5)
           gapSecParams.timeout          = 30; // must be 30s
 #endif
           gapSecParams.bond             = true;
@@ -587,7 +651,18 @@ void nRF51822::poll() {
           gapSecParams.min_key_size     = 7;
           gapSecParams.max_key_size     = 16;
 
-#ifdef NRF51_S130
+#if defined(NRF5) && !defined(S110)
+          ble_gap_sec_keyset_t keyset;
+
+          keyset.keys_peer.p_enc_key  = NULL;
+          keyset.keys_peer.p_id_key   = NULL;
+          keyset.keys_peer.p_sign_key = NULL;
+          keyset.keys_own.p_enc_key   = this->_encKey;
+          keyset.keys_own.p_id_key    = NULL;
+          keyset.keys_own.p_sign_key  = NULL;
+
+          sd_ble_gap_sec_params_reply(this->_connectionHandle, BLE_GAP_SEC_STATUS_SUCCESS, &gapSecParams, &keyset);
+#elif defined(NRF51_S130) || defined(S110)
           ble_gap_sec_keyset_t keyset;
 
           keyset.keys_central.p_enc_key  = NULL;
@@ -602,7 +677,7 @@ void nRF51822::poll() {
           sd_ble_gap_sec_params_reply(this->_connectionHandle, BLE_GAP_SEC_STATUS_SUCCESS, &gapSecParams);
 #endif
         } else {
-#ifdef NRF51_S130
+#if defined(NRF5) || defined(NRF51_S130)
           sd_ble_gap_sec_params_reply(this->_connectionHandle, BLE_GAP_SEC_STATUS_PAIRING_NOT_SUPP, NULL, NULL);
 #else
           sd_ble_gap_sec_params_reply(this->_connectionHandle, BLE_GAP_SEC_STATUS_PAIRING_NOT_SUPP, NULL);
@@ -615,7 +690,7 @@ void nRF51822::poll() {
         Serial.print(F("Evt Sec Info Request "));
         // Serial.print(bleEvt->evt.gap_evt.params.sec_info_request.peer_addr);
         // Serial.print(F(" "));
-#ifdef NRF51_S130
+#if defined(NRF5) || defined(NRF51_S130)
         Serial.print(bleEvt->evt.gap_evt.params.sec_info_request.master_id.ediv);
 #else
         Serial.print(bleEvt->evt.gap_evt.params.sec_info_request.div);
@@ -628,7 +703,7 @@ void nRF51822::poll() {
         Serial.print(bleEvt->evt.gap_evt.params.sec_info_request.sign_info);
         Serial.println();
 #endif
-#ifdef NRF51_S130
+#if defined(NRF5) || defined(NRF51_S130)
         if (this->_encKey->master_id.ediv == bleEvt->evt.gap_evt.params.sec_info_request.master_id.ediv) {
           sd_ble_gap_sec_info_reply(this->_connectionHandle, &this->_encKey->enc_info, NULL, NULL);
         } else {
@@ -649,14 +724,14 @@ void nRF51822::poll() {
         Serial.println(bleEvt->evt.gap_evt.params.auth_status.auth_status);
 #endif
         if (BLE_GAP_SEC_STATUS_SUCCESS == bleEvt->evt.gap_evt.params.auth_status.auth_status) {
-#ifndef NRF51_S130
+#if !defined(NRF5) && !defined(NRF51_S130)
           *this->_authStatus = bleEvt->evt.gap_evt.params.auth_status;
 #endif
           if (this->_bondStore) {
 #ifdef NRF_51822_DEBUG
             Serial.println(F("Storing bond data"));
 #endif
-#ifdef NRF51_S130
+#if defined(NRF5) || defined(NRF51_S130)
             this->_bondStore->putData(this->_bondData, 0, sizeof(this->_bondData));
 #else
             this->_bondStore->putData(this->_authStatusBuffer, 0, sizeof(this->_authStatusBuffer));
@@ -700,7 +775,8 @@ void nRF51822::poll() {
             }
             break;
           } else if (localCharacteristicInfo->handles.cccd_handle == handle) {
-            uint16_t value = bleEvt->evt.gatts_evt.params.write.data[0] | (bleEvt->evt.gatts_evt.params.write.data[1] << 8);
+            uint8_t* data  = &bleEvt->evt.gatts_evt.params.write.data[0];
+            uint16_t value = data[0] | (data[1] << 8);
 
             localCharacteristicInfo->notifySubscribed = (value & 0x0001);
             localCharacteristicInfo->indicateSubscribed = (value & 0x0002);
@@ -723,7 +799,7 @@ void nRF51822::poll() {
         Serial.print(F("Evt Sys Attr Missing "));
         Serial.println(bleEvt->evt.gatts_evt.params.sys_attr_missing.hint);
 #endif
-#ifdef NRF51_S130
+#if defined(NRF5) || defined(NRF51_S130)
         sd_ble_gatts_sys_attr_set(this->_connectionHandle, NULL, 0, 0);
 #else
         sd_ble_gatts_sys_attr_set(this->_connectionHandle, NULL, 0);
@@ -821,9 +897,13 @@ void nRF51822::poll() {
             this->_bondStore) {
           ble_gap_sec_params_t gapSecParams;
 
-#ifdef NRF51_S130
+          memset(&gapSecParams, 0x00, sizeof(ble_gap_sec_params_t));
+
+#if defined(NRF5) && !defined(S110)
+          gapSecParams.kdist_own.enc = 1;
+#elif defined(NRF51_S130)
           gapSecParams.kdist_periph.enc = 1;
-#else
+#elif !defined(NRF5)
           gapSecParams.timeout          = 30; // must be 30s
 #endif
           gapSecParams.bond             = true;
@@ -861,9 +941,13 @@ void nRF51822::poll() {
             this->_bondStore) {
           ble_gap_sec_params_t gapSecParams;
 
-#ifdef NRF51_S130
+          memset(&gapSecParams, 0x00, sizeof(ble_gap_sec_params_t));
+
+#if defined(NRF5) && !defined(S110)
+          gapSecParams.kdist_own.enc = 1;
+#elif defined(NRF51_S130)
           gapSecParams.kdist_periph.enc = 1;
-#else
+#elif !defined(NRF5)
           gapSecParams.timeout          = 30; // must be 30s
 #endif
           gapSecParams.bond             = true;
@@ -1228,6 +1312,8 @@ void nRF51822::startAdvertising() {
 #endif
 
   ble_gap_adv_params_t advertisingParameters;
+
+  memset(&advertisingParameters, 0x00, sizeof(advertisingParameters));
 
   advertisingParameters.type        = this->_connectable ? BLE_GAP_ADV_TYPE_ADV_IND : BLE_GAP_ADV_TYPE_ADV_NONCONN_IND;
   advertisingParameters.p_peer_addr = NULL;
