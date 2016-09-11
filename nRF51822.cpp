@@ -88,7 +88,6 @@ void nRF51822::begin(unsigned char advertisementDataType,
 #ifdef __RFduino__
   sd_softdevice_enable(NRF_CLOCK_LFCLKSRC_SYNTH_250_PPM, NULL);
 #elif defined(NRF5) && !defined(S110)
-
   #if defined(USE_LFRC)
     nrf_clock_lf_cfg_t cfg = {
       .source        = NRF_CLOCK_LF_SRC_RC,
@@ -115,7 +114,14 @@ void nRF51822::begin(unsigned char advertisementDataType,
 
   sd_softdevice_enable(&cfg, NULL);
 #else
-  sd_softdevice_enable(NRF_CLOCK_LFCLKSRC_XTAL_20_PPM, NULL); // sd_nvic_EnableIRQ(SWI2_IRQn);
+  #if defined(USE_LFRC)
+    sd_softdevice_enable(NRF_CLOCK_LFCLKSRC_RC_250_PPM_250MS_CALIBRATION, NULL);
+  #elif defined(USE_LFSYNT)
+    sd_softdevice_enable(NRF_CLOCK_LFCLKSRC_SYNTH_250_PPM, NULL);
+  #else
+    //default USE_LFXO
+    sd_softdevice_enable(NRF_CLOCK_LFCLKSRC_XTAL_20_PPM, NULL);
+  #endif
 #endif
 
 #if defined(NRF5) && !defined(S110)
