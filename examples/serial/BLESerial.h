@@ -28,7 +28,7 @@ class BLESerial : public BLEPeripheral, public Stream
     size_t _rxHead;
     size_t _rxTail;
     size_t _rxCount() const;
-    uint8_t _rxBuffer[256];
+    uint8_t _rxBuffer[BLE_ATTRIBUTE_MAX_VALUE_LENGTH];
     size_t _txCount;
     uint8_t _txBuffer[BLE_ATTRIBUTE_MAX_VALUE_LENGTH];
 
