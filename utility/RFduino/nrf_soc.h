@@ -1,26 +1,26 @@
-/* 
+/*
  * Copyright (c) Nordic Semiconductor ASA
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  *   1. Redistributions of source code must retain the above copyright notice, this
  *   list of conditions and the following disclaimer.
- * 
+ *
  *   2. Redistributions in binary form must reproduce the above copyright notice, this
  *   list of conditions and the following disclaimer in the documentation and/or
  *   other materials provided with the distribution.
- * 
+ *
  *   3. Neither the name of Nordic Semiconductor ASA nor the names of other
  *   contributors to this software may be used to endorse or promote products
  *   derived from this software without specific prior written permission.
- * 
+ *
  *   4. This software must only be used in a processor manufactured by Nordic
  *   Semiconductor ASA, or in a processor manufactured by a third party that
  *   is used in combination with a processor manufactured by Nordic Semiconductor.
- * 
- * 
+ *
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -31,14 +31,14 @@
  * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
- */ 
+ *
+ */
 /**
  * @defgroup nrf_soc_api SoC Library API
  * @{
- * 
+ *
  * @brief APIs for the SoC library.
- * 
+ *
  */
 
 #ifndef NRF_SOC_H__
@@ -47,8 +47,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "nrf_svc.h"
+#ifdef __RFduino__
 #include "nrf51.h"
-#include "nrf51_bitfields.h"
+#else
+#include "nrf.h"
+#endif
 #include "nrf_error_soc.h"
 
 /**@addtogroup NRF_SOC_DEFINES Defines
@@ -70,6 +73,7 @@
 
 #define SD_EVT_IRQn                       (SWI2_IRQn)        /**< SoftDevice Event IRQ number. Used for both protocol events and SoC events. */
 #define SD_EVT_IRQHandler                 (SWI2_IRQHandler)  /**< SoftDevice Event IRQ handler. Used for both protocol events and SoC events. */
+
 #define RADIO_NOTIFICATION_IRQn           (SWI1_IRQn)        /**< The radio notification IRQ number. */
 #define RADIO_NOTIFICATION_IRQHandler     (SWI1_IRQHandler)  /**< The radio notification IRQ handler. */
 
@@ -90,6 +94,7 @@
 /**@brief The SVC numbers used by the SVC functions in the SoC library. */
 enum NRF_SOC_SVCS
 {
+#ifndef __RFduino__
   SD_PPI_CHANNEL_ENABLE_GET = SOC_SVC_BASE,
   SD_PPI_CHANNEL_ENABLE_SET,
   SD_PPI_CHANNEL_ENABLE_CLR,
@@ -102,6 +107,9 @@ enum NRF_SOC_SVCS
   SD_FLASH_WRITE,
   SD_FLASH_PROTECT,
   SD_MUTEX_NEW = SOC_SVC_BASE_NOT_AVAILABLE,
+#else
+  SD_MUTEX_NEW = SOC_SVC_BASE,
+#endif
   SD_MUTEX_ACQUIRE,
   SD_MUTEX_RELEASE,
   SD_NVIC_ENABLEIRQ,
@@ -134,13 +142,27 @@ enum NRF_SOC_SVCS
   SD_CLOCK_HFCLK_REQUEST,
   SD_CLOCK_HFCLK_RELEASE,
   SD_CLOCK_HFCLK_IS_RUNNING,
+#ifdef __RFduino__
+  SD_PPI_CHANNEL_ENABLE_GET,
+  SD_PPI_CHANNEL_ENABLE_SET,
+  SD_PPI_CHANNEL_ENABLE_CLR,
+  SD_PPI_CHANNEL_ASSIGN,
+  SD_PPI_GROUP_TASK_ENABLE,
+  SD_PPI_GROUP_TASK_DISABLE,
+  SD_PPI_GROUP_ASSIGN,
+  SD_PPI_GROUP_GET,
+#endif
   SD_RADIO_NOTIFICATION_CFG_SET,
   SD_ECB_BLOCK_ENCRYPT,
+#ifdef __RFduino__
   SD_RADIO_SESSION_OPEN,
   SD_RADIO_SESSION_CLOSE,
   SD_RADIO_REQUEST,
   SD_EVT_GET,
   SD_TEMP_GET,
+#else
+  SD_EVENT_GET,
+#endif
   SVC_SOC_LAST
 };
 
@@ -171,7 +193,7 @@ enum NRF_POWER_THRESHOLDS
 {
   NRF_POWER_THRESHOLD_V21,  /**< 2.1 Volts power failure threshold. */
   NRF_POWER_THRESHOLD_V23,  /**< 2.3 Volts power failure threshold. */
-  NRF_POWER_THRESHOLD_V25,  /**< 2.5 Volts power failure threshold. */ 
+  NRF_POWER_THRESHOLD_V25,  /**< 2.5 Volts power failure threshold. */
   NRF_POWER_THRESHOLD_V27   /**< 2.7 Volts power failure threshold. */
 };
 
@@ -502,7 +524,7 @@ SVCALL(SD_NVIC_CRITICAL_REGION_ENTER, uint32_t, sd_nvic_critical_region_enter(ui
 /**@brief Exit critical region.
  *
  * @pre Application has entered a critical region using ::sd_nvic_critical_region_enter.
- * @post If not in a nested critical region, the application interrupts will restored to the state before ::sd_nvic_critical_region_enter was called. 
+ * @post If not in a nested critical region, the application interrupts will restored to the state before ::sd_nvic_critical_region_enter was called.
  *
  * @param[in] is_nested_critical_region If this is set to 1, the critical region won't be exited. @sa sd_nvic_critical_region_enter.
  *
@@ -536,7 +558,7 @@ SVCALL(SD_RAND_APPLICATION_BYTES_AVAILABLE, uint32_t, sd_rand_application_bytes_
 */
 SVCALL(SD_RAND_APPLICATION_GET_VECTOR, uint32_t, sd_rand_application_vector_get(uint8_t * p_buff, uint8_t length));
 
-/**@brief Gets the reset reason register. 
+/**@brief Gets the reset reason register.
  *
  * @param[out]  p_reset_reason  Contents of the NRF_POWER->RESETREAS register.
  *
@@ -544,7 +566,7 @@ SVCALL(SD_RAND_APPLICATION_GET_VECTOR, uint32_t, sd_rand_application_vector_get(
  */
 SVCALL(SD_POWER_RESET_REASON_GET, uint32_t, sd_power_reset_reason_get(uint32_t * p_reset_reason));
 
-/**@brief Clears the bits of the reset reason register. 
+/**@brief Clears the bits of the reset reason register.
  *
  * @param[in] reset_reason_clr_msk Contains the bits to clear from the reset reason register.
  *
@@ -561,7 +583,7 @@ SVCALL(SD_POWER_RESET_REASON_CLR, uint32_t, sd_power_reset_reason_clr(uint32_t r
  */
 SVCALL(SD_POWER_MODE_SET, uint32_t, sd_power_mode_set(nrf_power_mode_t power_mode));
 
-/**@brief Puts the chip in System OFF mode. 
+/**@brief Puts the chip in System OFF mode.
  *
  * @retval ::NRF_ERROR_SOC_POWER_OFF_SHOULD_NOT_RETURN
  */
@@ -681,12 +703,12 @@ SVCALL(SD_CLOCK_HFCLK_RELEASE, uint32_t, sd_clock_hfclk_release(void));
 SVCALL(SD_CLOCK_HFCLK_IS_RUNNING, uint32_t, sd_clock_hfclk_is_running(uint32_t * p_is_running));
 
 /**@brief Waits for an application event.
- * 
+ *
  * An application event is either an application interrupt or a pended interrupt when the
  * interrupt is disabled. When the interrupt is enabled it will be taken immediately since
  * this function will wait in thread mode, then the execution will return in the application's
- * main thread. When an interrupt is disabled and gets pended it will return to the application's 
- * thread main. The application must ensure that the pended flag is cleared using 
+ * main thread. When an interrupt is disabled and gets pended it will return to the application's
+ * thread main. The application must ensure that the pended flag is cleared using
  * ::sd_nvic_ClearPendingIRQ in order to sleep using this function. This is only necessary for
  * disabled interrupts, as the interrupt handler will clear the pending flag automatically for
  * enabled interrupts.
@@ -783,9 +805,9 @@ SVCALL(SD_PPI_GROUP_GET, uint32_t, sd_ppi_group_get(uint8_t group_num, uint32_t 
  * @note
  *      - The notification signal latency depends on the interrupt priority settings of SWI used
  *        for notification signal.
- *      - To ensure that the radio notification signal behaves in a consistent way, always 
- *        configure radio notifications when there is no protocol stack or other SoftDevice 
- *        activity in progress. It is recommended that the radio notification signal is 
+ *      - To ensure that the radio notification signal behaves in a consistent way, always
+ *        configure radio notifications when there is no protocol stack or other SoftDevice
+ *        activity in progress. It is recommended that the radio notification signal is
  *        configured directly after the SoftDevice has been enabled.
  *      - In the period between the ACTIVE signal and the start of the Radio Event, the SoftDevice
  *        will interrupt the application to do Radio Event preparation.
@@ -799,7 +821,7 @@ SVCALL(SD_PPI_GROUP_GET, uint32_t, sd_ppi_group_get(uint8_t group_num, uint32_t 
  *                       @ref NRF_RADIO_NOTIFICATION_TYPE_NONE.
  *
  * @param[in]  distance  Distance between the notification signal and start of radio activity.
- *                       This parameter is ignored when @ref NRF_RADIO_NOTIFICATION_TYPE_NONE or 
+ *                       This parameter is ignored when @ref NRF_RADIO_NOTIFICATION_TYPE_NONE or
  *                       @ref NRF_RADIO_NOTIFICATION_TYPE_INT_ON_INACTIVE is used.
  *
  * @retval ::NRF_ERROR_INVALID_PARAM The group number is invalid.
@@ -825,12 +847,12 @@ SVCALL(SD_ECB_BLOCK_ENCRYPT, uint32_t, sd_ecb_block_encrypt(nrf_ecb_hal_data_t *
  * @param[out] p_evt_id Set to one of the values in @ref NRF_SOC_EVTS, if any events are pending.
  *
  * @retval ::NRF_SUCCESS An event was pending. The event id is written in the p_evt_id parameter.
- * @retval ::NRF_ERROR_NOT_FOUND No pending events. 
+ * @retval ::NRF_ERROR_NOT_FOUND No pending events.
  */
 SVCALL(SD_EVT_GET, uint32_t, sd_evt_get(uint32_t * p_evt_id));
 
 /**@brief Get the temperature measured on the chip
- * 
+ *
  * This function will block until the temperature measurement is done.
  * It takes around 50us from call to return.
  *
@@ -842,6 +864,7 @@ SVCALL(SD_EVT_GET, uint32_t, sd_evt_get(uint32_t * p_evt_id));
  */
 SVCALL(SD_TEMP_GET, uint32_t, sd_temp_get(int32_t * p_temp));
 
+#ifndef __RFduino__
 /**@brief Flash Write
 *
 * Commands to write a buffer to flash
@@ -852,7 +875,7 @@ SVCALL(SD_TEMP_GET, uint32_t, sd_temp_get(int32_t * p_temp));
 *      - @ref NRF_EVT_FLASH_OPERATION_SUCCESS - The command was successfully completed.
 *      - @ref NRF_EVT_FLASH_OPERATION_ERROR   - The command could not be started.
 *
-* If the SoftDevice is not enabled no event will be generated, and this call will return @ref NRF_SUCCESS when the 
+* If the SoftDevice is not enabled no event will be generated, and this call will return @ref NRF_SUCCESS when the
  * write has been completed
 *
 * @note
@@ -884,7 +907,7 @@ SVCALL(SD_FLASH_WRITE, uint32_t, sd_flash_write(uint32_t * const p_dst, uint32_t
 *      - @ref NRF_EVT_FLASH_OPERATION_SUCCESS - The command was successfully completed.
 *      - @ref NRF_EVT_FLASH_OPERATION_ERROR   - The command could not be started.
 *
-* If the SoftDevice is not enabled no event will be generated, and this call will return @ref NRF_SUCCESS when the 
+* If the SoftDevice is not enabled no event will be generated, and this call will return @ref NRF_SUCCESS when the
 * erase has been completed
 *
 * @note
@@ -917,6 +940,7 @@ SVCALL(SD_FLASH_PAGE_ERASE, uint32_t, sd_flash_page_erase(uint32_t page_number))
  * @retval ::NRF_SUCCESS Values successfully written to PROTENSETx.
  */
 SVCALL(SD_FLASH_PROTECT, uint32_t, sd_flash_protect(uint32_t protenset0, uint32_t protenset1));
+#endif
 
 /**@brief Opens a session for radio requests.
  *
@@ -959,7 +983,7 @@ SVCALL(SD_FLASH_PROTECT, uint32_t, sd_flash_protect(uint32_t protenset0, uint32_
  *       and @ref NRF_RADIO_REQ_TYPE_NORMAL. The first request in a session must always be of type
  *       @ref NRF_RADIO_REQ_TYPE_EARLIEST.
  * @note For a normal request (@ref NRF_RADIO_REQ_TYPE_NORMAL), the start time of a radio timeslot is specified by
- *       p_request->distance_us and is given relative to the start of the previous timeslot. 
+ *       p_request->distance_us and is given relative to the start of the previous timeslot.
  * @note A too small p_request->distance_us will lead to a @ref NRF_EVT_RADIO_BLOCKED event.
  * @note Timeslots scheduled too close will lead to a @ref NRF_EVT_RADIO_BLOCKED event.
  * @note See the SoftDevice Specification for more on radio timeslot scheduling, distances and lengths.
@@ -972,7 +996,7 @@ SVCALL(SD_FLASH_PROTECT, uint32_t, sd_flash_protect(uint32_t protenset0, uint32_
  * @note The nrf_radio_signal_callback_t(@ref NRF_RADIO_CALLBACK_SIGNAL_TYPE_START) call has a latency relative to the
  *       specified radio timeslot start, but this does not affect the actual start time of the timeslot.
  * @note NRF_TIMER0 is reset at the start of the radio timeslot, and is clocked at 1MHz from the high frequency
- *       (16 MHz) clock source. If p_request->hfclk_force_xtal is true, the high frequency clock is 
+ *       (16 MHz) clock source. If p_request->hfclk_force_xtal is true, the high frequency clock is
  *       guaranteed to be clocked from the external crystal.
  * @note The SoftDevice will neither access the NRF_RADIO peripheral nor the NRF_TIMER0 peripheral
  *       during the radio timeslot.

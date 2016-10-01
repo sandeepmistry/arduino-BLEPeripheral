@@ -1,26 +1,26 @@
-/* 
+/*
  * Copyright (c) Nordic Semiconductor ASA
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  *   1. Redistributions of source code must retain the above copyright notice, this
  *   list of conditions and the following disclaimer.
- * 
+ *
  *   2. Redistributions in binary form must reproduce the above copyright notice, this
  *   list of conditions and the following disclaimer in the documentation and/or
  *   other materials provided with the distribution.
- * 
+ *
  *   3. Neither the name of Nordic Semiconductor ASA nor the names of other
  *   contributors to this software may be used to endorse or promote products
  *   derived from this software without specific prior written permission.
- * 
+ *
  *   4. This software must only be used in a processor manufactured by Nordic
  *   Semiconductor ASA, or in a processor manufactured by a third party that
  *   is used in combination with a processor manufactured by Nordic Semiconductor.
- * 
- * 
+ *
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -31,7 +31,7 @@
  * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 /**
@@ -147,7 +147,9 @@ typedef struct
 typedef struct
 {
   uint8_t    write_op;                 /**< Write Operation to be performed, see @ref BLE_GATT_WRITE_OPS. */
+#ifndef __RFduino__
   uint8_t    flags;                    /**< Flags, see @ref BLE_GATT_EXEC_WRITE_FLAGS. */
+#endif
   uint16_t   handle;                   /**< Handle to the attribute to be written. */
   uint16_t   offset;                   /**< Offset in bytes. @note For WRITE_CMD and WRITE_REQ, offset must be 0. */
   uint16_t   len;                      /**< Length of data in bytes. */
@@ -183,10 +185,10 @@ typedef struct
 } ble_gattc_evt_desc_disc_rsp_t;
 
 /**@brief GATT read by UUID handle value pair. */
-typedef struct 
+typedef struct
 {
   uint16_t            handle;          /**< Attribute Handle. */
-  uint8_t             *p_value;        /**< Pointer to value, variable length (length available as value_len in @ref ble_gattc_evt_char_val_by_uuid_read_rsp_t). 
+  uint8_t             *p_value;        /**< Pointer to value, variable length (length available as value_len in @ref ble_gattc_evt_char_val_by_uuid_read_rsp_t).
                                             Please note that this pointer is absolute to the memory provided by the user when retrieving the event,
                                             so it will effectively point to a location inside the handle_value array. */
 } ble_gattc_handle_value_t;
@@ -245,7 +247,9 @@ typedef struct
 {
   uint16_t            conn_handle;                /**< Connection Handle on which event occured. */
   uint16_t            gatt_status;                /**< GATT status code for the operation, see @ref BLE_GATT_STATUS_CODES. */
+#ifndef __RFduino__
   uint16_t            error_handle;               /**< In case of error: The handle causing the error. In all other cases @ref BLE_GATT_HANDLE_INVALID. */
+#endif
   union
   {
     ble_gattc_evt_prim_srvc_disc_rsp_t          prim_srvc_disc_rsp;         /**< Primary Service Discovery Response Event Parameters. */
@@ -267,7 +271,7 @@ typedef struct
 
 /**@brief Initiate or continue a GATT Primary Service Discovery procedure.
  *
- * @details This function initiates or resumes a Primary Service discovery procedure, starting from the supplied handle. 
+ * @details This function initiates or resumes a Primary Service discovery procedure, starting from the supplied handle.
  *          If the last service has not been reached, this function must be called again with an updated start handle value to continue the search.
  *
  * @note If any of the discovered services have 128-bit UUIDs which are not present in the table provided to ble_vs_uuids_assign, a UUID structure with
@@ -362,7 +366,7 @@ SVCALL(SD_BLE_GATTC_CHAR_VALUE_BY_UUID_READ, uint32_t, sd_ble_gattc_char_value_b
 /**@brief Initiate or continue a GATT Read (Long) Characteristic or Descriptor procedure.
  *
  * @details This function initiates or resumes a GATT Read (Long) Characteristic or Descriptor procedure. If the Characteristic or Descriptor
- *          to be read is longer than ATT_MTU - 1, this function must be called multiple times with appropriate offset to read the 
+ *          to be read is longer than ATT_MTU - 1, this function must be called multiple times with appropriate offset to read the
  *          complete value.
  *
  * @param[in] conn_handle The connection handle identifying the connection to perform this procedure on.
@@ -380,7 +384,7 @@ SVCALL(SD_BLE_GATTC_READ, uint32_t, sd_ble_gattc_read(uint16_t conn_handle, uint
 
 /**@brief Initiate a GATT Read Multiple Characteristic Values procedure.
  *
- * @details This function initiates a GATT Read Multiple Characteristic Values procedure. 
+ * @details This function initiates a GATT Read Multiple Characteristic Values procedure.
  *
  * @param[in] conn_handle The connection handle identifying the connection to perform this procedure on.
  * @param[in] p_handles A pointer to the handle(s) of the attribute(s) to be read.
@@ -397,11 +401,11 @@ SVCALL(SD_BLE_GATTC_CHAR_VALUES_READ, uint32_t, sd_ble_gattc_char_values_read(ui
 
 /**@brief Perform a Write (Characteristic Value or Descriptor, with or without response, signed or not, long or reliable) procedure.
  *
- * @details This function can perform all write procedures described in GATT. 
+ * @details This function can perform all write procedures described in GATT.
  *
- * @note    It is important to note that a write without response will <b>consume an application buffer</b>, and will therefore 
- *          generate a @ref BLE_EVT_TX_COMPLETE event when the packet has been transmitted. A write (with response) on the other hand will use the 
- *          standard client internal buffer and thus will only generate a @ref BLE_GATTC_EVT_WRITE_RSP event as soon as the write response 
+ * @note    It is important to note that a write without response will <b>consume an application buffer</b>, and will therefore
+ *          generate a @ref BLE_EVT_TX_COMPLETE event when the packet has been transmitted. A write (with response) on the other hand will use the
+ *          standard client internal buffer and thus will only generate a @ref BLE_GATTC_EVT_WRITE_RSP event as soon as the write response
  *          has been received from the peer. Please see the documentation of @ref sd_ble_tx_buffer_count_get for more details.
  *
  * @param[in] conn_handle The connection handle identifying the connection to perform this procedure on.

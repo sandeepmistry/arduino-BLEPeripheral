@@ -1,26 +1,26 @@
-/* 
+/*
  * Copyright (c) Nordic Semiconductor ASA
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  *   1. Redistributions of source code must retain the above copyright notice, this
  *   list of conditions and the following disclaimer.
- * 
+ *
  *   2. Redistributions in binary form must reproduce the above copyright notice, this
  *   list of conditions and the following disclaimer in the documentation and/or
  *   other materials provided with the distribution.
- * 
+ *
  *   3. Neither the name of Nordic Semiconductor ASA nor the names of other
  *   contributors to this software may be used to endorse or promote products
  *   derived from this software without specific prior written permission.
- * 
+ *
  *   4. This software must only be used in a processor manufactured by Nordic
  *   Semiconductor ASA, or in a processor manufactured by a third party that
  *   is used in combination with a processor manufactured by Nordic Semiconductor.
- * 
- * 
+ *
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -31,7 +31,7 @@
  * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 /**
@@ -71,16 +71,20 @@ enum BLE_GAP_SVCS
   SD_BLE_GAP_AUTHENTICATE,                     /**< Initiate Pairing/Bonding. */
   SD_BLE_GAP_SEC_PARAMS_REPLY,                 /**< Reply with Security Parameters. */
   SD_BLE_GAP_AUTH_KEY_REPLY,                   /**< Reply with an authentication key. */
+#ifndef __RFduino__
   SD_BLE_GAP_ENCRYPT,                          /**< Initiate encryption procedure. */
+#endif
   SD_BLE_GAP_SEC_INFO_REPLY,                   /**< Reply with Security Information. */
   SD_BLE_GAP_CONN_SEC_GET,                     /**< Obtain connection security level. */
-  SD_BLE_GAP_RSSI_START,                       /**< Start reporting of changes in RSSI. */ 
-  SD_BLE_GAP_RSSI_STOP,                        /**< Stop reporting of changes in RSSI. */ 
+  SD_BLE_GAP_RSSI_START,                       /**< Start reporting of changes in RSSI. */
+  SD_BLE_GAP_RSSI_STOP,                        /**< Stop reporting of changes in RSSI. */
+#ifndef __RFduino__
   SD_BLE_GAP_SCAN_START,                       /**< Start Scanning. */
   SD_BLE_GAP_SCAN_STOP,                        /**< Stop Scanning. */
   SD_BLE_GAP_CONNECT,                          /**< Connect. */
   SD_BLE_GAP_CONNECT_CANCEL,                   /**< Cancel ongoing connection procedure. */
   SD_BLE_GAP_RSSI_GET,                         /**< Get the last RSSI sample. */
+#endif
 };
 
 /**@brief GAP Event IDs.
@@ -194,7 +198,7 @@ enum BLE_GAP_OPTS
 #define BLE_GAP_AD_TYPE_PUBLIC_TARGET_ADDRESS               0x17 /**< Public Target Address. */
 #define BLE_GAP_AD_TYPE_RANDOM_TARGET_ADDRESS               0x18 /**< Random Target Address. */
 #define BLE_GAP_AD_TYPE_APPEARANCE                          0x19 /**< Appearance. */
-#define BLE_GAP_AD_TYPE_ADVERTISING_INTERVAL                0x1A /**< Advertising Interval. */ 
+#define BLE_GAP_AD_TYPE_ADVERTISING_INTERVAL                0x1A /**< Advertising Interval. */
 #define BLE_GAP_AD_TYPE_LE_BLUETOOTH_DEVICE_ADDRESS         0x1B /**< LE Bluetooth Device Address. */
 #define BLE_GAP_AD_TYPE_LE_ROLE                             0x1C /**< LE Role. */
 #define BLE_GAP_AD_TYPE_SIMPLE_PAIRING_HASH_C256            0x1D /**< Simple Pairing Hash C-256. */
@@ -459,7 +463,7 @@ typedef struct
   uint8_t             irk_count;       /**< Count of IRKs in array, up to @ref BLE_GAP_WHITELIST_IRK_MAX_COUNT. */
 } ble_gap_whitelist_t;
 
-/**@brief Channel mask for RF channels used in advertising and scanning. */ 
+/**@brief Channel mask for RF channels used in advertising and scanning. */
 typedef struct
 {
   uint8_t ch_37_off : 1;  /**< Setting this bit to 1 will turn off advertising on channel 37 */
@@ -478,16 +482,23 @@ typedef struct
                                                    - If type equals @ref BLE_GAP_ADV_TYPE_ADV_DIRECT_IND, this parameter must be set to 0 for high duty cycle directed advertising.
                                                    - If type equals @ref BLE_GAP_ADV_TYPE_ADV_DIRECT_IND, set @ref BLE_GAP_ADV_INTERVAL_MIN <= interval <= @ref BLE_GAP_ADV_INTERVAL_MAX for low duty cycle advertising.*/
   uint16_t              timeout;              /**< Advertising timeout between 0x0001 and 0x3FFF in seconds, 0x0000 disables timeout. See also @ref BLE_GAP_ADV_TIMEOUT_VALUES. If type equals @ref BLE_GAP_ADV_TYPE_ADV_DIRECT_IND, this parameter must be set to 0 for High duty cycle directed advertising. */
+#ifndef __RFduino__
   ble_gap_adv_ch_mask_t channel_mask;         /**< Advertising channel mask. @see ble_gap_channel_mask_t for documentation. */
+#endif
 } ble_gap_adv_params_t;
 
 
 /**@brief GAP scanning parameters. */
 typedef struct
 {
+#ifdef __RFduino__
+  uint8_t                 filter;                    /**< Filter based on discovery mode, see @ref BLE_GAP_DISC_MODES. */
+#endif
   uint8_t                 active    : 1;        /**< If 1, perform active scanning (scan requests). */
   uint8_t                 selective : 1;        /**< If 1, ignore unknown devices (non whitelisted). */
+#ifdef __RFduino__
   ble_gap_whitelist_t *   p_whitelist;          /**< Pointer to whitelist, NULL if none is given. */
+#endif
   uint16_t                interval;             /**< Scan interval between 0x0004 and 0x4000 in 0.625ms units (2.5ms to 10.24s). */
   uint16_t                window;               /**< Scan window between 0x0004 and 0x4000 in 0.625ms units (2.5ms to 10.24s). */
   uint16_t                timeout;              /**< Scan timeout between 0x0001 and 0xFFFF in seconds, 0x0000 disables timeout. */
@@ -506,25 +517,30 @@ typedef struct
 /**@brief GAP security parameters. */
 typedef struct
 {
+  uint16_t              timeout;                   /**< Timeout for SMP transactions or Security Request in seconds, see @ref sd_ble_gap_authenticate and @ref sd_ble_gap_sec_params_reply for more information. */
   uint8_t               bond    : 1;               /**< Perform bonding. */
   uint8_t               mitm    : 1;               /**< Man In The Middle protection required. */
   uint8_t               io_caps : 3;               /**< IO capabilities, see @ref BLE_GAP_IO_CAPS. */
   uint8_t               oob     : 1;               /**< Out Of Band data available. */
   uint8_t               min_key_size;              /**< Minimum encryption key size in octets between 7 and 16. If 0 then not applicable in this instance. */
   uint8_t               max_key_size;              /**< Maximum encryption key size in octets between min_key_size and 16. */
+#ifndef __RFduino__
   ble_gap_sec_kdist_t   kdist_periph;              /**< Key distribution bitmap: keys that the peripheral device will distribute. */
   ble_gap_sec_kdist_t   kdist_central;             /**< Key distribution bitmap: keys that the central device will distribute. */
+#endif
 } ble_gap_sec_params_t;
 
 
 /**@brief GAP Encryption Information. */
 typedef struct
 {
+#ifdef __RFduino__
+  uint16_t  div;                        /**< Encryption Diversifier. */
+#endif
   uint8_t   ltk[BLE_GAP_SEC_KEY_LEN];   /**< Long Term Key. */
   uint8_t   auth : 1;                   /**< Authenticated Key. */
   uint8_t   ltk_len : 7;                /**< LTK length in octets. */
 } ble_gap_enc_info_t;
-
 
 /**@brief GAP Master Identification. */
 typedef struct
@@ -545,7 +561,9 @@ typedef struct
 typedef struct
 {
   ble_gap_addr_t        peer_addr;              /**< Bluetooth address of the peer device. */
+#ifndef __RFduino__
   ble_gap_addr_t        own_addr;               /**< Bluetooth address of the local device used during connection setup. */
+#endif
   uint8_t               irk_match :1;           /**< If 1, peer device's address resolved using an IRK. */
   uint8_t               irk_match_idx  :7;      /**< Index in IRK list where the address was matched. */
   ble_gap_conn_params_t conn_params;            /**< GAP Connection Parameters. */
@@ -555,6 +573,9 @@ typedef struct
 /**@brief Event structure for @ref BLE_GAP_EVT_DISCONNECTED. */
 typedef struct
 {
+#ifdef __RFduino__
+  ble_gap_addr_t peer_addr;                     /**< Bluetooth address of the peer device. */
+#endif
   uint8_t reason;                               /**< HCI error code, see @ref BLE_HCI_STATUS_CODES. */
 } ble_gap_evt_disconnected_t;
 
@@ -577,12 +598,15 @@ typedef struct
 typedef struct
 {
   ble_gap_addr_t      peer_addr;                     /**< Bluetooth address of the peer device. */
+#ifndef __RFduino__
   ble_gap_master_id_t master_id;                     /**< Master Identification for LTK lookup. */
+#else
+  uint16_t       div;                                /**< Encryption diversifier for LTK lookup. */
+#endif
   uint8_t             enc_info  : 1;                 /**< If 1, Encryption Information required. */
   uint8_t             id_info   : 1;                 /**< If 1, Identity Information required. */
   uint8_t             sign_info : 1;                 /**< If 1, Signing Information required. */
 } ble_gap_evt_sec_info_request_t;
-
 
 /**@brief Event structure for @ref BLE_GAP_EVT_PASSKEY_DISPLAY. */
 typedef struct
@@ -628,9 +652,17 @@ typedef struct
 /**@brief Security Keys. */
 typedef struct
 {
+#ifndef __RFduino__
   ble_gap_enc_key_t     *p_enc_key;           /**< Encryption Key, or NULL. */
   ble_gap_id_key_t      *p_id_key;            /**< Identity Key, or NULL. */
   ble_gap_sign_info_t   *p_sign_key;          /**< Signing Key, or NULL. */
+#else
+  uint8_t ltk       : 1;                        /**< Long Term Key. */
+  uint8_t ediv_rand : 1;                        /**< Encrypted Diversifier and Random value. */
+  uint8_t irk       : 1;                        /**< Identity Resolving Key. */
+  uint8_t address   : 1;                        /**< Public or static random address. */
+  uint8_t csrk      : 1;                        /**< Connection Signature Resolving Key. */
+#endif
 } ble_gap_sec_keys_t;
 
 
@@ -648,12 +680,30 @@ typedef struct
 typedef struct
 {
   uint8_t               auth_status;            /**< Authentication status, see @ref BLE_GAP_SEC_STATUS. */
+#ifndef __RFduino__
   uint8_t               error_src : 2;          /**< On error, source that caused the failure, see @ref BLE_GAP_SEC_STATUS_SOURCES. */
   uint8_t               bonded : 1;             /**< Procedure resulted in a bond. */
+#else
+  uint8_t               error_src;              /**< On error, source that caused the failure, see @ref BLE_GAP_SEC_STATUS_SOURCES. */
+#endif
   ble_gap_sec_levels_t  sm1_levels;             /**< Levels supported in Security Mode 1. */
   ble_gap_sec_levels_t  sm2_levels;             /**< Levels supported in Security Mode 2. */
+#ifndef __RFduino__
   ble_gap_sec_kdist_t   kdist_periph;           /**< Bitmap stating which keys were exchanged (distributed) by the peripheral. */
   ble_gap_sec_kdist_t   kdist_central;          /**< Bitmap stating which keys were exchanged (distributed) by the central. */
+#else
+  ble_gap_sec_keys_t    periph_kex;             /**< Bitmap stating which keys were exchanged (distributed) by the peripheral. */
+  ble_gap_sec_keys_t    central_kex;            /**< Bitmap stating which keys were exchanged (distributed) by the central. */
+  struct periph_keys_t
+  {
+    ble_gap_enc_info_t    enc_info;             /**< Peripheral's Encryption information. */
+  } periph_keys;                                /**< Actual keys distributed from the Peripheral to the Central. */
+  struct central_keys_t
+  {
+    ble_gap_irk_t         irk;                  /**< Central's IRK. */
+    ble_gap_addr_t        id_info;              /**< Central's Identity Info. */
+  } central_keys;                               /**< Actual keys distributed from the Central to the Peripheral. */
+#endif
 } ble_gap_evt_auth_status_t;
 
 
@@ -731,10 +781,12 @@ typedef struct
     ble_gap_evt_conn_sec_update_t             conn_sec_update;              /**< Connection Security Update Event Parameters. */
     ble_gap_evt_timeout_t                     timeout;                      /**< Timeout Event Parameters. */
     ble_gap_evt_rssi_changed_t                rssi_changed;                 /**< RSSI Event parameters. */
+#ifndef __RFduino__
     ble_gap_evt_adv_report_t                  adv_report;                   /**< Advertising Report Event Parameters. */
     ble_gap_evt_sec_request_t                 sec_request;                  /**< Security Request Event Parameters. */
     ble_gap_evt_conn_param_update_request_t   conn_param_update_request;    /**< Connection Parameter Update Parameters. */
     ble_gap_evt_scan_req_report_t             scan_req_report;              /**< Scan Request Report parameters. */
+#endif
   } params;                                                                 /**< Event Parameters. */
 
 } ble_gap_evt_t;
@@ -823,12 +875,12 @@ typedef struct
  *        - A private address refresh cycle.
  *
  * @note  The specified address cycle interval is used when the address cycle mode is
- *        @ref BLE_GAP_ADDR_CYCLE_MODE_AUTO. If 0 is given, the address will not be automatically 
+ *        @ref BLE_GAP_ADDR_CYCLE_MODE_AUTO. If 0 is given, the address will not be automatically
  *        refreshed at all. The default interval is @ref BLE_GAP_DEFAULT_PRIVATE_ADDR_CYCLE_INTERVAL_S.
  *
  * @note  If the current address cycle mode is @ref BLE_GAP_ADDR_CYCLE_MODE_AUTO, the address will immediately be
  *        refreshed when a custom privacy option is set. A new address can be generated manually by calling
- *        @ref sd_ble_gap_address_set with the same type again. 
+ *        @ref sd_ble_gap_address_set with the same type again.
  *
  * @note  If the IRK is updated, the new IRK becomes the one to be distributed in all
  *        bonding procedures performed after @ref sd_ble_opt_set returns.
@@ -866,7 +918,7 @@ typedef struct
  *        This can be used with @ref sd_ble_opt_set to enable and disable
  *        compatibility modes. Compatibility modes are disabled by default.
  *
- *  @note  Compatibility mode 1 enables interoperability with devices that do not support 
+ *  @note  Compatibility mode 1 enables interoperability with devices that do not support
  *         a value of 0 for the WinOffset parameter in the Link Layer CONNECT_REQ packet.
  *
  *  @retval ::NRF_SUCCESS Set successfully.
@@ -899,7 +951,7 @@ typedef union
  * @note If the address cycle mode is @ref BLE_GAP_ADDR_CYCLE_MODE_AUTO, the address type is required to
  * be @ref BLE_GAP_ADDR_TYPE_RANDOM_PRIVATE_RESOLVABLE or
  * @ref BLE_GAP_ADDR_TYPE_RANDOM_PRIVATE_NON_RESOLVABLE. The given address is ignored and the
- * SoftDevice will generate a new private address automatically every 
+ * SoftDevice will generate a new private address automatically every
  * @ref BLE_GAP_DEFAULT_PRIVATE_ADDR_CYCLE_INTERVAL_S seconds. If this API
  * call is used again with the same parameters, the SoftDevice will immediately
  * generate a new private address to replace the current address.
@@ -949,9 +1001,9 @@ SVCALL(SD_BLE_GAP_ADDRESS_GET, uint32_t, sd_ble_gap_address_get(ble_gap_addr_t *
  *
  * @note The format of the advertising data will be checked by this call to ensure interoperability.
  *       Limitations imposed by this API call to the data provided include having a flags data type in the scan response data and
- *       duplicating the local name in the advertising data and scan response data. 
+ *       duplicating the local name in the advertising data and scan response data.
  *
- * @note To clear the advertising data and set it to a 0-length packet, simply provide a valid pointer (p_data/p_sr_data) with its corresponding 
+ * @note To clear the advertising data and set it to a 0-length packet, simply provide a valid pointer (p_data/p_sr_data) with its corresponding
  *        length (dlen/srdlen) set to 0.
  *
  * @note The call will fail if p_data and p_sr_data are both NULL since this would have no effect.
@@ -1133,7 +1185,7 @@ SVCALL(SD_BLE_GAP_DEVICE_NAME_GET, uint32_t, sd_ble_gap_device_name_get(uint8_t 
  *                         In the peripheral role, only the timeout, bond and mitm fields of this structure are used.
  *                         In the central role, this pointer may be NULL to reject a Security Request.
  *
- * @details In the central role, this function will send an SMP Pairing Request (or an SMP Pairing Failed if rejected), 
+ * @details In the central role, this function will send an SMP Pairing Request (or an SMP Pairing Failed if rejected),
  *          otherwise in the peripheral role, an SMP Security Request will be sent.
  *
  * @note    Calling this function may result in the following events depending on the outcome and parameters: @ref BLE_GAP_EVT_SEC_PARAMS_REQUEST,
@@ -1157,13 +1209,13 @@ SVCALL(SD_BLE_GAP_AUTHENTICATE, uint32_t, sd_ble_gap_authenticate(uint16_t conn_
  * @param[in] sec_status Security status, see @ref BLE_GAP_SEC_STATUS.
  * @param[in] p_sec_params Pointer to a @ref ble_gap_sec_params_t security parameters structure. In the central role this must be set to NULL, as the parameters have
  *                         already been provided during a previous call to @ref sd_ble_gap_authenticate.
- * @param[in,out] p_sec_keyset Pointer to a @ref ble_gap_sec_keyset_t security keyset structure. Any keys distributed as a result of the ongoing security procedure 
- *                         will be stored into the memory referenced by the pointers inside this structure. The keys will be stored and available to the application 
+ * @param[in,out] p_sec_keyset Pointer to a @ref ble_gap_sec_keyset_t security keyset structure. Any keys distributed as a result of the ongoing security procedure
+ *                         will be stored into the memory referenced by the pointers inside this structure. The keys will be stored and available to the application
  *                         upon reception of a @ref BLE_GAP_EVT_AUTH_STATUS event.
- *                         The pointer to the ID key data distributed by the <b>local device</b> constitutes however an exception. It can either point to ID key data 
- *                         filled in by the user before calling this function, in which case a user-supplied Bluetooth address and IRK will be distributed, 
- *                         or the pointer to the ID key data structure can be NULL, in which case the device's configured (or default, if none is configured) 
- *                         Bluetooth address and IRK will be distributed. 
+ *                         The pointer to the ID key data distributed by the <b>local device</b> constitutes however an exception. It can either point to ID key data
+ *                         filled in by the user before calling this function, in which case a user-supplied Bluetooth address and IRK will be distributed,
+ *                         or the pointer to the ID key data structure can be NULL, in which case the device's configured (or default, if none is configured)
+ *                         Bluetooth address and IRK will be distributed.
  *
  * @details This function is only used to reply to a @ref BLE_GAP_EVT_SEC_PARAMS_REQUEST, calling it at other times will result in an @ref NRF_ERROR_INVALID_STATE.
  * @note    If the call returns an error code, the request is still pending, and the reply call may be repeated with corrected parameters.
@@ -1174,8 +1226,11 @@ SVCALL(SD_BLE_GAP_AUTHENTICATE, uint32_t, sd_ble_gap_authenticate(uint16_t conn_
  * @retval ::NRF_ERROR_INVALID_STATE Invalid state to perform operation.
  * @retval ::BLE_ERROR_INVALID_CONN_HANDLE Invalid connection handle supplied.
  */
+#ifndef __RFduino__
 SVCALL(SD_BLE_GAP_SEC_PARAMS_REPLY, uint32_t, sd_ble_gap_sec_params_reply(uint16_t conn_handle, uint8_t sec_status, ble_gap_sec_params_t const *p_sec_params, ble_gap_sec_keyset_t const *p_sec_keyset));
-
+#else
+SVCALL(SD_BLE_GAP_SEC_PARAMS_REPLY, uint32_t, sd_ble_gap_sec_params_reply(uint16_t conn_handle, uint8_t sec_status, ble_gap_sec_params_t const * const p_sec_params));
+#endif
 
 /**@brief Reply with an authentication key.
  *
@@ -1196,7 +1251,7 @@ SVCALL(SD_BLE_GAP_SEC_PARAMS_REPLY, uint32_t, sd_ble_gap_sec_params_reply(uint16
  */
 SVCALL(SD_BLE_GAP_AUTH_KEY_REPLY, uint32_t, sd_ble_gap_auth_key_reply(uint16_t conn_handle, uint8_t key_type, uint8_t const *p_key));
 
-
+#ifndef __RFduino__
 /**@brief Initiate GAP Encryption procedure.
  *
  * @param[in] conn_handle Connection handle.
@@ -1215,7 +1270,7 @@ SVCALL(SD_BLE_GAP_AUTH_KEY_REPLY, uint32_t, sd_ble_gap_auth_key_reply(uint16_t c
  * @retval ::NRF_ERROR_BUSY Procedure already in progress or not allowed at this time, wait for pending procedures to complete and retry.
  */
 SVCALL(SD_BLE_GAP_ENCRYPT, uint32_t, sd_ble_gap_encrypt(uint16_t conn_handle, ble_gap_master_id_t const *p_master_id, ble_gap_enc_info_t const *p_enc_info));
-
+#endif
 
 /**@brief Reply with GAP security information.
  *
@@ -1233,8 +1288,11 @@ SVCALL(SD_BLE_GAP_ENCRYPT, uint32_t, sd_ble_gap_encrypt(uint16_t conn_handle, bl
  * @retval ::NRF_ERROR_INVALID_STATE Invalid state to perform operation.
  * @retval ::BLE_ERROR_INVALID_CONN_HANDLE Invalid connection handle supplied.
  */
+#ifndef __RFduino__
 SVCALL(SD_BLE_GAP_SEC_INFO_REPLY, uint32_t, sd_ble_gap_sec_info_reply(uint16_t conn_handle, ble_gap_enc_info_t const *p_enc_info, ble_gap_irk_t const *p_id_info, ble_gap_sign_info_t const *p_sign_info));
-
+#else
+SVCALL(SD_BLE_GAP_SEC_INFO_REPLY, uint32_t, sd_ble_gap_sec_info_reply(uint16_t conn_handle, ble_gap_enc_info_t const * const p_enc_info, ble_gap_sign_info_t const * const p_sign_info));
+#endif
 
 /**@brief Get the current connection security.
  *
@@ -1248,7 +1306,7 @@ SVCALL(SD_BLE_GAP_SEC_INFO_REPLY, uint32_t, sd_ble_gap_sec_info_reply(uint16_t c
 SVCALL(SD_BLE_GAP_CONN_SEC_GET, uint32_t, sd_ble_gap_conn_sec_get(uint16_t conn_handle, ble_gap_conn_sec_t *p_conn_sec));
 
 
-/**@brief Start reporting the received signal strength to the application. 
+/**@brief Start reporting the received signal strength to the application.
  *
  * A new event is reported whenever the RSSI value changes, until @ref sd_ble_gap_rssi_stop is called.
  *
@@ -1265,7 +1323,7 @@ SVCALL(SD_BLE_GAP_RSSI_START, uint32_t, sd_ble_gap_rssi_start(uint16_t conn_hand
 
 /**@brief Stop reporting the received signal strength.
  *
- * @note An RSSI change detected before the call but not yet received by the application 
+ * @note An RSSI change detected before the call but not yet received by the application
  * may be reported after @ref sd_ble_gap_rssi_stop has been called.
  *
  * @param[in] conn_handle Connection handle.
@@ -1276,7 +1334,7 @@ SVCALL(SD_BLE_GAP_RSSI_START, uint32_t, sd_ble_gap_rssi_start(uint16_t conn_hand
  */
 SVCALL(SD_BLE_GAP_RSSI_STOP, uint32_t, sd_ble_gap_rssi_stop(uint16_t conn_handle));
 
-
+#ifndef __RFduino__
 /**@brief Get the received signal strength for the last connection event.
  *
  * @param[in]  conn_handle Connection handle.
@@ -1292,7 +1350,6 @@ SVCALL(SD_BLE_GAP_RSSI_STOP, uint32_t, sd_ble_gap_rssi_stop(uint16_t conn_handle
  * @retval ::NRF_ERROR_INVALID_STATE       RSSI reporting is not ongoing, or disconnection in progress.
  */
 SVCALL(SD_BLE_GAP_RSSI_GET, uint32_t, sd_ble_gap_rssi_get(uint16_t conn_handle, int8_t *p_rssi));
-
 
 /**@brief Start scanning (GAP Discovery procedure, Observer Procedure).
  *
@@ -1341,6 +1398,7 @@ SVCALL(SD_BLE_GAP_CONNECT, uint32_t, sd_ble_gap_connect(ble_gap_addr_t const *p_
 SVCALL(SD_BLE_GAP_CONNECT_CANCEL, uint32_t, sd_ble_gap_connect_cancel(void));
 
 /** @} */
+#endif
 
 #endif // BLE_GAP_H__
 
