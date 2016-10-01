@@ -1,17 +1,46 @@
-/* Copyright (c) 2011 Nordic Semiconductor. All Rights Reserved.
- *
- * The information contained herein is confidential property of Nordic Semiconductor. The use,
- * copying, transfer or disclosure of such information is prohibited except by express written
- * agreement with Nordic Semiconductor.
- *
+/* 
+ * Copyright (c) Nordic Semiconductor ASA
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ * 
+ *   1. Redistributions of source code must retain the above copyright notice, this
+ *   list of conditions and the following disclaimer.
+ * 
+ *   2. Redistributions in binary form must reproduce the above copyright notice, this
+ *   list of conditions and the following disclaimer in the documentation and/or
+ *   other materials provided with the distribution.
+ * 
+ *   3. Neither the name of Nordic Semiconductor ASA nor the names of other
+ *   contributors to this software may be used to endorse or promote products
+ *   derived from this software without specific prior written permission.
+ * 
+ *   4. This software must only be used in a processor manufactured by Nordic
+ *   Semiconductor ASA, or in a processor manufactured by a third party that
+ *   is used in combination with a processor manufactured by Nordic Semiconductor.
+ * 
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * 
  */
+
 /**
   @addtogroup BLE_COMMON
   @{
   @defgroup ble_types Common types and macro definitions
   @{
 
-  @brief Common types and macro definitions for the S110 SoftDevice.
+  @brief Common types and macro definitions for the BLE SoftDevice.
  */
 
 #ifndef BLE_TYPES_H__
@@ -19,7 +48,7 @@
 
 #include <stdint.h>
 
-/** @addtogroup BLE_COMMON_DEFINES Defines
+/** @addtogroup BLE_TYPES_DEFINES Defines
  * @{ */
 
 /** @defgroup BLE_CONN_HANDLES BLE Connection Handles
@@ -67,8 +96,8 @@
 /** @defgroup BLE_APPEARANCES Bluetooth Appearance values
  *  @note Retrieved from http://developer.bluetooth.org/gatt/characteristics/Pages/CharacteristicViewer.aspx?u=org.bluetooth.characteristic.gap.appearance.xml
  * @{ */
-#define BLE_APPEARANCE_UNKNOWN                              0   /**< Unknown. */
-#define BLE_APPEARANCE_GENERIC_PHONE                        64  /**< Generic Phone. */
+#define BLE_APPEARANCE_UNKNOWN                                0 /**< Unknown. */
+#define BLE_APPEARANCE_GENERIC_PHONE                         64 /**< Generic Phone. */
 #define BLE_APPEARANCE_GENERIC_COMPUTER                     128 /**< Generic Computer. */
 #define BLE_APPEARANCE_GENERIC_WATCH                        192 /**< Generic Watch. */
 #define BLE_APPEARANCE_WATCH_SPORTS_WATCH                   193 /**< Watch: Sports Watch. */
@@ -107,6 +136,15 @@
 #define BLE_APPEARANCE_CYCLING_CADENCE_SENSOR              1155 /**< Cycling: Cadence Sensor. */
 #define BLE_APPEARANCE_CYCLING_POWER_SENSOR                1156 /**< Cycling: Power Sensor. */
 #define BLE_APPEARANCE_CYCLING_SPEED_CADENCE_SENSOR        1157 /**< Cycling: Speed and Cadence Sensor. */
+#define BLE_APPEARANCE_GENERIC_PULSE_OXIMETER              3136 /**< Generic Pulse Oximeter. */
+#define BLE_APPEARANCE_PULSE_OXIMETER_FINGERTIP            3137 /**< Fingertip (Pulse Oximeter subtype). */
+#define BLE_APPEARANCE_PULSE_OXIMETER_WRIST_WORN           3138 /**< Wrist Worn(Pulse Oximeter subtype). */
+#define BLE_APPEARANCE_GENERIC_WEIGHT_SCALE                3200 /**< Generic Weight Scale. */
+#define BLE_APPEARANCE_GENERIC_OUTDOOR_SPORTS_ACT          5184 /**< Generic Outdoor Sports Activity. */
+#define BLE_APPEARANCE_OUTDOOR_SPORTS_ACT_LOC_DISP         5185 /**< Location Display Device (Outdoor Sports Activity subtype). */
+#define BLE_APPEARANCE_OUTDOOR_SPORTS_ACT_LOC_AND_NAV_DISP 5186 /**< Location and Navigation Display Device (Outdoor Sports Activity subtype). */
+#define BLE_APPEARANCE_OUTDOOR_SPORTS_ACT_LOC_POD          5187 /**< Location Pod (Outdoor Sports Activity subtype). */
+#define BLE_APPEARANCE_OUTDOOR_SPORTS_ACT_LOC_AND_NAV_POD  5188 /**< Location and Navigation Pod (Outdoor Sports Activity subtype). */
 /** @} */
 
 /** @brief Set .type and .uuid fields of ble_uuid_struct to specified uuid value. */
@@ -134,20 +172,23 @@
 
 /** @} */
 
+/** @addtogroup BLE_TYPES_STRUCTURES Structures
+ * @{ */
+
 /** @brief 128 bit UUID values. */
 typedef struct
 { 
-    unsigned char uuid128[16];
+    unsigned char uuid128[16]; /**< Little-Endian UUID bytes. */
 } ble_uuid128_t;
 
 /** @brief  Bluetooth Low Energy UUID type, encapsulates both 16-bit and 128-bit UUIDs. */
 typedef struct
 {
     uint16_t    uuid; /**< 16-bit UUID value or octets 12-13 of 128-bit UUID. */
-    uint8_t     type; /**< UUID type, see @ref BLE_UUID_TYPES. */
+    uint8_t     type; /**< UUID type, see @ref BLE_UUID_TYPES. If type is @ref BLE_UUID_TYPE_UNKNOWN, the value of uuid is undefined. */
 } ble_uuid_t;
 
-
+/** @} */
 
 #endif /* BLE_TYPES_H__ */
 

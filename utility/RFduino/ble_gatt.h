@@ -1,11 +1,40 @@
-/* Copyright (c) 2012 Nordic Semiconductor. All Rights Reserved.
- *
- * The information contained herein is confidential property of Nordic Semiconductor. The use,
- * copying, transfer or disclosure of such information is prohibited except by express written
- * agreement with Nordic Semiconductor.
- *
+/* 
+ * Copyright (c) Nordic Semiconductor ASA
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ * 
+ *   1. Redistributions of source code must retain the above copyright notice, this
+ *   list of conditions and the following disclaimer.
+ * 
+ *   2. Redistributions in binary form must reproduce the above copyright notice, this
+ *   list of conditions and the following disclaimer in the documentation and/or
+ *   other materials provided with the distribution.
+ * 
+ *   3. Neither the name of Nordic Semiconductor ASA nor the names of other
+ *   contributors to this software may be used to endorse or promote products
+ *   derived from this software without specific prior written permission.
+ * 
+ *   4. This software must only be used in a processor manufactured by Nordic
+ *   Semiconductor ASA, or in a processor manufactured by a third party that
+ *   is used in combination with a processor manufactured by Nordic Semiconductor.
+ * 
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * 
  */
- /**
+
+/**
   @addtogroup BLE_GATT Generic Attribute Profile (GATT) Common
   @{
   @brief  Common definitions and prototypes for the GATT interfaces.
@@ -42,8 +71,14 @@
 #define BLE_GATT_OP_WRITE_REQ              0x01  /**< Write Request. */
 #define BLE_GATT_OP_WRITE_CMD              0x02  /**< Write Command. */
 #define BLE_GATT_OP_SIGN_WRITE_CMD         0x03  /**< Signed Write Command. */
-#define BLE_GATT_OP_PREPARE_WRITE_REQ      0x04  /**< Prepare Write Request. */
-#define BLE_GATT_OP_EXECUTE_WRITE_REQ      0x05  /**< Execute Write Request. */
+#define BLE_GATT_OP_PREP_WRITE_REQ         0x04  /**< Prepare Write Request. */
+#define BLE_GATT_OP_EXEC_WRITE_REQ         0x05  /**< Execute Write Request. */
+/** @} */
+
+/** @defgroup BLE_GATT_EXEC_WRITE_FLAGS GATT Execute Write flags
+ * @{ */
+#define BLE_GATT_EXEC_WRITE_FLAG_PREPARED_CANCEL 0x00
+#define BLE_GATT_EXEC_WRITE_FLAG_PREPARED_WRITE  0x01
 /** @} */
 
 /** @defgroup BLE_GATT_HVX_TYPES GATT Handle Value operations
@@ -125,34 +160,39 @@
 /** @defgroup BLE_GATT_CPF_NAMESPACES GATT Bluetooth Namespaces
  * @{
  */
-#define BLE_GATT_CPF_NAMESPACE_BTSIG            0x01
-#define BLE_GATT_CPF_NAMESPACE_DESCRIPTION_UNKNOWN 0x0000
+#define BLE_GATT_CPF_NAMESPACE_BTSIG            0x01 /**< Bluetooth SIG defined Namespace. */
+#define BLE_GATT_CPF_NAMESPACE_DESCRIPTION_UNKNOWN 0x0000 /**< Namespace Description Unknown. */
 /** @} */
 
 /** @} */
+
+/** @addtogroup BLE_GATT_STRUCTURES Structures
+ * @{ */
 
 /**@brief GATT Characteristic Properties. */
 typedef struct
 {
   /* Standard properties */
-  uint8_t broadcast       :1; /**< Broadcasting of value permitted. */
-  uint8_t read            :1; /**< Reading value permitted. */
-  uint8_t write_wo_resp   :1; /**< Writing value with Write Command permitted. */
-  uint8_t write           :1; /**< Writing value with Write Request permitted. */
-  uint8_t notify          :1; /**< Notications of value permitted. */
-  uint8_t indicate        :1; /**< Indications of value permitted. */
-  uint8_t auth_signed_wr  :1; /**< Writing value with Signed Write Command permitted. */
+  uint8_t broadcast       :1; /**< Broadcasting of the value permitted. */
+  uint8_t read            :1; /**< Reading the value permitted. */
+  uint8_t write_wo_resp   :1; /**< Writing the value with Write Command permitted. */
+  uint8_t write           :1; /**< Writing the value with Write Request permitted. */
+  uint8_t notify          :1; /**< Notications of the value permitted. */
+  uint8_t indicate        :1; /**< Indications of the value permitted. */
+  uint8_t auth_signed_wr  :1; /**< Writing the value with Signed Write Command permitted. */
 } ble_gatt_char_props_t;
 
 /**@brief GATT Characteristic Extended Properties. */
 typedef struct
 {
   /* Extended properties */
-  uint8_t reliable_wr     :1; /**< Writing value with Queued Write Request permitted. */
-  uint8_t wr_aux          :1; /**< Writing the Characteristic User Description permitted. */
+  uint8_t reliable_wr     :1; /**< Writing the value with Queued Write operations permitted. */
+  uint8_t wr_aux          :1; /**< Writing the Characteristic User Description descriptor permitted. */
 } ble_gatt_char_ext_props_t;
 
 #endif // BLE_GATT_H__
+
+/** @} */
 
 /**
   @}
