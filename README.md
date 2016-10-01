@@ -70,8 +70,6 @@ Enables you to create more customized BLE Peripheral's compared to the basic UAR
    * 3.0
    * 3.1
    * LC
- * [MPIDE](http://chipkit.net/started/install-chipkit-software/) ([ChipKit](http://chipkit.net))
-   * PIC32MX
 
 **Warning**: For more advanced sketches an MCU with more than 2kB of RAM and 32kB of flash space is recommended. Advance sketches include:
  * Multiple services and characteristics
