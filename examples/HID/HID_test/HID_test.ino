@@ -1,3 +1,6 @@
+// Copyright (c) Sandeep Mistry. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 // Import libraries (BLEPeripheral depends on SPI)
 #include <SPI.h>
 #include <BLEHIDPeripheral.h>
@@ -25,7 +28,7 @@ void setup() {
 
   // clears bond data on every boot
   bleHID.clearBondStoreData();
-  
+
    bleHID.setDeviceName("Arduino BLE HID");
 //  bleHID.setAppearance(961);
 
@@ -52,7 +55,7 @@ void loop() {
     while (bleHID.connected()) {
       if (Serial.available() > 0) {
         Serial.read();
-        
+
 //        bleMouse.move(100, 100, 0);
 //        bleKeyboard.press(KEYCODE_A);
         bleMultimedia.write(MMKEY_VOL_UP);

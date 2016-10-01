@@ -1,3 +1,6 @@
+// Copyright (c) Sandeep Mistry. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 // Import libraries (BLEPeripheral depends on SPI)
 #include <SPI.h>
 #include <BLEHIDPeripheral.h>
@@ -37,11 +40,11 @@ void setup() {
 
   if (c == '#') {
     Serial.println(F("BLE HID Peripheral - clearing bond data"));
-    
+
     // clear bond store data
     bleHIDPeripheral.clearBondStoreData();
   }
-  
+
   bleHIDPeripheral.setLocalName("HID Keypad");
   bleHIDPeripheral.addHID(bleKeyboard);
 
@@ -60,7 +63,7 @@ void loop() {
 
     while (central.connected()) {
       char c = keypad.getKey();
-  
+
       if (c) {
         Serial.println(c);
         bleKeyboard.print(c);

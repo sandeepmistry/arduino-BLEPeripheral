@@ -1,3 +1,6 @@
+// Copyright (c) Sandeep Mistry. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 // Import libraries (BLEPeripheral depends on SPI)
 #include <SPI.h>
 #include <BLEHIDPeripheral.h>
@@ -26,24 +29,24 @@ void setup() {
 #if defined (__AVR_ATmega32U4__)
   while(!Serial);
 #endif
-  
+
   pinMode(JOYSTICK_BUTTON_PIN, INPUT_PULLUP);
   buttonState = digitalRead(JOYSTICK_BUTTON_PIN);
-  
+
   if (buttonState == LOW) {
     Serial.println(F("BLE HID Peripheral - clearing bond data"));
-    
+
     // clear bond store data
     bleHIDPeripheral.clearBondStoreData();
   }
-  
+
   bleHIDPeripheral.setLocalName("HID Mouse");
   bleHIDPeripheral.addHID(bleMouse);
 
   bleHIDPeripheral.begin();
 
   Serial.println(F("BLE HID Mouse"));
-  
+
   joystickXCenter = readJoystickAxis(JOYSTICK_X_AXIS_PIN);
   joystickYCenter = readJoystickAxis(JOYSTICK_Y_AXIS_PIN);
 }
@@ -60,7 +63,7 @@ void loop() {
       int tempButtonState = digitalRead(JOYSTICK_BUTTON_PIN);
       if (tempButtonState != buttonState) {
         buttonState = tempButtonState;
-        
+
         if (buttonState == LOW) {
           Serial.println(F("Mouse press"));
           bleMouse.press();
@@ -72,7 +75,7 @@ void loop() {
 
       int x = readJoystickAxis(JOYSTICK_X_AXIS_PIN) - joystickXCenter;
       int y = readJoystickAxis(JOYSTICK_Y_AXIS_PIN) - joystickYCenter;
-      
+
       if (x || y) {
         bleMouse.move(x, y);
       }
@@ -88,6 +91,6 @@ int readJoystickAxis(int pin) {
   int rawValue = analogRead(pin);
   int mappedValue = map(rawValue, 0, 1023, 0, JOYSTICK_RANGE);
   int centeredValue = mappedValue - (JOYSTICK_RANGE / 2);
-  
+
   return (centeredValue * -1); // reverse direction
 }

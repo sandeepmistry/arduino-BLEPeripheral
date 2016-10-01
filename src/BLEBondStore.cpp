@@ -1,3 +1,6 @@
+// Copyright (c) Sandeep Mistry. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 #ifdef __AVR__
   #include <avr/eeprom.h>
 #elif defined(NRF51) || defined(NRF52) || defined(__RFduino__)

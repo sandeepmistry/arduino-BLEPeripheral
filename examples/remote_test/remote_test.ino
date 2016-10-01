@@ -1,3 +1,6 @@
+// Copyright (c) Sandeep Mistry. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 // Import libraries (BLEPeripheral depends on SPI)
 #include <SPI.h>
 #include <BLEPeripheral.h>
@@ -81,7 +84,7 @@ void blePeripheralRemoteServicesDiscoveredHandler(BLECentral& central) {
 //    Serial.println(F("Read 1"));
 //    remoteCharacteristic1.read();
 //  }
-//  
+//
 //  if (remoteCharacteristic2.canRead()) {
 //    Serial.println(F("Read 2"));
 //    remoteCharacteristic2.read();
@@ -89,15 +92,15 @@ void blePeripheralRemoteServicesDiscoveredHandler(BLECentral& central) {
 //
 //  if (remoteCharacteristic3.canWrite()) {
 //    Serial.println(F("Write 3"));
-//    
+//
 //    unsigned long writeValue = 42;
-//    
+//
 //    remoteCharacteristic3.write((const unsigned char*)&writeValue, sizeof(writeValue));
 //  }
-//  
+//
 //  if (remoteCharacteristic4.canSubscribe()) {
 //    Serial.println(F("Subscribe 4"));
-//        
+//
 //    remoteCharacteristic4.subscribe();
 //  }
 }

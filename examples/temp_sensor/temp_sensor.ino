@@ -1,3 +1,6 @@
+// Copyright (c) Sandeep Mistry. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 // TimerOne library: https://code.google.com/p/arduino-timerone/
 #include <TimerOne.h>
 // DHT library: https://github.com/adafruit/DHT-sensor-library

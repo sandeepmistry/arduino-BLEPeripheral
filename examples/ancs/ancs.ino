@@ -1,3 +1,6 @@
+// Copyright (c) Sandeep Mistry. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 // Import libraries (BLEPeripheral depends on SPI)
 #include <SPI.h>
 #include <BLEPeripheral.h>
@@ -92,7 +95,7 @@ void blePeripheralRemoteServicesDiscoveredHandler(BLECentral& central) {
   Serial.print(F("Remote services discovered event, central: "));
   Serial.println(central.address());
 
-  if (ancsNotificationSourceCharacteristic.canSubscribe()) {    
+  if (ancsNotificationSourceCharacteristic.canSubscribe()) {
     ancsNotificationSourceCharacteristic.subscribe();
   }
 }
