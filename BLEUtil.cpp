@@ -4,13 +4,15 @@
 
 void BLEUtil::addressToString(const unsigned char *in, char* out) {
   String address = "";
+  String hex;
 
   for (int i = 5; i >= 0; i--) {
     if (in[i] < 0x10) {
       address += "0";
     }
 
-    address += String(in[i], 16);
+    hex = String(in[i], 16);
+    address += hex;
 
     if (i > 0) {
       address += ":";
