@@ -14,9 +14,7 @@
 #include "BLEBondStore.h"
 
 #if defined(NRF51) || defined(NRF52) || defined(__RFduino__)
-#define FLASH_WAIT_READY { \
-  while (NRF_NVMC->READY == NVMC_READY_READY_Busy) {}; \
-}
+#include "nrf_soc.h"
 #endif
 
 BLEBondStore::BLEBondStore(int offset)
@@ -42,23 +40,26 @@ void BLEBondStore::clearData() {
 #if defined(__AVR__) || defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MKL26Z64__)
   eeprom_write_byte((unsigned char *)this->_offset, 0x00);
 #elif defined(NRF51) || defined(NRF52) || defined(__RFduino__)
-  // turn on flash erase enable
-  NRF_NVMC->CONFIG = (NVMC_CONFIG_WEN_Een << NVMC_CONFIG_WEN_Pos);
 
-  // wait until ready
-  FLASH_WAIT_READY
-
-  // erase page
-  NRF_NVMC->ERASEPAGE = (uint32_t)this->_flashPageStartAddress;
-
-  // wait until ready
-  FLASH_WAIT_READY
-
-  // turn off flash erase enable
-  NRF_NVMC->CONFIG = (NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos);
-
-  // wait until ready
-  FLASH_WAIT_READY
+//  uint32_t us = micros();
+  int32_t pageNo = (uint32_t)_flashPageStartAddress/NRF_FICR->CODEPAGESIZE;
+  uint32_t err_code;
+  do {
+	err_code = sd_flash_page_erase(pageNo);
+  } while(err_code == NRF_ERROR_BUSY);
+//  Serial.print("BLEBondStore::clearData()[us]:"); Serial.println(micros()-us); // nrf51: 26116us nrf52: 2655us!
+//  switch(err_code) {
+//  // @retval ::NRF_ERROR_INVALID_ADDR   Tried to write to a non existing flash address, or p_dst or p_src was unaligned.
+//  // @retval ::NRF_ERROR_BUSY           The previous command has not yet completed.
+//  // @retval ::NRF_ERROR_INVALID_LENGTH Size was 0, or higher than the maximum allowed size.
+//  // @retval ::NRF_ERROR_FORBIDDEN      Tried to write to or read from protected location.
+//  // @retval ::NRF_SUCCESS              The command was accepted.
+//  case NRF_ERROR_INTERNAL: 	 	Serial.println("clearData: NRF_ERROR_INTERNAL");  	break;
+//  case NRF_ERROR_INVALID_ADDR:	Serial.println("clearData: NRF_ERROR_INVALID_ADDR");break;
+//  case NRF_ERROR_BUSY: 		 	Serial.println("clearData: NRF_ERROR_BUSY");		break; 
+//  case NRF_ERROR_FORBIDDEN: 		Serial.println("clearData: NRF_ERROR_FORBIDDEN"); 	break;
+//  default:				     	Serial.println("clearData: NRF_SUCCESS!!");			break;
+//  }
 #endif
 }
 
@@ -72,32 +73,24 @@ void BLEBondStore::putData(const unsigned char* data, unsigned int offset, unsig
 #elif defined(NRF51) || defined(NRF52) || defined(__RFduino__) // ignores offset
   this->clearData();
 
-  offset = offset;
-
-  // turn on flash write enable
-  NRF_NVMC->CONFIG = (NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos);
-
-  // wait until ready
-  FLASH_WAIT_READY
-
-  uint32_t *out = this->_flashPageStartAddress;
-  uint32_t *in  = (uint32_t*)data;
-
-  for(unsigned char i = 0; i < length; i += 4) { // assumes length is multiple of 4
-    *out = *in;
-
-    out++;
-    in++;
-  }
-
-  // wait until ready
-  FLASH_WAIT_READY
-
-  // turn off flash write enable
-  NRF_NVMC->CONFIG = (NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos);
-
-  // wait until ready
-  FLASH_WAIT_READY
+//  uint32_t us = micros();
+  uint32_t err_code;
+  do {
+	  err_code = sd_flash_write((uint32_t*)_flashPageStartAddress, (uint32_t*)data, (uint32_t)length/4);
+  } while(err_code == NRF_ERROR_BUSY);
+//  Serial.print("BLEBondStore::putData()[us]:"); Serial.println(micros()-us);	// nrf51:40832us nrf52:95031us!
+//  switch(err_code) {
+//  // @retval ::NRF_ERROR_INVALID_ADDR   Tried to write to a non existing flash address, or p_dst or p_src was unaligned.
+//  // @retval ::NRF_ERROR_BUSY           The previous command has not yet completed.
+//  // @retval ::NRF_ERROR_INVALID_LENGTH Size was 0, or higher than the maximum allowed size.
+//  // @retval ::NRF_ERROR_FORBIDDEN      Tried to write to or read from protected location.
+//  // @retval ::NRF_SUCCESS              The command was accepted.
+//  case NRF_ERROR_INTERNAL: 	 	Serial.println("putData: NRF_ERROR_INTERNAL");  	break;
+//  case NRF_ERROR_INVALID_ADDR:	Serial.println("putData: NRF_ERROR_INVALID_ADDR");	break;
+//  case NRF_ERROR_BUSY: 		 	Serial.println("putData: NRF_ERROR_BUSY");			break; 
+//  case NRF_ERROR_FORBIDDEN: 		Serial.println("putData: NRF_ERROR_FORBIDDEN"); 	break;
+//  default:				     	Serial.println("putData: NRF_SUCCESS!!");			break;
+//  }
 #endif
 }
 
