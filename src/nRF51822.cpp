@@ -76,9 +76,8 @@ nRF51822::~nRF51822() {
   this->end();
 }
 
-void nRF51822::begin(unsigned char advertisementDataType,
-                      unsigned char advertisementDataLength,
-                      const unsigned char* advertisementData,
+void nRF51822::begin(unsigned char advertisementDataSize,
+                      BLEAdvertisementData *advertisementData,
                       unsigned char scanDataType,
                       unsigned char scanDataLength,
                       const unsigned char* scanData,
@@ -196,14 +195,16 @@ void nRF51822::begin(unsigned char advertisementDataType,
 
   this->_advDataLen += 3;
 
-  if (advertisementDataType && advertisementDataLength && advertisementData) {
-    this->_advData[this->_advDataLen + 0] = advertisementDataLength + 1;
-    this->_advData[this->_advDataLen + 1] = advertisementDataType;
-    this->_advDataLen += 2;
+  if (advertisementDataSize && advertisementData) {
+    for (int i = 0; i < advertisementDataSize; i++) {
+      this->_advData[this->_advDataLen + 0] = advertisementData[i].length + 1;
+      this->_advData[this->_advDataLen + 1] = advertisementData[i].type;
+      this->_advDataLen += 2;
 
-    memcpy(&this->_advData[this->_advDataLen], advertisementData, advertisementDataLength);
+      memcpy(&this->_advData[this->_advDataLen], advertisementData[i].data, advertisementData[i].length);
 
-    this->_advDataLen += advertisementDataLength;
+      this->_advDataLen += advertisementData[i].length;
+    }
   }
 
   if (scanDataType && scanDataLength && scanData) {

@@ -11,6 +11,13 @@
 #include "BLERemoteCharacteristic.h"
 #include "BLERemoteService.h"
 
+struct BLEAdvertisementData
+{
+  unsigned char length;
+  unsigned char type;
+  unsigned char data[BLE_ADVERTISEMENT_DATA_MAX_VALUE_LENGTH];
+};
+
 class BLEDevice;
 
 class BLEDeviceEventListener
@@ -49,9 +56,8 @@ class BLEDevice
     void setConnectable(bool connectable);
     void setBondStore(BLEBondStore& bondStore);
 
-    virtual void begin(unsigned char /*advertisementDataType*/,
-                unsigned char /*advertisementDataLength*/,
-                const unsigned char* /*advertisementData*/,
+    virtual void begin(unsigned char /*advertisementDataSize*/,
+                BLEAdvertisementData * /*advertisementData*/,
                 unsigned char /*scanDataType*/,
                 unsigned char /*scanDataLength*/,
                 const unsigned char* /*scanData*/,

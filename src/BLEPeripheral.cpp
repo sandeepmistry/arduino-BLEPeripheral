@@ -69,39 +69,54 @@ BLEPeripheral::~BLEPeripheral() {
 }
 
 void BLEPeripheral::begin() {
-  unsigned char advertisementDataType = 0;
   unsigned char scanDataType = 0;
 
-  unsigned char advertisementDataLength = 0;
+  unsigned char advertisementDataSize = 0;
   unsigned char scanDataLength = 0;
 
-  unsigned char advertisementData[BLE_ADVERTISEMENT_DATA_MAX_VALUE_LENGTH];
+  BLEAdvertisementData advertisementData[3];
   unsigned char scanData[BLE_SCAN_DATA_MAX_VALUE_LENGTH];
 
+  unsigned char remainingAdvertisementDataLength = BLE_ADVERTISEMENT_DATA_MAX_VALUE_LENGTH + 2;
   if (this->_serviceSolicitationUuid){
     BLEUuid serviceSolicitationUuid = BLEUuid(this->_serviceSolicitationUuid);
 
-    advertisementDataLength = serviceSolicitationUuid.length();
-    advertisementDataType = (advertisementDataLength > 2) ? 0x15 : 0x14;
+    unsigned char uuidLength = serviceSolicitationUuid.length();
+    advertisementData[advertisementDataSize].length = uuidLength;
+    advertisementData[advertisementDataSize].type = (uuidLength > 2) ? 0x15 : 0x14;
 
-    memcpy(advertisementData, serviceSolicitationUuid.data(), advertisementDataLength);
-  } else if (this->_advertisedServiceUuid){
+    memcpy(advertisementData[advertisementDataSize].data, serviceSolicitationUuid.data(), uuidLength);
+    advertisementDataSize += 1;
+    remainingAdvertisementDataLength -= uuidLength + 2;
+  }
+  if (this->_advertisedServiceUuid){
     BLEUuid advertisedServiceUuid = BLEUuid(this->_advertisedServiceUuid);
 
-    advertisementDataLength = advertisedServiceUuid.length();
-    advertisementDataType = (advertisementDataLength > 2) ? 0x06 : 0x02;
+    unsigned char uuidLength = advertisedServiceUuid.length();
+    if (uuidLength + 2 <= remainingAdvertisementDataLength) {
+      advertisementData[advertisementDataSize].length = uuidLength;
+      advertisementData[advertisementDataSize].type = (uuidLength > 2) ? 0x06 : 0x02;
 
-    memcpy(advertisementData, advertisedServiceUuid.data(), advertisementDataLength);
-  } else if (this->_manufacturerData && this->_manufacturerDataLength > 0) {
-    advertisementDataLength = this->_manufacturerDataLength;
-
-    if (advertisementDataLength > sizeof(advertisementData)) {
-      advertisementDataLength = sizeof(advertisementData);
+      memcpy(advertisementData[advertisementDataSize].data, advertisedServiceUuid.data(), uuidLength);
+      advertisementDataSize += 1;
+      remainingAdvertisementDataLength -= uuidLength + 2;
     }
+  }
+  if (this->_manufacturerData && this->_manufacturerDataLength > 0) {
+    if (remainingAdvertisementDataLength >= 3) {
+      unsigned char dataLength = this->_manufacturerDataLength;
 
-    advertisementDataType = 0xff;
+      if (dataLength + 2 > remainingAdvertisementDataLength) {
+        dataLength = remainingAdvertisementDataLength - 2;
+      }
 
-    memcpy(advertisementData, this->_manufacturerData, advertisementDataLength);
+      advertisementData[advertisementDataSize].length = dataLength;
+      advertisementData[advertisementDataSize].type = 0xff;
+
+      memcpy(advertisementData[advertisementDataSize].data, this->_manufacturerData, dataLength);
+      advertisementDataSize += 1;
+      remainingAdvertisementDataLength -= dataLength + 2;
+    }
   }
 
   if (this->_localName){
@@ -144,7 +159,7 @@ void BLEPeripheral::begin() {
     this->addRemoteAttribute(this->_remoteServicesChangedCharacteristic);
   }
 
-  this->_device->begin(advertisementDataType, advertisementDataLength, advertisementData,
+  this->_device->begin(advertisementDataSize, advertisementData,
                         scanDataType, scanDataLength, scanData,
                         this->_localAttributes, this->_numLocalAttributes,
                         this->_remoteAttributes, this->_numRemoteAttributes);
