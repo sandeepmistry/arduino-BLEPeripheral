@@ -75,6 +75,8 @@ void EddystoneBeacon::begin(char power, const char* uri) {
   this->_power = power;
   this->setURI(uri);
 
+  this->setAdvertisedServiceUuid(this->_bleService.uuid());
+
   BLEPeripheral::begin();
 
   this->_bleCharacteristic.broadcast();
