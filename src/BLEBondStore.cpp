@@ -1,5 +1,9 @@
 // Copyright (c) Sandeep Mistry. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
+//
+// Contributors:
+//    Bosch Software Innovations GmbH - Please refer to git log
+
 
 #ifdef __AVR__
   #include <avr/eeprom.h>
