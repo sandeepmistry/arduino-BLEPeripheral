@@ -11,11 +11,11 @@
 #include "BLERemoteCharacteristic.h"
 #include "BLERemoteService.h"
 
-struct BLEAdvertisementData
+struct BLEEirData
 {
   unsigned char length;
   unsigned char type;
-  unsigned char data[BLE_ADVERTISEMENT_DATA_MAX_VALUE_LENGTH];
+  unsigned char data[BLE_EIR_DATA_MAX_VALUE_LENGTH];
 };
 
 class BLEDevice;
@@ -57,10 +57,9 @@ class BLEDevice
     void setBondStore(BLEBondStore& bondStore);
 
     virtual void begin(unsigned char /*advertisementDataSize*/,
-                BLEAdvertisementData * /*advertisementData*/,
-                unsigned char /*scanDataType*/,
-                unsigned char /*scanDataLength*/,
-                const unsigned char* /*scanData*/,
+                BLEEirData * /*advertisementData*/,
+                unsigned char /*scanDataSize*/,
+                BLEEirData * /*scanData*/,
                 BLELocalAttribute** /*localAttributes*/,
                 unsigned char /*numLocalAttributes*/,
                 BLERemoteAttribute** /*remoteAttributes*/,

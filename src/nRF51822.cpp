@@ -77,10 +77,9 @@ nRF51822::~nRF51822() {
 }
 
 void nRF51822::begin(unsigned char advertisementDataSize,
-                      BLEAdvertisementData *advertisementData,
-                      unsigned char scanDataType,
-                      unsigned char scanDataLength,
-                      const unsigned char* scanData,
+                      BLEEirData *advertisementData,
+                      unsigned char scanDataSize,
+                      BLEEirData *scanData,
                       BLELocalAttribute** localAttributes,
                       unsigned char numLocalAttributes,
                       BLERemoteAttribute** remoteAttributes,
@@ -207,12 +206,16 @@ void nRF51822::begin(unsigned char advertisementDataSize,
     }
   }
 
-  if (scanDataType && scanDataLength && scanData) {
-    srData[0] = scanDataLength + 1;
-    srData[1] = scanDataType;
-    memcpy(&srData[2], scanData, scanDataLength);
+  if (scanDataSize && scanData) {
+    for (int i = 0; i < scanDataSize; i++) {
+      srData[srDataLen + 0] = scanData[i].length + 1;
+      srData[srDataLen + 1] = scanData[i].type;
+      srDataLen += 2;
 
-    srDataLen = 2 + scanDataLength;
+      memcpy(&srData[srDataLen], scanData[i].data, scanData[i].length);
+
+      srDataLen += scanData[i].length;
+    }
   }
 
   sd_ble_gap_adv_data_set(this->_advData, this->_advDataLen, srData, srDataLen);

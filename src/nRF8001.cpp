@@ -144,10 +144,9 @@ nRF8001::~nRF8001() {
 }
 
 void nRF8001::begin(unsigned char advertisementDataSize,
-                      BLEAdvertisementData *advertisementData,
-                      unsigned char scanDataType,
-                      unsigned char scanDataLength,
-                      const unsigned char* scanData,
+                      BLEEirData *advertisementData,
+                      unsigned char scanDataSize,
+                      BLEEirData *scanData,
                       BLELocalAttribute** localAttributes,
                       unsigned char numLocalAttributes,
                       BLERemoteAttribute** remoteAttributes,
@@ -261,7 +260,7 @@ void nRF8001::begin(unsigned char advertisementDataSize,
   setupMsg.status_byte = 0;
 
   bool hasAdvertisementData = advertisementDataSize && advertisementData;
-  bool hasScanData          = scanDataType && scanDataLength && scanData;
+  bool hasScanData          = scanDataSize && scanData;
 
   for (int i = 0; i < NB_BASE_SETUP_MESSAGES; i++) {
     int setupMsgSize = pgm_read_byte_near(&baseSetupMsgs[i].buffer[0]) + 2;
@@ -308,9 +307,9 @@ void nRF8001::begin(unsigned char advertisementDataSize,
       setupMsgData->data[1] = advertisementData[0].length;
       memcpy(&setupMsgData->data[2], advertisementData[0].data, advertisementData[0].length);
     } else if (i == 6 && hasScanData) {
-      setupMsgData->data[0] = scanDataType;
-      setupMsgData->data[1] = scanDataLength;
-      memcpy(&setupMsgData->data[2], scanData, scanDataLength);
+      setupMsgData->data[0] = scanData[0].type;
+      setupMsgData->data[1] = scanData[0].length;
+      memcpy(&setupMsgData->data[2], scanData[0].data, scanData[0].length);
     }
 
     this->sendSetupMessage(&setupMsg);

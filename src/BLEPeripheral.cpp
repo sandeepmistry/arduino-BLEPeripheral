@@ -69,13 +69,10 @@ BLEPeripheral::~BLEPeripheral() {
 }
 
 void BLEPeripheral::begin() {
-  unsigned char scanDataType = 0;
-
   unsigned char advertisementDataSize = 0;
-  unsigned char scanDataLength = 0;
 
-  BLEAdvertisementData advertisementData[3];
-  unsigned char scanData[BLE_SCAN_DATA_MAX_VALUE_LENGTH];
+  BLEEirData advertisementData[3];
+  BLEEirData scanData = { 0 };
 
   unsigned char remainingAdvertisementDataLength = BLE_ADVERTISEMENT_DATA_MAX_VALUE_LENGTH + 2;
   if (this->_serviceSolicitationUuid){
@@ -121,15 +118,15 @@ void BLEPeripheral::begin() {
 
   if (this->_localName){
     unsigned char localNameLength = strlen(this->_localName);
-    scanDataLength = localNameLength;
+    scanData.length = localNameLength;
 
-    if (scanDataLength > sizeof(scanData)) {
-      scanDataLength = sizeof(scanData);
+    if (scanData.length > BLE_SCAN_DATA_MAX_VALUE_LENGTH) {
+      scanData.length = BLE_SCAN_DATA_MAX_VALUE_LENGTH;
     }
 
-    scanDataType = (localNameLength > scanDataLength) ? 0x08 : 0x09;
+    scanData.type = (localNameLength > scanData.length) ? 0x08 : 0x09;
 
-    memcpy(scanData, this->_localName, scanDataLength);
+    memcpy(scanData.data, this->_localName, scanData.length);
   }
 
   if (this->_localAttributes == NULL) {
@@ -160,7 +157,7 @@ void BLEPeripheral::begin() {
   }
 
   this->_device->begin(advertisementDataSize, advertisementData,
-                        scanDataType, scanDataLength, scanData,
+                        scanData.length > 0 ? 1 : 0, &scanData,
                         this->_localAttributes, this->_numLocalAttributes,
                         this->_remoteAttributes, this->_numRemoteAttributes);
 
