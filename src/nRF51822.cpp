@@ -46,12 +46,12 @@ uint32_t sd_ble_gatts_value_set(uint16_t handle, uint16_t offset, uint16_t* cons
 nRF51822::nRF51822() :
   BLEDevice(),
 
-  _txBufferCount(0),
-
   _advDataLen(0),
   _broadcastCharacteristic(NULL),
 
   _connectionHandle(BLE_CONN_HANDLE_INVALID),
+
+  _txBufferCount(0),
 
   _numLocalCharacteristics(0),
   _localCharacteristicInfo(NULL),

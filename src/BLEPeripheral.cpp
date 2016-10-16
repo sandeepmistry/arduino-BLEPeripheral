@@ -72,7 +72,9 @@ void BLEPeripheral::begin() {
   unsigned char advertisementDataSize = 0;
 
   BLEEirData advertisementData[3];
-  BLEEirData scanData = { 0 };
+  BLEEirData scanData;
+
+  scanData.length = 0;
 
   unsigned char remainingAdvertisementDataLength = BLE_ADVERTISEMENT_DATA_MAX_VALUE_LENGTH + 2;
   if (this->_serviceSolicitationUuid){
