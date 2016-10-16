@@ -46,12 +46,10 @@ class nRF8001 : protected BLEDevice
 
     virtual ~nRF8001();
 
-    virtual void begin(unsigned char advertisementDataType,
-                unsigned char advertisementDataLength,
-                const unsigned char* advertisementData,
-                unsigned char scanDataType,
-                unsigned char scanDataLength,
-                const unsigned char* scanData,
+    virtual void begin(unsigned char advertisementDataSize,
+                BLEEirData *advertisementData,
+                unsigned char scanDataSize,
+                BLEEirData *scanData,
                 BLELocalAttribute** localAttributes,
                 unsigned char numLocalAttributes,
                 BLERemoteAttribute** remoteAttributes,
