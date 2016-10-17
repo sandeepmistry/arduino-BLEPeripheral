@@ -1,8 +1,5 @@
 // Copyright (c) Sandeep Mistry. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
-//
-// Contributors:
-//    Bosch Software Innovations GmbH - Please refer to git log
 
 
 #ifdef __AVR__
@@ -41,13 +38,11 @@ void BLEBondStore::clearData() {
   eeprom_write_byte((unsigned char *)this->_offset, 0x00);
 #elif defined(NRF51) || defined(NRF52) || defined(__RFduino__)
 
-//uint32_t us = micros();
   int32_t pageNo = (uint32_t)_flashPageStartAddress/NRF_FICR->CODEPAGESIZE;
   uint32_t err_code;
   do {
 	err_code = sd_flash_page_erase(pageNo);
   } while(err_code == NRF_ERROR_BUSY);
-//Serial.print("BLEBondStore::clearData()[us]:"); Serial.println(micros()-us); // nrf51: 26116us nrf52: 2655us!
 #endif
 }
 
@@ -61,12 +56,10 @@ void BLEBondStore::putData(const unsigned char* data, unsigned int offset, unsig
 #elif defined(NRF51) || defined(NRF52) || defined(__RFduino__) // ignores offset
   this->clearData();
 
-//uint32_t us = micros();
   uint32_t err_code;
   do {
 	  err_code = sd_flash_write((uint32_t*)_flashPageStartAddress, (uint32_t*)data, (uint32_t)length/4);
   } while(err_code == NRF_ERROR_BUSY);
-//Serial.print("BLEBondStore::putData()[us]:"); Serial.println(micros()-us);	// nrf51:40832us nrf52:95031us!
 #endif
 }
 
