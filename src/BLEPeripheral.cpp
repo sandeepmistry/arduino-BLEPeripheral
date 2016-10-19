@@ -1,5 +1,9 @@
 // Copyright (c) Sandeep Mistry. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
+//
+// Contributors:
+//    Bosch Software Innovations GmbH - Please refer to git log
+
 
 #include "BLEUuid.h"
 
@@ -375,7 +379,7 @@ void BLEPeripheral::BLEDeviceRemoteCharacteristicValueChanged(BLEDevice& /*devic
   remoteCharacteristic.setValue(this->_central, value, valueLength);
 }
 
-void BLEPeripheral::BLEDeviceAddressReceived(BLEDevice& /*device*/, const unsigned char* /*address*/) {
+void BLEPeripheral::BLEDeviceAddressReceived(BLEDevice& /*device*/, const unsigned char* address) {
 #ifdef BLE_PERIPHERAL_DEBUG
   char addressStr[18];
 

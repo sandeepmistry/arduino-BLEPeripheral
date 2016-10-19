@@ -1,5 +1,8 @@
 // Copyright (c) Sandeep Mistry. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
+//
+// Contributors:
+//    Bosch Software Innovations GmbH - Please refer to git log
 
 #if defined(NRF51) || defined(NRF52) || defined(__RFduino__)
 
@@ -625,10 +628,6 @@ void nRF51822::poll() {
       case BLE_GAP_EVT_SEC_PARAMS_REQUEST:
 #ifdef NRF_51822_DEBUG
         Serial.print(F("Evt Sec Params Request "));
-#if !defined(NRF51_S130) && !defined(S110)
-        Serial.print(bleEvt->evt.gap_evt.params.sec_params_request.peer_params.timeout);
-        Serial.print(F(" "));
-#endif
         Serial.print(bleEvt->evt.gap_evt.params.sec_params_request.peer_params.bond);
         Serial.print(F(" "));
         Serial.print(bleEvt->evt.gap_evt.params.sec_params_request.peer_params.mitm);
