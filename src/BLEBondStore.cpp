@@ -1,11 +1,9 @@
 // Copyright (c) Sandeep Mistry. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-
 #ifdef __AVR__
   #include <avr/eeprom.h>
 #elif defined(__RFduino__)
-  #include <utility/RFduino/nrf_soc.h>
 #define FLASH_WAIT_READY { \
   while (NRF_NVMC->READY == NVMC_READY_READY_Busy) {}; \
 }
@@ -42,13 +40,9 @@ void BLEBondStore::clearData() {
 #if defined(__AVR__) || defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MKL26Z64__)
   eeprom_write_byte((unsigned char *)this->_offset, 0x00);
 #elif defined(NRF51) || defined(NRF52)
+  int32_t pageNo = (uint32_t)_flashPageStartAddress / NRF_FICR->CODEPAGESIZE;
 
-  int32_t pageNo = (uint32_t)_flashPageStartAddress/NRF_FICR->CODEPAGESIZE;
-  uint32_t err_code;
-  do {
-	err_code = sd_flash_page_erase(pageNo);
-  } while(err_code == NRF_ERROR_BUSY);
-
+  while(sd_flash_page_erase(pageNo) == NRF_ERROR_BUSY);
 #elif defined(__RFduino__)
 
   // turn on flash erase enable
@@ -68,7 +62,6 @@ void BLEBondStore::clearData() {
 
   // wait until ready
   FLASH_WAIT_READY
-
 #endif
 }
 
@@ -82,13 +75,8 @@ void BLEBondStore::putData(const unsigned char* data, unsigned int offset, unsig
 #elif defined(NRF51) || defined(NRF52)  // ignores offset
   this->clearData();
 
-  uint32_t err_code;
-  do {
-	  err_code = sd_flash_write((uint32_t*)_flashPageStartAddress, (uint32_t*)data, (uint32_t)length/4);
-  } while(err_code == NRF_ERROR_BUSY);
-
+  while (sd_flash_write((uint32_t*)_flashPageStartAddress, (uint32_t*)data, (uint32_t)length/4) == NRF_ERROR_BUSY);
 #elif defined(__RFduino__) // ignores offset
-
   this->clearData();
 
   // turn on flash write enable
@@ -115,7 +103,6 @@ void BLEBondStore::putData(const unsigned char* data, unsigned int offset, unsig
 
   // wait until ready
   FLASH_WAIT_READY
-
 #endif
 }
 
