@@ -625,7 +625,7 @@ void nRF51822::poll() {
       case BLE_GAP_EVT_SEC_PARAMS_REQUEST:
 #ifdef NRF_51822_DEBUG
         Serial.print(F("Evt Sec Params Request "));
-#if !defined(NRF51_S130) && !defined(S110)
+#if !defined(NRF5) && !defined(NRF51_S130)
         Serial.print(bleEvt->evt.gap_evt.params.sec_params_request.peer_params.timeout);
         Serial.print(F(" "));
 #endif
