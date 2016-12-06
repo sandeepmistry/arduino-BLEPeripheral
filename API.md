@@ -234,7 +234,7 @@ or
 
   * value - string value (max: 20 characters on nRF8001 and nRF51822)
   
-  Please take note that in order to initiate a characteristic containing one or more 0's (i.e. not a real string) you should use a combination of
+  Please take note that in order to initialise a characteristic containing one or more 0's (i.e. not a real string) you should use a combination of
   ```
   BLECharacteristic(const char* uuid, unsigned char properties, sizeof(value));
   BLECharacteristic.setValue((unsigned char*)value, sizeof(value));
