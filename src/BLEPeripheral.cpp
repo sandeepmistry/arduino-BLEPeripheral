@@ -202,6 +202,9 @@ bool  BLEPeripheral::setTxPower(int txPower) {
 void BLEPeripheral::setBondStore(BLEBondStore& bondStore) {
   this->_device->setBondStore(bondStore);
 }
+void BLEPeripheral::requestTemperature() {
+  this->_device->requestTemperature();
+}
 
 void BLEPeripheral::setDeviceName(const char* deviceName) {
   this->_deviceNameCharacteristic.setValue(deviceName);
