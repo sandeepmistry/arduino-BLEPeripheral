@@ -170,6 +170,10 @@ void BLEPeripheral::poll() {
   this->_device->poll();
 }
 
+void BLEPeripheral::poll(void* eventData, uint16_t length) {
+  this->_device->poll(eventData, length);
+}
+
 void BLEPeripheral::end() {
   this->_device->end();
 }
@@ -247,6 +251,12 @@ void BLEPeripheral::disconnect() {
 
 BLECentral BLEPeripheral::central() {
   this->poll();
+
+  return this->_central;
+}
+
+BLECentral BLEPeripheral::central(void* eventData, uint16_t length) {
+  this->poll(eventData, length);
 
   return this->_central;
 }

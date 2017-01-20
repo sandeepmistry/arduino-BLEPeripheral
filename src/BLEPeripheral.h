@@ -60,6 +60,7 @@ class BLEPeripheral : public BLEDeviceEventListener,
 
     void begin();
     void poll();
+    void poll(void* eventData, uint16_t length);
     void end();
 
     void setAdvertisedServiceUuid(const char* advertisedServiceUuid);
@@ -86,6 +87,7 @@ class BLEPeripheral : public BLEDeviceEventListener,
     void disconnect();
 
     BLECentral central();
+    BLECentral central(void* eventData, uint16_t length);
     bool connected();
 
     void setEventHandler(BLEPeripheralEvent event, BLEPeripheralEventHandler eventHandler);

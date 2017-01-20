@@ -18,6 +18,7 @@ class BLECentral
     bool connected();
     const char* address() const;
     void poll();
+    void poll(void* eventData, uint16_t length);
 
     void disconnect();
 

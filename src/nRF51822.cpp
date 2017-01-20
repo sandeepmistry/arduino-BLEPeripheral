@@ -512,479 +512,431 @@ void nRF51822::begin(unsigned char advertisementDataSize,
 void nRF51822::poll() {
   uint32_t   evtBuf[BLE_STACK_EVT_MSG_BUF_SIZE] __attribute__ ((__aligned__(BLE_EVTS_PTR_ALIGNMENT)));
   uint16_t   evtLen = sizeof(evtBuf);
-  ble_evt_t* bleEvt = (ble_evt_t*)evtBuf;
 
   if (sd_ble_evt_get((uint8_t*)evtBuf, &evtLen) == NRF_SUCCESS) {
-    switch (bleEvt->header.evt_id) {
-      case BLE_EVT_TX_COMPLETE:
+    poll(evtBuf, evtLen);  
+  }
+
+  // sd_app_evt_wait();
+}
+
+void nRF51822::poll(void* eventData, uint16_t length) {
+  ble_evt_t* bleEvt = (ble_evt_t*)eventData;
+
+  switch (bleEvt->header.evt_id) {
+    case BLE_EVT_TX_COMPLETE:
 #ifdef NRF_51822_DEBUG
-        Serial.print(F("Evt TX complete "));
-        Serial.println(bleEvt->evt.common_evt.params.tx_complete.count);
+      Serial.print(F("Evt TX complete "));
+      Serial.println(bleEvt->evt.common_evt.params.tx_complete.count);
 #endif
-        this->_txBufferCount += bleEvt->evt.common_evt.params.tx_complete.count;
-        break;
+      this->_txBufferCount += bleEvt->evt.common_evt.params.tx_complete.count;
+      break;
 
-      case BLE_GAP_EVT_CONNECTED:
+    case BLE_GAP_EVT_CONNECTED:
 #ifdef NRF_51822_DEBUG
-        char address[18];
+      char address[18];
 
-        BLEUtil::addressToString(bleEvt->evt.gap_evt.params.connected.peer_addr.addr, address);
+      BLEUtil::addressToString(bleEvt->evt.gap_evt.params.connected.peer_addr.addr, address);
 
-        Serial.print(F("Evt Connected "));
-        Serial.println(address);
+      Serial.print(F("Evt Connected "));
+      Serial.println(address);
 #endif
 
-        this->_connectionHandle = bleEvt->evt.gap_evt.conn_handle;
+      this->_connectionHandle = bleEvt->evt.gap_evt.conn_handle;
 
 #if defined(NRF5) && !defined(S110)
-        {
-          uint8_t count;
+      {
+        uint8_t count;
 
-          sd_ble_tx_packet_count_get(this->_connectionHandle, &count);
+        sd_ble_tx_packet_count_get(this->_connectionHandle, &count);
 
-          this->_txBufferCount = count;
-        }
+        this->_txBufferCount = count;
+      }
 #else
-        sd_ble_tx_buffer_count_get(&this->_txBufferCount);
+      sd_ble_tx_buffer_count_get(&this->_txBufferCount);
 #endif
 
-        if (this->_eventListener) {
-          this->_eventListener->BLEDeviceConnected(*this, bleEvt->evt.gap_evt.params.connected.peer_addr.addr);
-        }
+      if (this->_eventListener) {
+        this->_eventListener->BLEDeviceConnected(*this, bleEvt->evt.gap_evt.params.connected.peer_addr.addr);
+      }
 
-        if (this->_minimumConnectionInterval >= BLE_GAP_CP_MIN_CONN_INTVL_MIN &&
-            this->_maximumConnectionInterval <= BLE_GAP_CP_MAX_CONN_INTVL_MAX) {
-          ble_gap_conn_params_t gap_conn_params;
+      if (this->_minimumConnectionInterval >= BLE_GAP_CP_MIN_CONN_INTVL_MIN &&
+          this->_maximumConnectionInterval <= BLE_GAP_CP_MAX_CONN_INTVL_MAX) {
+        ble_gap_conn_params_t gap_conn_params;
 
-          gap_conn_params.min_conn_interval = this->_minimumConnectionInterval;  // in 1.25ms units
-          gap_conn_params.max_conn_interval = this->_maximumConnectionInterval;  // in 1.25ms unit
-          gap_conn_params.slave_latency     = 0;
-          gap_conn_params.conn_sup_timeout  = 4000 / 10; // in 10ms unit
+        gap_conn_params.min_conn_interval = this->_minimumConnectionInterval;  // in 1.25ms units
+        gap_conn_params.max_conn_interval = this->_maximumConnectionInterval;  // in 1.25ms unit
+        gap_conn_params.slave_latency     = 0;
+        gap_conn_params.conn_sup_timeout  = 4000 / 10; // in 10ms unit
 
-          sd_ble_gap_conn_param_update(this->_connectionHandle, &gap_conn_params);
-        }
+        sd_ble_gap_conn_param_update(this->_connectionHandle, &gap_conn_params);
+      }
 
-        if (this->_numRemoteServices > 0) {
-          sd_ble_gattc_primary_services_discover(this->_connectionHandle, 1, NULL);
-        }
-        break;
+      if (this->_numRemoteServices > 0) {
+        sd_ble_gattc_primary_services_discover(this->_connectionHandle, 1, NULL);
+      }
+      break;
 
-      case BLE_GAP_EVT_DISCONNECTED:
+    case BLE_GAP_EVT_DISCONNECTED:
 #ifdef NRF_51822_DEBUG
-        Serial.println(F("Evt Disconnected"));
+      Serial.println(F("Evt Disconnected"));
 #endif
-        this->_connectionHandle = BLE_CONN_HANDLE_INVALID;
-        this->_txBufferCount = 0;
+      this->_connectionHandle = BLE_CONN_HANDLE_INVALID;
+      this->_txBufferCount = 0;
 
-        for (int i = 0; i < this->_numLocalCharacteristics; i++) {
-          struct localCharacteristicInfo* localCharacteristicInfo = &this->_localCharacteristicInfo[i];
+      for (int i = 0; i < this->_numLocalCharacteristics; i++) {
+        struct localCharacteristicInfo* localCharacteristicInfo = &this->_localCharacteristicInfo[i];
 
-          localCharacteristicInfo->notifySubscribed = false;
-          localCharacteristicInfo->indicateSubscribed = false;
+        localCharacteristicInfo->notifySubscribed = false;
+        localCharacteristicInfo->indicateSubscribed = false;
 
-          if (localCharacteristicInfo->characteristic->subscribed()) {
-            if (this->_eventListener) {
-              this->_eventListener->BLEDeviceCharacteristicSubscribedChanged(*this, *localCharacteristicInfo->characteristic, false);
-            }
-          }
-        }
-
-        if (this->_eventListener) {
-          this->_eventListener->BLEDeviceDisconnected(*this);
-        }
-
-        // clear remote handle info
-        for (int i = 0; i < this->_numRemoteServices; i++) {
-          memset(&this->_remoteServiceInfo[i].handlesRange, 0, sizeof(this->_remoteServiceInfo[i].handlesRange));
-        }
-
-        for (int i = 0; i < this->_numRemoteCharacteristics; i++) {
-          memset(&this->_remoteCharacteristicInfo[i].properties, 0, sizeof(this->_remoteCharacteristicInfo[i].properties));
-          this->_remoteCharacteristicInfo[i].valueHandle = 0;
-        }
-
-        this->_remoteRequestInProgress = false;
-
-        this->startAdvertising();
-        break;
-
-      case BLE_GAP_EVT_CONN_PARAM_UPDATE:
-#ifdef NRF_51822_DEBUG
-        Serial.print(F("Evt Conn Param Update 0x"));
-        Serial.print(bleEvt->evt.gap_evt.params.conn_param_update.conn_params.min_conn_interval, HEX);
-        Serial.print(F(" 0x"));
-        Serial.print(bleEvt->evt.gap_evt.params.conn_param_update.conn_params.max_conn_interval, HEX);
-        Serial.print(F(" 0x"));
-        Serial.print(bleEvt->evt.gap_evt.params.conn_param_update.conn_params.slave_latency, HEX);
-        Serial.print(F(" 0x"));
-        Serial.print(bleEvt->evt.gap_evt.params.conn_param_update.conn_params.conn_sup_timeout, HEX);
-        Serial.println();
-#endif
-        break;
-
-      case BLE_GAP_EVT_SEC_PARAMS_REQUEST:
-#ifdef NRF_51822_DEBUG
-        Serial.print(F("Evt Sec Params Request "));
-#if !defined(NRF5) && !defined(NRF51_S130)
-        Serial.print(bleEvt->evt.gap_evt.params.sec_params_request.peer_params.timeout);
-        Serial.print(F(" "));
-#endif
-        Serial.print(bleEvt->evt.gap_evt.params.sec_params_request.peer_params.bond);
-        Serial.print(F(" "));
-        Serial.print(bleEvt->evt.gap_evt.params.sec_params_request.peer_params.mitm);
-        Serial.print(F(" "));
-        Serial.print(bleEvt->evt.gap_evt.params.sec_params_request.peer_params.io_caps);
-        Serial.print(F(" "));
-        Serial.print(bleEvt->evt.gap_evt.params.sec_params_request.peer_params.oob);
-        Serial.print(F(" "));
-        Serial.print(bleEvt->evt.gap_evt.params.sec_params_request.peer_params.min_key_size);
-        Serial.print(F(" "));
-        Serial.print(bleEvt->evt.gap_evt.params.sec_params_request.peer_params.max_key_size);
-        Serial.println();
-#endif
-
-        if (this->_bondStore && !this->_bondStore->hasData()) {
-          // only allow bonding if bond store exists and there is no data
-
-          ble_gap_sec_params_t gapSecParams;
-
-          memset(&gapSecParams, 0x00, sizeof(ble_gap_sec_params_t));
-
-#if defined(NRF5) && !defined(S110)
-          gapSecParams.kdist_own.enc = 1;
-#elif defined(NRF51_S130)
-          gapSecParams.kdist_periph.enc = 1;
-#elif !defined(NRF5)
-          gapSecParams.timeout          = 30; // must be 30s
-#endif
-          gapSecParams.bond             = true;
-          gapSecParams.mitm             = false;
-          gapSecParams.io_caps          = BLE_GAP_IO_CAPS_NONE;
-          gapSecParams.oob              = false;
-          gapSecParams.min_key_size     = 7;
-          gapSecParams.max_key_size     = 16;
-
-#if defined(NRF5) && !defined(S110)
-          ble_gap_sec_keyset_t keyset;
-
-          keyset.keys_peer.p_enc_key  = NULL;
-          keyset.keys_peer.p_id_key   = NULL;
-          keyset.keys_peer.p_sign_key = NULL;
-          keyset.keys_own.p_enc_key   = this->_encKey;
-          keyset.keys_own.p_id_key    = NULL;
-          keyset.keys_own.p_sign_key  = NULL;
-
-          sd_ble_gap_sec_params_reply(this->_connectionHandle, BLE_GAP_SEC_STATUS_SUCCESS, &gapSecParams, &keyset);
-#elif defined(NRF51_S130) || defined(S110)
-          ble_gap_sec_keyset_t keyset;
-
-          keyset.keys_central.p_enc_key  = NULL;
-          keyset.keys_central.p_id_key   = NULL;
-          keyset.keys_central.p_sign_key = NULL;
-          keyset.keys_periph.p_enc_key   = this->_encKey;
-          keyset.keys_periph.p_id_key    = NULL;
-          keyset.keys_periph.p_sign_key  = NULL;
-
-          sd_ble_gap_sec_params_reply(this->_connectionHandle, BLE_GAP_SEC_STATUS_SUCCESS, &gapSecParams, &keyset);
-#else
-          sd_ble_gap_sec_params_reply(this->_connectionHandle, BLE_GAP_SEC_STATUS_SUCCESS, &gapSecParams);
-#endif
-        } else {
-#if defined(NRF5) || defined(NRF51_S130)
-          sd_ble_gap_sec_params_reply(this->_connectionHandle, BLE_GAP_SEC_STATUS_PAIRING_NOT_SUPP, NULL, NULL);
-#else
-          sd_ble_gap_sec_params_reply(this->_connectionHandle, BLE_GAP_SEC_STATUS_PAIRING_NOT_SUPP, NULL);
-#endif
-        }
-        break;
-
-      case BLE_GAP_EVT_SEC_INFO_REQUEST:
-#ifdef NRF_51822_DEBUG
-        Serial.print(F("Evt Sec Info Request "));
-        // Serial.print(bleEvt->evt.gap_evt.params.sec_info_request.peer_addr);
-        // Serial.print(F(" "));
-#if defined(NRF5) || defined(NRF51_S130)
-        Serial.print(bleEvt->evt.gap_evt.params.sec_info_request.master_id.ediv);
-#else
-        Serial.print(bleEvt->evt.gap_evt.params.sec_info_request.div);
-#endif
-        Serial.print(F(" "));
-        Serial.print(bleEvt->evt.gap_evt.params.sec_info_request.enc_info);
-        Serial.print(F(" "));
-        Serial.print(bleEvt->evt.gap_evt.params.sec_info_request.id_info);
-        Serial.print(F(" "));
-        Serial.print(bleEvt->evt.gap_evt.params.sec_info_request.sign_info);
-        Serial.println();
-#endif
-#if defined(NRF5) || defined(NRF51_S130)
-        if (this->_encKey->master_id.ediv == bleEvt->evt.gap_evt.params.sec_info_request.master_id.ediv) {
-          sd_ble_gap_sec_info_reply(this->_connectionHandle, &this->_encKey->enc_info, NULL, NULL);
-        } else {
-          sd_ble_gap_sec_info_reply(this->_connectionHandle, NULL, NULL, NULL);
-        }
-#else
-        if (this->_authStatus->periph_keys.enc_info.div == bleEvt->evt.gap_evt.params.sec_info_request.div) {
-          sd_ble_gap_sec_info_reply(this->_connectionHandle, &this->_authStatus->periph_keys.enc_info, NULL);
-        } else {
-          sd_ble_gap_sec_info_reply(this->_connectionHandle, NULL, NULL);
-        }
-#endif
-        break;
-
-      case BLE_GAP_EVT_AUTH_STATUS:
-#ifdef NRF_51822_DEBUG
-        Serial.println(F("Evt Auth Status"));
-        Serial.println(bleEvt->evt.gap_evt.params.auth_status.auth_status);
-#endif
-        if (BLE_GAP_SEC_STATUS_SUCCESS == bleEvt->evt.gap_evt.params.auth_status.auth_status) {
-#if !defined(NRF5) && !defined(NRF51_S130)
-          *this->_authStatus = bleEvt->evt.gap_evt.params.auth_status;
-#endif
-          if (this->_bondStore) {
-#ifdef NRF_51822_DEBUG
-            Serial.println(F("Storing bond data"));
-#endif
-#if defined(NRF5) || defined(NRF51_S130)
-            this->_bondStore->putData(this->_bondData, 0, sizeof(this->_bondData));
-#else
-            this->_bondStore->putData(this->_authStatusBuffer, 0, sizeof(this->_authStatusBuffer));
-#endif
-          }
-
+        if (localCharacteristicInfo->characteristic->subscribed()) {
           if (this->_eventListener) {
-            this->_eventListener->BLEDeviceBonded(*this);
+            this->_eventListener->BLEDeviceCharacteristicSubscribedChanged(*this, *localCharacteristicInfo->characteristic, false);
           }
         }
-        break;
+      }
 
-      case BLE_GAP_EVT_CONN_SEC_UPDATE:
+      if (this->_eventListener) {
+        this->_eventListener->BLEDeviceDisconnected(*this);
+      }
+
+      // clear remote handle info
+      for (int i = 0; i < this->_numRemoteServices; i++) {
+        memset(&this->_remoteServiceInfo[i].handlesRange, 0, sizeof(this->_remoteServiceInfo[i].handlesRange));
+      }
+
+      for (int i = 0; i < this->_numRemoteCharacteristics; i++) {
+        memset(&this->_remoteCharacteristicInfo[i].properties, 0, sizeof(this->_remoteCharacteristicInfo[i].properties));
+        this->_remoteCharacteristicInfo[i].valueHandle = 0;
+      }
+
+      this->_remoteRequestInProgress = false;
+
+      this->startAdvertising();
+      break;
+
+    case BLE_GAP_EVT_CONN_PARAM_UPDATE:
 #ifdef NRF_51822_DEBUG
-        Serial.print(F("Evt Conn Sec Update "));
-        Serial.print(bleEvt->evt.gap_evt.params.conn_sec_update.conn_sec.sec_mode.sm);
-        Serial.print(F(" "));
-        Serial.print(bleEvt->evt.gap_evt.params.conn_sec_update.conn_sec.sec_mode.lv);
-        Serial.print(F(" "));
-        Serial.print(bleEvt->evt.gap_evt.params.conn_sec_update.conn_sec.encr_key_size);
-        Serial.println();
+      Serial.print(F("Evt Conn Param Update 0x"));
+      Serial.print(bleEvt->evt.gap_evt.params.conn_param_update.conn_params.min_conn_interval, HEX);
+      Serial.print(F(" 0x"));
+      Serial.print(bleEvt->evt.gap_evt.params.conn_param_update.conn_params.max_conn_interval, HEX);
+      Serial.print(F(" 0x"));
+      Serial.print(bleEvt->evt.gap_evt.params.conn_param_update.conn_params.slave_latency, HEX);
+      Serial.print(F(" 0x"));
+      Serial.print(bleEvt->evt.gap_evt.params.conn_param_update.conn_params.conn_sup_timeout, HEX);
+      Serial.println();
 #endif
-        break;
+      break;
 
-      case BLE_GATTS_EVT_WRITE: {
+    case BLE_GAP_EVT_SEC_PARAMS_REQUEST:
 #ifdef NRF_51822_DEBUG
-        Serial.print(F("Evt Write, handle = "));
-        Serial.println(bleEvt->evt.gatts_evt.params.write.handle, DEC);
-
-        BLEUtil::printBuffer(bleEvt->evt.gatts_evt.params.write.data, bleEvt->evt.gatts_evt.params.write.len);
+      Serial.print(F("Evt Sec Params Request "));
+#if !defined(NRF5) && !defined(NRF51_S130)
+      Serial.print(bleEvt->evt.gap_evt.params.sec_params_request.peer_params.timeout);
+      Serial.print(F(" "));
+#endif
+      Serial.print(bleEvt->evt.gap_evt.params.sec_params_request.peer_params.bond);
+      Serial.print(F(" "));
+      Serial.print(bleEvt->evt.gap_evt.params.sec_params_request.peer_params.mitm);
+      Serial.print(F(" "));
+      Serial.print(bleEvt->evt.gap_evt.params.sec_params_request.peer_params.io_caps);
+      Serial.print(F(" "));
+      Serial.print(bleEvt->evt.gap_evt.params.sec_params_request.peer_params.oob);
+      Serial.print(F(" "));
+      Serial.print(bleEvt->evt.gap_evt.params.sec_params_request.peer_params.min_key_size);
+      Serial.print(F(" "));
+      Serial.print(bleEvt->evt.gap_evt.params.sec_params_request.peer_params.max_key_size);
+      Serial.println();
 #endif
 
-        uint16_t handle = bleEvt->evt.gatts_evt.params.write.handle;
+      if (this->_bondStore && !this->_bondStore->hasData()) {
+        // only allow bonding if bond store exists and there is no data
 
-        for (int i = 0; i < this->_numLocalCharacteristics; i++) {
-          struct localCharacteristicInfo* localCharacteristicInfo = &this->_localCharacteristicInfo[i];
+        ble_gap_sec_params_t gapSecParams;
 
-          if (localCharacteristicInfo->handles.value_handle == handle) {
+        memset(&gapSecParams, 0x00, sizeof(ble_gap_sec_params_t));
+
+#if defined(NRF5) && !defined(S110)
+        gapSecParams.kdist_own.enc = 1;
+#elif defined(NRF51_S130)
+        gapSecParams.kdist_periph.enc = 1;
+#elif !defined(NRF5)
+        gapSecParams.timeout          = 30; // must be 30s
+#endif
+        gapSecParams.bond             = true;
+        gapSecParams.mitm             = false;
+        gapSecParams.io_caps          = BLE_GAP_IO_CAPS_NONE;
+        gapSecParams.oob              = false;
+        gapSecParams.min_key_size     = 7;
+        gapSecParams.max_key_size     = 16;
+
+#if defined(NRF5) && !defined(S110)
+        ble_gap_sec_keyset_t keyset;
+
+        keyset.keys_peer.p_enc_key  = NULL;
+        keyset.keys_peer.p_id_key   = NULL;
+        keyset.keys_peer.p_sign_key = NULL;
+        keyset.keys_own.p_enc_key   = this->_encKey;
+        keyset.keys_own.p_id_key    = NULL;
+        keyset.keys_own.p_sign_key  = NULL;
+
+        sd_ble_gap_sec_params_reply(this->_connectionHandle, BLE_GAP_SEC_STATUS_SUCCESS, &gapSecParams, &keyset);
+#elif defined(NRF51_S130) || defined(S110)
+        ble_gap_sec_keyset_t keyset;
+
+        keyset.keys_central.p_enc_key  = NULL;
+        keyset.keys_central.p_id_key   = NULL;
+        keyset.keys_central.p_sign_key = NULL;
+        keyset.keys_periph.p_enc_key   = this->_encKey;
+        keyset.keys_periph.p_id_key    = NULL;
+        keyset.keys_periph.p_sign_key  = NULL;
+
+        sd_ble_gap_sec_params_reply(this->_connectionHandle, BLE_GAP_SEC_STATUS_SUCCESS, &gapSecParams, &keyset);
+#else
+        sd_ble_gap_sec_params_reply(this->_connectionHandle, BLE_GAP_SEC_STATUS_SUCCESS, &gapSecParams);
+#endif
+      } else {
+#if defined(NRF5) || defined(NRF51_S130)
+        sd_ble_gap_sec_params_reply(this->_connectionHandle, BLE_GAP_SEC_STATUS_PAIRING_NOT_SUPP, NULL, NULL);
+#else
+        sd_ble_gap_sec_params_reply(this->_connectionHandle, BLE_GAP_SEC_STATUS_PAIRING_NOT_SUPP, NULL);
+#endif
+      }
+      break;
+
+    case BLE_GAP_EVT_SEC_INFO_REQUEST:
+#ifdef NRF_51822_DEBUG
+      Serial.print(F("Evt Sec Info Request "));
+      // Serial.print(bleEvt->evt.gap_evt.params.sec_info_request.peer_addr);
+      // Serial.print(F(" "));
+#if defined(NRF5) || defined(NRF51_S130)
+      Serial.print(bleEvt->evt.gap_evt.params.sec_info_request.master_id.ediv);
+#else
+      Serial.print(bleEvt->evt.gap_evt.params.sec_info_request.div);
+#endif
+      Serial.print(F(" "));
+      Serial.print(bleEvt->evt.gap_evt.params.sec_info_request.enc_info);
+      Serial.print(F(" "));
+      Serial.print(bleEvt->evt.gap_evt.params.sec_info_request.id_info);
+      Serial.print(F(" "));
+      Serial.print(bleEvt->evt.gap_evt.params.sec_info_request.sign_info);
+      Serial.println();
+#endif
+#if defined(NRF5) || defined(NRF51_S130)
+      if (this->_encKey->master_id.ediv == bleEvt->evt.gap_evt.params.sec_info_request.master_id.ediv) {
+        sd_ble_gap_sec_info_reply(this->_connectionHandle, &this->_encKey->enc_info, NULL, NULL);
+      } else {
+        sd_ble_gap_sec_info_reply(this->_connectionHandle, NULL, NULL, NULL);
+      }
+#else
+      if (this->_authStatus->periph_keys.enc_info.div == bleEvt->evt.gap_evt.params.sec_info_request.div) {
+        sd_ble_gap_sec_info_reply(this->_connectionHandle, &this->_authStatus->periph_keys.enc_info, NULL);
+      } else {
+        sd_ble_gap_sec_info_reply(this->_connectionHandle, NULL, NULL);
+      }
+#endif
+      break;
+
+    case BLE_GAP_EVT_AUTH_STATUS:
+#ifdef NRF_51822_DEBUG
+      Serial.println(F("Evt Auth Status"));
+      Serial.println(bleEvt->evt.gap_evt.params.auth_status.auth_status);
+#endif
+      if (BLE_GAP_SEC_STATUS_SUCCESS == bleEvt->evt.gap_evt.params.auth_status.auth_status) {
+#if !defined(NRF5) && !defined(NRF51_S130)
+        *this->_authStatus = bleEvt->evt.gap_evt.params.auth_status;
+#endif
+        if (this->_bondStore) {
+#ifdef NRF_51822_DEBUG
+          Serial.println(F("Storing bond data"));
+#endif
+#if defined(NRF5) || defined(NRF51_S130)
+          this->_bondStore->putData(this->_bondData, 0, sizeof(this->_bondData));
+#else
+          this->_bondStore->putData(this->_authStatusBuffer, 0, sizeof(this->_authStatusBuffer));
+#endif
+        }
+
+        if (this->_eventListener) {
+          this->_eventListener->BLEDeviceBonded(*this);
+        }
+      }
+      break;
+
+    case BLE_GAP_EVT_CONN_SEC_UPDATE:
+#ifdef NRF_51822_DEBUG
+      Serial.print(F("Evt Conn Sec Update "));
+      Serial.print(bleEvt->evt.gap_evt.params.conn_sec_update.conn_sec.sec_mode.sm);
+      Serial.print(F(" "));
+      Serial.print(bleEvt->evt.gap_evt.params.conn_sec_update.conn_sec.sec_mode.lv);
+      Serial.print(F(" "));
+      Serial.print(bleEvt->evt.gap_evt.params.conn_sec_update.conn_sec.encr_key_size);
+      Serial.println();
+#endif
+      break;
+
+    case BLE_GATTS_EVT_WRITE: {
+#ifdef NRF_51822_DEBUG
+      Serial.print(F("Evt Write, handle = "));
+      Serial.println(bleEvt->evt.gatts_evt.params.write.handle, DEC);
+
+      BLEUtil::printBuffer(bleEvt->evt.gatts_evt.params.write.data, bleEvt->evt.gatts_evt.params.write.len);
+#endif
+
+      uint16_t handle = bleEvt->evt.gatts_evt.params.write.handle;
+
+      for (int i = 0; i < this->_numLocalCharacteristics; i++) {
+        struct localCharacteristicInfo* localCharacteristicInfo = &this->_localCharacteristicInfo[i];
+
+        if (localCharacteristicInfo->handles.value_handle == handle) {
+          if (this->_eventListener) {
+            this->_eventListener->BLEDeviceCharacteristicValueChanged(*this, *localCharacteristicInfo->characteristic, bleEvt->evt.gatts_evt.params.write.data, bleEvt->evt.gatts_evt.params.write.len);
+          }
+          break;
+        } else if (localCharacteristicInfo->handles.cccd_handle == handle) {
+          uint8_t* data  = &bleEvt->evt.gatts_evt.params.write.data[0];
+          uint16_t value = data[0] | (data[1] << 8);
+
+          localCharacteristicInfo->notifySubscribed = (value & 0x0001);
+          localCharacteristicInfo->indicateSubscribed = (value & 0x0002);
+
+          bool subscribed = (localCharacteristicInfo->notifySubscribed || localCharacteristicInfo->indicateSubscribed);
+
+          if (subscribed != localCharacteristicInfo->characteristic->subscribed()) {
             if (this->_eventListener) {
-              this->_eventListener->BLEDeviceCharacteristicValueChanged(*this, *localCharacteristicInfo->characteristic, bleEvt->evt.gatts_evt.params.write.data, bleEvt->evt.gatts_evt.params.write.len);
+              this->_eventListener->BLEDeviceCharacteristicSubscribedChanged(*this, *localCharacteristicInfo->characteristic, subscribed);
             }
             break;
-          } else if (localCharacteristicInfo->handles.cccd_handle == handle) {
-            uint8_t* data  = &bleEvt->evt.gatts_evt.params.write.data[0];
-            uint16_t value = data[0] | (data[1] << 8);
-
-            localCharacteristicInfo->notifySubscribed = (value & 0x0001);
-            localCharacteristicInfo->indicateSubscribed = (value & 0x0002);
-
-            bool subscribed = (localCharacteristicInfo->notifySubscribed || localCharacteristicInfo->indicateSubscribed);
-
-            if (subscribed != localCharacteristicInfo->characteristic->subscribed()) {
-              if (this->_eventListener) {
-                this->_eventListener->BLEDeviceCharacteristicSubscribedChanged(*this, *localCharacteristicInfo->characteristic, subscribed);
-              }
-              break;
-            }
           }
         }
-        break;
       }
+      break;
+    }
 
-      case BLE_GATTS_EVT_SYS_ATTR_MISSING:
+    case BLE_GATTS_EVT_SYS_ATTR_MISSING:
 #ifdef NRF_51822_DEBUG
-        Serial.print(F("Evt Sys Attr Missing "));
-        Serial.println(bleEvt->evt.gatts_evt.params.sys_attr_missing.hint);
+      Serial.print(F("Evt Sys Attr Missing "));
+      Serial.println(bleEvt->evt.gatts_evt.params.sys_attr_missing.hint);
 #endif
 #if defined(NRF5) || defined(NRF51_S130)
-        sd_ble_gatts_sys_attr_set(this->_connectionHandle, NULL, 0, 0);
+      sd_ble_gatts_sys_attr_set(this->_connectionHandle, NULL, 0, 0);
 #else
-        sd_ble_gatts_sys_attr_set(this->_connectionHandle, NULL, 0);
+      sd_ble_gatts_sys_attr_set(this->_connectionHandle, NULL, 0);
 #endif
-        break;
+      break;
 
-      case BLE_GATTC_EVT_PRIM_SRVC_DISC_RSP:
+    case BLE_GATTC_EVT_PRIM_SRVC_DISC_RSP:
 #ifdef NRF_51822_DEBUG
-        Serial.print(F("Evt Prim Srvc Disc Rsp 0x"));
-        Serial.println(bleEvt->evt.gattc_evt.gatt_status, HEX);
+      Serial.print(F("Evt Prim Srvc Disc Rsp 0x"));
+      Serial.println(bleEvt->evt.gattc_evt.gatt_status, HEX);
 #endif
-        if (bleEvt->evt.gattc_evt.gatt_status == BLE_GATT_STATUS_SUCCESS) {
-          uint16_t count = bleEvt->evt.gattc_evt.params.prim_srvc_disc_rsp.count;
-          for (int i = 0; i < count; i++) {
-            for (int j = 0; j < this->_numRemoteServices; j++) {
-              if ((bleEvt->evt.gattc_evt.params.prim_srvc_disc_rsp.services[i].uuid.type == this->_remoteServiceInfo[j].uuid.type) &&
-                  (bleEvt->evt.gattc_evt.params.prim_srvc_disc_rsp.services[i].uuid.uuid == this->_remoteServiceInfo[j].uuid.uuid)) {
-                this->_remoteServiceInfo[j].handlesRange = bleEvt->evt.gattc_evt.params.prim_srvc_disc_rsp.services[i].handle_range;
-                break;
-              }
-            }
-          }
-
-          uint16_t startHandle = bleEvt->evt.gattc_evt.params.prim_srvc_disc_rsp.services[count - 1].handle_range.end_handle + 1;
-
-          sd_ble_gattc_primary_services_discover(this->_connectionHandle, startHandle, NULL);
-        } else {
-          // done discovering services
-          for (int i = 0; i < this->_numRemoteServices; i++) {
-            if (this->_remoteServiceInfo[i].handlesRange.start_handle != 0 && this->_remoteServiceInfo[i].handlesRange.end_handle != 0) {
-              this->_remoteServiceDiscoveryIndex = i;
-
-              sd_ble_gattc_characteristics_discover(this->_connectionHandle, &this->_remoteServiceInfo[i].handlesRange);
+      if (bleEvt->evt.gattc_evt.gatt_status == BLE_GATT_STATUS_SUCCESS) {
+        uint16_t count = bleEvt->evt.gattc_evt.params.prim_srvc_disc_rsp.count;
+        for (int i = 0; i < count; i++) {
+          for (int j = 0; j < this->_numRemoteServices; j++) {
+            if ((bleEvt->evt.gattc_evt.params.prim_srvc_disc_rsp.services[i].uuid.type == this->_remoteServiceInfo[j].uuid.type) &&
+                (bleEvt->evt.gattc_evt.params.prim_srvc_disc_rsp.services[i].uuid.uuid == this->_remoteServiceInfo[j].uuid.uuid)) {
+              this->_remoteServiceInfo[j].handlesRange = bleEvt->evt.gattc_evt.params.prim_srvc_disc_rsp.services[i].handle_range;
               break;
             }
           }
         }
-        break;
 
-      case BLE_GATTC_EVT_CHAR_DISC_RSP:
-#ifdef NRF_51822_DEBUG
-        Serial.print(F("Evt Char Disc Rsp 0x"));
-        Serial.println(bleEvt->evt.gattc_evt.gatt_status, HEX);
-#endif
-        if (bleEvt->evt.gattc_evt.gatt_status == BLE_GATT_STATUS_SUCCESS) {
-          ble_gattc_handle_range_t serviceHandlesRange = this->_remoteServiceInfo[this->_remoteServiceDiscoveryIndex].handlesRange;
+        uint16_t startHandle = bleEvt->evt.gattc_evt.params.prim_srvc_disc_rsp.services[count - 1].handle_range.end_handle + 1;
 
-          uint16_t count = bleEvt->evt.gattc_evt.params.char_disc_rsp.count;
+        sd_ble_gattc_primary_services_discover(this->_connectionHandle, startHandle, NULL);
+      } else {
+        // done discovering services
+        for (int i = 0; i < this->_numRemoteServices; i++) {
+          if (this->_remoteServiceInfo[i].handlesRange.start_handle != 0 && this->_remoteServiceInfo[i].handlesRange.end_handle != 0) {
+            this->_remoteServiceDiscoveryIndex = i;
 
-          for (int i = 0; i < count; i++) {
-            for (int j = 0; j < this->_numRemoteCharacteristics; j++) {
-              if ((this->_remoteServiceInfo[this->_remoteServiceDiscoveryIndex].service == this->_remoteCharacteristicInfo[j].service) &&
-                  (bleEvt->evt.gattc_evt.params.char_disc_rsp.chars[i].uuid.type == this->_remoteCharacteristicInfo[j].uuid.type) &&
-                  (bleEvt->evt.gattc_evt.params.char_disc_rsp.chars[i].uuid.uuid == this->_remoteCharacteristicInfo[j].uuid.uuid)) {
-                this->_remoteCharacteristicInfo[j].properties = bleEvt->evt.gattc_evt.params.char_disc_rsp.chars[i].char_props;
-                this->_remoteCharacteristicInfo[j].valueHandle = bleEvt->evt.gattc_evt.params.char_disc_rsp.chars[i].handle_value;
-              }
-            }
-
-            serviceHandlesRange.start_handle = bleEvt->evt.gattc_evt.params.char_disc_rsp.chars[i].handle_value;
-          }
-
-          sd_ble_gattc_characteristics_discover(this->_connectionHandle, &serviceHandlesRange);
-        } else {
-          bool discoverCharacteristics = false;
-
-          for (int i = this->_remoteServiceDiscoveryIndex + 1; i < this->_numRemoteServices; i++) {
-            if (this->_remoteServiceInfo[i].handlesRange.start_handle != 0 && this->_remoteServiceInfo[i].handlesRange.end_handle != 0) {
-              this->_remoteServiceDiscoveryIndex = i;
-
-              sd_ble_gattc_characteristics_discover(this->_connectionHandle, &this->_remoteServiceInfo[i].handlesRange);
-              discoverCharacteristics = true;
-              break;
-            }
-          }
-
-          if (!discoverCharacteristics) {
-            if (this->_eventListener) {
-              this->_eventListener->BLEDeviceRemoteServicesDiscovered(*this);
-            }
+            sd_ble_gattc_characteristics_discover(this->_connectionHandle, &this->_remoteServiceInfo[i].handlesRange);
+            break;
           }
         }
-        break;
-
-      case BLE_GATTC_EVT_READ_RSP: {
-#ifdef NRF_51822_DEBUG
-        Serial.print(F("Evt Read Rsp 0x"));
-        Serial.println(bleEvt->evt.gattc_evt.gatt_status, HEX);
-        Serial.println(bleEvt->evt.gattc_evt.params.read_rsp.handle, DEC);
-        BLEUtil::printBuffer(bleEvt->evt.gattc_evt.params.read_rsp.data, bleEvt->evt.gattc_evt.params.read_rsp.len);
-#endif
-        this->_remoteRequestInProgress = false;
-
-        if (bleEvt->evt.gattc_evt.gatt_status == BLE_GATT_STATUS_ATTERR_INSUF_AUTHENTICATION &&
-            this->_bondStore) {
-          ble_gap_sec_params_t gapSecParams;
-
-          memset(&gapSecParams, 0x00, sizeof(ble_gap_sec_params_t));
-
-#if defined(NRF5) && !defined(S110)
-          gapSecParams.kdist_own.enc = 1;
-#elif defined(NRF51_S130)
-          gapSecParams.kdist_periph.enc = 1;
-#elif !defined(NRF5)
-          gapSecParams.timeout          = 30; // must be 30s
-#endif
-          gapSecParams.bond             = true;
-          gapSecParams.mitm             = false;
-          gapSecParams.io_caps          = BLE_GAP_IO_CAPS_NONE;
-          gapSecParams.oob              = false;
-          gapSecParams.min_key_size     = 7;
-          gapSecParams.max_key_size     = 16;
-
-          sd_ble_gap_authenticate(this->_connectionHandle, &gapSecParams);
-        } else {
-          uint16_t handle = bleEvt->evt.gattc_evt.params.read_rsp.handle;
-
-          for (int i = 0; i < this->_numRemoteCharacteristics; i++) {
-            if (this->_remoteCharacteristicInfo[i].valueHandle == handle) {
-              if (this->_eventListener) {
-                this->_eventListener->BLEDeviceRemoteCharacteristicValueChanged(*this, *this->_remoteCharacteristicInfo[i].characteristic, bleEvt->evt.gattc_evt.params.read_rsp.data, bleEvt->evt.gattc_evt.params.read_rsp. len);
-              }
-              break;
-            }
-          }
-        }
-        break;
       }
+      break;
 
-      case BLE_GATTC_EVT_WRITE_RSP:
+    case BLE_GATTC_EVT_CHAR_DISC_RSP:
 #ifdef NRF_51822_DEBUG
-        Serial.print(F("Evt Write Rsp 0x"));
-        Serial.println(bleEvt->evt.gattc_evt.gatt_status, HEX);
-        Serial.println(bleEvt->evt.gattc_evt.params.write_rsp.handle, DEC);
+      Serial.print(F("Evt Char Disc Rsp 0x"));
+      Serial.println(bleEvt->evt.gattc_evt.gatt_status, HEX);
 #endif
-        this->_remoteRequestInProgress = false;
+      if (bleEvt->evt.gattc_evt.gatt_status == BLE_GATT_STATUS_SUCCESS) {
+        ble_gattc_handle_range_t serviceHandlesRange = this->_remoteServiceInfo[this->_remoteServiceDiscoveryIndex].handlesRange;
 
-        if (bleEvt->evt.gattc_evt.gatt_status == BLE_GATT_STATUS_ATTERR_INSUF_AUTHENTICATION &&
-            this->_bondStore) {
-          ble_gap_sec_params_t gapSecParams;
+        uint16_t count = bleEvt->evt.gattc_evt.params.char_disc_rsp.count;
 
-          memset(&gapSecParams, 0x00, sizeof(ble_gap_sec_params_t));
+        for (int i = 0; i < count; i++) {
+          for (int j = 0; j < this->_numRemoteCharacteristics; j++) {
+            if ((this->_remoteServiceInfo[this->_remoteServiceDiscoveryIndex].service == this->_remoteCharacteristicInfo[j].service) &&
+                (bleEvt->evt.gattc_evt.params.char_disc_rsp.chars[i].uuid.type == this->_remoteCharacteristicInfo[j].uuid.type) &&
+                (bleEvt->evt.gattc_evt.params.char_disc_rsp.chars[i].uuid.uuid == this->_remoteCharacteristicInfo[j].uuid.uuid)) {
+              this->_remoteCharacteristicInfo[j].properties = bleEvt->evt.gattc_evt.params.char_disc_rsp.chars[i].char_props;
+              this->_remoteCharacteristicInfo[j].valueHandle = bleEvt->evt.gattc_evt.params.char_disc_rsp.chars[i].handle_value;
+            }
+          }
+
+          serviceHandlesRange.start_handle = bleEvt->evt.gattc_evt.params.char_disc_rsp.chars[i].handle_value;
+        }
+
+        sd_ble_gattc_characteristics_discover(this->_connectionHandle, &serviceHandlesRange);
+      } else {
+        bool discoverCharacteristics = false;
+
+        for (int i = this->_remoteServiceDiscoveryIndex + 1; i < this->_numRemoteServices; i++) {
+          if (this->_remoteServiceInfo[i].handlesRange.start_handle != 0 && this->_remoteServiceInfo[i].handlesRange.end_handle != 0) {
+            this->_remoteServiceDiscoveryIndex = i;
+
+            sd_ble_gattc_characteristics_discover(this->_connectionHandle, &this->_remoteServiceInfo[i].handlesRange);
+            discoverCharacteristics = true;
+            break;
+          }
+        }
+
+        if (!discoverCharacteristics) {
+          if (this->_eventListener) {
+            this->_eventListener->BLEDeviceRemoteServicesDiscovered(*this);
+          }
+        }
+      }
+      break;
+
+    case BLE_GATTC_EVT_READ_RSP: {
+#ifdef NRF_51822_DEBUG
+      Serial.print(F("Evt Read Rsp 0x"));
+      Serial.println(bleEvt->evt.gattc_evt.gatt_status, HEX);
+      Serial.println(bleEvt->evt.gattc_evt.params.read_rsp.handle, DEC);
+      BLEUtil::printBuffer(bleEvt->evt.gattc_evt.params.read_rsp.data, bleEvt->evt.gattc_evt.params.read_rsp.len);
+#endif
+      this->_remoteRequestInProgress = false;
+
+      if (bleEvt->evt.gattc_evt.gatt_status == BLE_GATT_STATUS_ATTERR_INSUF_AUTHENTICATION &&
+          this->_bondStore) {
+        ble_gap_sec_params_t gapSecParams;
+
+        memset(&gapSecParams, 0x00, sizeof(ble_gap_sec_params_t));
 
 #if defined(NRF5) && !defined(S110)
-          gapSecParams.kdist_own.enc = 1;
+        gapSecParams.kdist_own.enc = 1;
 #elif defined(NRF51_S130)
-          gapSecParams.kdist_periph.enc = 1;
+        gapSecParams.kdist_periph.enc = 1;
 #elif !defined(NRF5)
-          gapSecParams.timeout          = 30; // must be 30s
+        gapSecParams.timeout          = 30; // must be 30s
 #endif
-          gapSecParams.bond             = true;
-          gapSecParams.mitm             = false;
-          gapSecParams.io_caps          = BLE_GAP_IO_CAPS_NONE;
-          gapSecParams.oob              = false;
-          gapSecParams.min_key_size     = 7;
-          gapSecParams.max_key_size     = 16;
+        gapSecParams.bond             = true;
+        gapSecParams.mitm             = false;
+        gapSecParams.io_caps          = BLE_GAP_IO_CAPS_NONE;
+        gapSecParams.oob              = false;
+        gapSecParams.min_key_size     = 7;
+        gapSecParams.max_key_size     = 16;
 
-          sd_ble_gap_authenticate(this->_connectionHandle, &gapSecParams);
-        }
-        break;
-
-      case BLE_GATTC_EVT_HVX: {
-#ifdef NRF_51822_DEBUG
-        Serial.print(F("Evt Hvx 0x"));
-        Serial.println(bleEvt->evt.gattc_evt.gatt_status, HEX);
-        Serial.println(bleEvt->evt.gattc_evt.params.hvx.handle, DEC);
-#endif
-        uint16_t handle = bleEvt->evt.gattc_evt.params.hvx.handle;
-
-        if (bleEvt->evt.gattc_evt.params.hvx.type == BLE_GATT_HVX_INDICATION) {
-          sd_ble_gattc_hv_confirm(this->_connectionHandle, handle);
-        }
+        sd_ble_gap_authenticate(this->_connectionHandle, &gapSecParams);
+      } else {
+        uint16_t handle = bleEvt->evt.gattc_evt.params.read_rsp.handle;
 
         for (int i = 0; i < this->_numRemoteCharacteristics; i++) {
           if (this->_remoteCharacteristicInfo[i].valueHandle == handle) {
@@ -994,21 +946,74 @@ void nRF51822::poll() {
             break;
           }
         }
-        break;
+      }
+      break;
+    }
+
+    case BLE_GATTC_EVT_WRITE_RSP:
+#ifdef NRF_51822_DEBUG
+      Serial.print(F("Evt Write Rsp 0x"));
+      Serial.println(bleEvt->evt.gattc_evt.gatt_status, HEX);
+      Serial.println(bleEvt->evt.gattc_evt.params.write_rsp.handle, DEC);
+#endif
+      this->_remoteRequestInProgress = false;
+
+      if (bleEvt->evt.gattc_evt.gatt_status == BLE_GATT_STATUS_ATTERR_INSUF_AUTHENTICATION &&
+          this->_bondStore) {
+        ble_gap_sec_params_t gapSecParams;
+
+        memset(&gapSecParams, 0x00, sizeof(ble_gap_sec_params_t));
+
+#if defined(NRF5) && !defined(S110)
+        gapSecParams.kdist_own.enc = 1;
+#elif defined(NRF51_S130)
+        gapSecParams.kdist_periph.enc = 1;
+#elif !defined(NRF5)
+        gapSecParams.timeout          = 30; // must be 30s
+#endif
+        gapSecParams.bond             = true;
+        gapSecParams.mitm             = false;
+        gapSecParams.io_caps          = BLE_GAP_IO_CAPS_NONE;
+        gapSecParams.oob              = false;
+        gapSecParams.min_key_size     = 7;
+        gapSecParams.max_key_size     = 16;
+
+        sd_ble_gap_authenticate(this->_connectionHandle, &gapSecParams);
+      }
+      break;
+
+    case BLE_GATTC_EVT_HVX: {
+#ifdef NRF_51822_DEBUG
+      Serial.print(F("Evt Hvx 0x"));
+      Serial.println(bleEvt->evt.gattc_evt.gatt_status, HEX);
+      Serial.println(bleEvt->evt.gattc_evt.params.hvx.handle, DEC);
+#endif
+      uint16_t handle = bleEvt->evt.gattc_evt.params.hvx.handle;
+
+      if (bleEvt->evt.gattc_evt.params.hvx.type == BLE_GATT_HVX_INDICATION) {
+        sd_ble_gattc_hv_confirm(this->_connectionHandle, handle);
       }
 
-      default:
-#ifdef NRF_51822_DEBUG
-        Serial.print(F("bleEvt->header.evt_id = 0x"));
-        Serial.print(bleEvt->header.evt_id, HEX);
-        Serial.print(F(" "));
-        Serial.println(bleEvt->header.evt_len);
-#endif
-        break;
+      for (int i = 0; i < this->_numRemoteCharacteristics; i++) {
+        if (this->_remoteCharacteristicInfo[i].valueHandle == handle) {
+          if (this->_eventListener) {
+            this->_eventListener->BLEDeviceRemoteCharacteristicValueChanged(*this, *this->_remoteCharacteristicInfo[i].characteristic, bleEvt->evt.gattc_evt.params.read_rsp.data, bleEvt->evt.gattc_evt.params.read_rsp. len);
+          }
+          break;
+        }
+      }
+      break;
     }
-  }
 
-  // sd_app_evt_wait();
+    default:
+#ifdef NRF_51822_DEBUG
+      Serial.print(F("bleEvt->header.evt_id = 0x"));
+      Serial.print(bleEvt->header.evt_id, HEX);
+      Serial.print(F(" "));
+      Serial.println(bleEvt->header.evt_len);
+#endif
+      break;
+  }
 }
 
 void nRF51822::end() {

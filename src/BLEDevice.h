@@ -66,6 +66,7 @@ class BLEDevice
                 unsigned char /*numRemoteAttributes*/) { }
 
     virtual void poll() { }
+    virtual void poll(void* eventData, uint16_t length) { }
 
     virtual void end() { }
 

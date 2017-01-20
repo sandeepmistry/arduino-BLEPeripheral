@@ -56,6 +56,7 @@ class nRF8001 : protected BLEDevice
                 unsigned char numRemoteAttributes);
 
     virtual void poll();
+    virtual void poll(void* eventData, uint16_t length) { /* TODO */ };
 
     virtual void end();
 

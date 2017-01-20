@@ -46,6 +46,10 @@ void BLECentral::poll() {
   this->_peripheral->poll();
 }
 
+void BLECentral::poll(void* eventData, uint16_t length) {
+  this->_peripheral->poll(eventData, length);
+}
+
 void BLECentral::disconnect() {
   if (this->connected()) {
     this->_peripheral->disconnect();
