@@ -11,7 +11,7 @@
 #define JOYSTICK_Y_AXIS_PIN A1
 #define JOYSTICK_RANGE 24
 
-// define pins (varies per shield/board)
+// define pins (varies per shield/board), required, but are hard coded or ignored for some boards like those in the nrf5x core
 #define BLE_REQ   9
 #define BLE_RDY   8
 #define BLE_RST   4

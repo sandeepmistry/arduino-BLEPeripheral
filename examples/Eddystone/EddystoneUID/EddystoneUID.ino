@@ -5,7 +5,7 @@
 #include <SPI.h>
 #include <EddystoneBeacon.h>
 
-// define pins (varies per shield/board)
+// define pins (varies per shield/board), required, but are hard coded or ignored for some boards like those in the nrf5x core
 //
 //   Adafruit Bluefruit LE   10, 2, 9
 //   Blend                    9, 8, UNUSED

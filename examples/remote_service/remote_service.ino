@@ -5,7 +5,7 @@
 #include <SPI.h>
 #include <BLEPeripheral.h>
 
-// define pins (varies per shield/board)
+// define pins (varies per shield/board), required, but are hard coded or ignored for some boards like those in the nrf5x core
 #define BLE_REQ   6
 #define BLE_RDY   7
 #define BLE_RST   4

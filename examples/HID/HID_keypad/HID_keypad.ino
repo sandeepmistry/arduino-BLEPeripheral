@@ -22,7 +22,7 @@ byte colPins[COLS] = { 7, 6, 5 }; //connect to the column pinouts of the keypad
 
 Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
 
-// define pins (varies per shield/board)
+// define pins (varies per shield/board), required, but are hard coded or ignored for some boards like those in the nrf5x core
 #define BLE_REQ   9
 #define BLE_RDY   8
 #define BLE_RST   4

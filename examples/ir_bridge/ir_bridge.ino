@@ -8,7 +8,7 @@
 // https://github.com/shirriff/Arduino-IRremote
 #include <IRremote.h>
 
-// define pins (varies per shield/board)
+// define pins (varies per shield/board), required, but are hard coded or ignored for some boards like those in the nrf5x core
 #define BLE_REQ     10
 #define BLE_RDY     2
 #define BLE_RST     9

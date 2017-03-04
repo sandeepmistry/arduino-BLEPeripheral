@@ -1,6 +1,7 @@
 # BLEPeripheral
 
 ## Constructor
+These pins are required by constrcutor, but are hard coded or ignored for some boards like those in the nrf5x core
 ```c
 BLEPeripheral(unsigned char req, unsigned char rdy, unsigned char rst);
 ```
