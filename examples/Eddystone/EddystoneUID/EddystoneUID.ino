@@ -5,18 +5,8 @@
 #include <SPI.h>
 #include <EddystoneBeacon.h>
 
-// define pins (varies per shield/board), required, but are hard coded or ignored for some boards like those in the nrf5x core
-//
-//   Adafruit Bluefruit LE   10, 2, 9
-//   Blend                    9, 8, UNUSED
-//   Blend Micro              6, 7, 4
-//   RBL BLE Shield           9, 8, UNUSED
-
-#define EDDYSTONE_BEACON_REQ   6
-#define EDDYSTONE_BEACON_RDY   7
-#define EDDYSTONE_BEACON_RST   4
-
-EddystoneBeacon eddystoneBeacon = EddystoneBeacon(EDDYSTONE_BEACON_REQ, EDDYSTONE_BEACON_RDY, EDDYSTONE_BEACON_RST);
+//custom boards may override default pin definitions with EddystoneBeacon(PIN_REQ, PIN_RDY, PIN_RST)
+EddystoneBeacon eddystoneBeacon = EddystoneBeacon();
 BLEUuid         uid             = BLEUuid("01020304050607080910-AABBCCDDEEFF"); // <namespace id>-<instance id>
 
 void setup() {

@@ -9,12 +9,8 @@
 #include <BLEMultimedia.h>
 #include <BLESystemControl.h>
 
-// define pins (varies per shield/board), required, but are hard coded or ignored for some boards like those in the nrf5x core
-#define BLE_REQ   6
-#define BLE_RDY   7
-#define BLE_RST   4
-
-BLEHIDPeripheral bleHID = BLEHIDPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
+//custom boards may override default pin definitions with BLEHIDPeripheral(PIN_REQ, PIN_RDY, PIN_RST)
+BLEHIDPeripheral bleHID = BLEHIDPeripheral();
 BLEMouse bleMouse;
 BLEKeyboard bleKeyboard;
 BLEMultimedia bleMultimedia;

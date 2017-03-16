@@ -9,11 +9,6 @@
 // http://www.pjrc.com/teensy/td_libs_Encoder.html
 #include <Encoder.h>
 
-// define pins (varies per shield/board), required, but are hard coded or ignored for some boards like those in the nrf5x core
-#define BLE_REQ   10
-#define BLE_RDY   2
-#define BLE_RST   9
-
 #define BUTTON_PIN 5
 
 #define ENC_RIGHT_PIN 3
@@ -23,7 +18,8 @@
 
 //#define ANDROID_CENTRAL
 
-BLEHIDPeripheral bleHIDPeripheral = BLEHIDPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
+//custom boards may override default pin definitions with BLEHIDPeripheral(PIN_REQ, PIN_RDY, PIN_RST)
+BLEHIDPeripheral bleHIDPeripheral = BLEHIDPeripheral();
 BLEMultimedia bleMultimedia;
 
 Encoder encoder(ENC_RIGHT_PIN, ENC_LEFT_PIN);
