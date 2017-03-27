@@ -1,6 +1,8 @@
 # BLEPeripheral
 
 ## Constructor
+Creates the BLEPeripheral object. Pin Arguments are optional as pins are self detecting. See https://github.com/sandeepmistry/arduino-BLEPeripheral#pinouts
+
 ```c
 BLEPeripheral(unsigned char req = BLE_DEFAULT_REQ, unsigned char rdy = BLE_DEFAULT_RDY, unsigned char rst = BLE_DEFAULT_RST);
  * req - REQ pin
