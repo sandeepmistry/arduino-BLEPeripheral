@@ -6,15 +6,10 @@
 #include <BLEHIDPeripheral.h>
 #include <BLEKeyboard.h>
 
-// define pins (varies per shield/board)
-#define BLE_REQ   6
-#define BLE_RDY   7
-#define BLE_RST   4
-
 //#define ANDROID_CENTRAL
 
-// create peripheral instance, see pinouts above
-BLEHIDPeripheral bleHIDPeripheral = BLEHIDPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
+//custom boards may override default pin definitions with BLEHIDPeripheral(PIN_REQ, PIN_RDY, PIN_RST)
+BLEHIDPeripheral bleHIDPeripheral = BLEHIDPeripheral();
 BLEKeyboard bleKeyboard;
 
 void setup() {

@@ -7,7 +7,7 @@
 class BLESerial : public BLEPeripheral, public Stream
 {
   public:
-    BLESerial(unsigned char req, unsigned char rdy, unsigned char rst);
+    BLESerial(unsigned char req = BLE_DEFAULT_REQ, unsigned char rdy = BLE_DEFAULT_RDY, unsigned char rst = BLE_DEFAULT_RST);
 
     void begin(...);
     void poll();

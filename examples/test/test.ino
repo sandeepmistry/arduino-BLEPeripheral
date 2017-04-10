@@ -11,13 +11,8 @@
 #include <SPI.h>
 #include <BLEPeripheral.h>
 
-// define pins (varies per shield/board)
-#define BLE_REQ   10
-#define BLE_RDY   2
-#define BLE_RST   9
-
-// create peripheral instance, see pinouts above
-BLEPeripheral                    blePeripheral       = BLEPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
+//custom boards may override default pin definitions with BLEPeripheral(PIN_REQ, PIN_RDY, PIN_RST)
+BLEPeripheral                    blePeripheral                            = BLEPeripheral();
 
 // create service
 BLEService                       testService         = BLEService("fff0");

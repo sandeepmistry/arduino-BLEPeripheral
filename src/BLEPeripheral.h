@@ -34,11 +34,16 @@
   #define BLE_DEFAULT_REQ   6
   #define BLE_DEFAULT_RDY   7
   #define BLE_DEFAULT_RST   4
+#elif defined(BLEND)
+  #define BLE_DEFAULT_REQ   9
+  #define BLE_DEFAULT_RDY   8
+  #define BLE_DEFAULT_RST   4
 #else
   #define BLE_DEFAULT_REQ   10
   #define BLE_DEFAULT_RDY   2
   #define BLE_DEFAULT_RST   9
 #endif
+
 
 enum BLEPeripheralEvent {
   BLEConnected = 0,

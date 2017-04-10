@@ -8,11 +8,6 @@
 // https://github.com/shirriff/Arduino-IRremote
 #include <IRremote.h>
 
-// define pins (varies per shield/board)
-#define BLE_REQ     10
-#define BLE_RDY     2
-#define BLE_RST     9
-
 #define IR_SEND_PIN 3
 #define IR_RECV_PIN 4
 
@@ -30,8 +25,8 @@ IRsend                           irSend                      = IRsend(/*IR_SEND_
 IRrecv                           irRecv                      = IRrecv(IR_RECV_PIN);
 IRValue                          irValue;
 
-// create peripheral instance, see pinouts above
-BLEPeripheral                    blePeripheral               = BLEPeripheral(BLE_REQ, BLE_RDY, BLE_RST);
+//custom boards may override default pin definitions with BLEPeripheral(PIN_REQ, PIN_RDY, PIN_RST)
+BLEPeripheral                    blePeripheral                            = BLEPeripheral();
 
 // create service and characteristics
 BLEService                       irService                   = BLEService("00004952-0000-bbbb-0123-456789abcdef");
