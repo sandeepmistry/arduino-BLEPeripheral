@@ -103,8 +103,10 @@ git clone https://github.com/sandeepmistry/arduino-BLEPeripheral BLEPeripheral
 ```
 
 ### [arduino-nRF5x core](https://github.com/sandeepmistry/arduino-nRF5) users
-[arduino-nRF5x core](https://github.com/sandeepmistry/arduino-nRF5) users REQUIRE a softdevice in order to successfully program/run anything in this library. Please see [Flashing a Softdevice](https://github.com/sandeepmistry/arduino-nRF5#flashing-a-softdevice)
-Further, the error ```fatal error: ble_gatts.h: No such file or directory``` in indicitive of no softdevice being selected.
+
+The [arduino-nRF5x core](https://github.com/sandeepmistry/arduino-nRF5) **REQUIRES** a SoftDevice in order to successfully use this library. Please see [Flashing a SoftDevice](https://github.com/sandeepmistry/arduino-nRF5#flashing-a-softdevice).
+
+Further, the error ```fatal error: ble_gatts.h: No such file or directory``` in indicitive of no SoftDevice being selected.
 
 ### Starter sketch
 Load [starter.ino](examples/starter/starter.ino)
