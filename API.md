@@ -8,6 +8,7 @@ BLEPeripheral(unsigned char req = BLE_DEFAULT_REQ, unsigned char rdy = BLE_DEFAU
  * req - REQ pin
  * rdy - RDY pin
  * rst - RST pin, can be ```UNUSED```
+```
 
 ## Advertising
 
