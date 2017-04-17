@@ -5,10 +5,11 @@ Creates the BLEPeripheral object. Pin Arguments are optional as pins are self de
 
 ```c
 BLEPeripheral(unsigned char req = BLE_DEFAULT_REQ, unsigned char rdy = BLE_DEFAULT_RDY, unsigned char rst = BLE_DEFAULT_RST);
- * req - REQ pin
+```
+* req - REQ pin
  * rdy - RDY pin
  * rst - RST pin, can be ```UNUSED```
-```
+
 
 ## Advertising
 
