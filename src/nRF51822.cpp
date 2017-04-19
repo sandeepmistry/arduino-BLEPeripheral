@@ -77,9 +77,9 @@ nRF51822::~nRF51822() {
 }
 
 void nRF51822::begin(unsigned char advertisementDataSize,
-                      BLEEirData *advertisementData,
+                      unsigned char *advertisementData,
                       unsigned char scanDataSize,
-                      BLEEirData *scanData,
+                      unsigned char *scanData,
                       BLELocalAttribute** localAttributes,
                       unsigned char numLocalAttributes,
                       BLERemoteAttribute** remoteAttributes,
@@ -182,43 +182,10 @@ void nRF51822::begin(unsigned char advertisementDataSize,
   sd_ble_gap_ppcp_set(&gap_conn_params);
   sd_ble_gap_tx_power_set(0);
 
-  unsigned char srData[31];
-  unsigned char srDataLen = 0;
+  memcpy(&this->_advData, advertisementData, advertisementDataSize);
+  this->_advDataLen=advertisementDataSize;
 
-  this->_advDataLen = 0;
-
-  // flags
-  this->_advData[this->_advDataLen + 0] = 2;
-  this->_advData[this->_advDataLen + 1] = 0x01;
-  this->_advData[this->_advDataLen + 2] = 0x06;
-
-  this->_advDataLen += 3;
-
-  if (advertisementDataSize && advertisementData) {
-    for (int i = 0; i < advertisementDataSize; i++) {
-      this->_advData[this->_advDataLen + 0] = advertisementData[i].length + 1;
-      this->_advData[this->_advDataLen + 1] = advertisementData[i].type;
-      this->_advDataLen += 2;
-
-      memcpy(&this->_advData[this->_advDataLen], advertisementData[i].data, advertisementData[i].length);
-
-      this->_advDataLen += advertisementData[i].length;
-    }
-  }
-
-  if (scanDataSize && scanData) {
-    for (int i = 0; i < scanDataSize; i++) {
-      srData[srDataLen + 0] = scanData[i].length + 1;
-      srData[srDataLen + 1] = scanData[i].type;
-      srDataLen += 2;
-
-      memcpy(&srData[srDataLen], scanData[i].data, scanData[i].length);
-
-      srDataLen += scanData[i].length;
-    }
-  }
-
-  sd_ble_gap_adv_data_set(this->_advData, this->_advDataLen, srData, srDataLen);
+  sd_ble_gap_adv_data_set(this->_advData, this->_advDataLen, (uint8_t *)scanData, scanDataSize);
   sd_ble_gap_appearance_set(0);
 
   for (int i = 0; i < numLocalAttributes; i++) {

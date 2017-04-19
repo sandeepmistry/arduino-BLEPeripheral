@@ -52,10 +52,10 @@ class nRF51822 : public BLEDevice
 
     virtual ~nRF51822();
 
-    virtual void begin(unsigned char advertisementDataSize,
-                BLEEirData *advertisementData,
+     virtual void begin(unsigned char advertisementDataSize,
+                unsigned char *advertisementData,
                 unsigned char scanDataSize,
-                BLEEirData *scanData,
+                unsigned char *scanData,
                 BLELocalAttribute** localAttributes,
                 unsigned char numLocalAttributes,
                 BLERemoteAttribute** remoteAttributes,

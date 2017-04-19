@@ -57,9 +57,9 @@ class BLEDevice
     void setBondStore(BLEBondStore& bondStore);
 
     virtual void begin(unsigned char /*advertisementDataSize*/,
-                BLEEirData * /*advertisementData*/,
+                unsigned char * /*advertisementData*/,
                 unsigned char /*scanDataSize*/,
-                BLEEirData * /*scanData*/,
+                unsigned char * /*scanData*/,
                 BLELocalAttribute** /*localAttributes*/,
                 unsigned char /*numLocalAttributes*/,
                 BLERemoteAttribute** /*remoteAttributes*/,
