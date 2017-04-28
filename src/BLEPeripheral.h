@@ -79,6 +79,7 @@ class BLEPeripheral : public BLEDeviceEventListener,
     bool setTxPower(int txPower);
     void setConnectable(bool connectable);
     void setBondStore(BLEBondStore& bondStore);
+    void requestTemperature();
 
 
     void setDeviceName(const char* deviceName);

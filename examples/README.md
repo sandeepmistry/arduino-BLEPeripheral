@@ -10,6 +10,10 @@
   * broadcast [physical web](http://physical-web.org) beacon
 * [test](test)
   * read/write/notify characteristic for counter
+* [temp_sensor](temp_sensor)
+  * read temperature and humidity from adafruit DHT series sensors
+* [temp_soc](temp_sensor)
+  * request nRF SoC temperature and offer value on an service characteristic
 * [serial](serial)
   * serial port service compatible with following applications:
     - nRF Toolbox - [iOS](https://itunes.apple.com/us/app/nrf-toolbox/id820906058?mt=8) | [Android](https://play.google.com/store/apps/details?id=no.nordicsemi.android.nrftoolbox)
