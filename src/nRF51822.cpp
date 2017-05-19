@@ -502,7 +502,7 @@ void nRF51822::begin(unsigned char advertisementDataSize,
 #endif
   }
 
-  this->startAdvertising();
+  //this->startAdvertising();
 
 #ifdef __RFduino__
   RFduinoBLE_enabled = 1;
@@ -516,6 +516,14 @@ void nRF51822::poll() {
 
   if (sd_ble_evt_get((uint8_t*)evtBuf, &evtLen) == NRF_SUCCESS) {
     switch (bleEvt->header.evt_id) {
+      case BLE_GAP_EVT_ADV_REPORT:
+//#ifdef NRF_51822_DEBUG
+        Serial.print(F("Evt Adv Report, dlen = "));
+        Serial.println(bleEvt->evt.gap_evt.params.adv_report.dlen);
+//#endif
+        //this->_scanResult = &(bleEvt->evt.gap_evt.params.adv_report);
+        break;
+
       case BLE_EVT_TX_COMPLETE:
 #ifdef NRF_51822_DEBUG
         Serial.print(F("Evt TX complete "));
@@ -1336,6 +1344,34 @@ void nRF51822::startAdvertising() {
   advertisingParameters.timeout     = 0;
 
   sd_ble_gap_adv_start(&advertisingParameters);
+}
+
+void nRF51822::stopAdvertising() {
+  sd_ble_gap_adv_stop();
+}
+
+void nRF51822::startScanning() {
+#ifdef NRF_51822_DEBUG
+  Serial.println(F("Start scanning"));
+#endif
+
+  // see https://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.s130.api.v2.0.1%2Fstructble__gap__scan__params__t.html
+  ble_gap_scan_params_t scanParameters;
+
+  memset(&scanParameters, 0x00, sizeof(scanParameters));
+
+  scanParameters.active      = 1;    // send scan requests
+  scanParameters.interval    = 0x40; // 40 ms in units of 0.625 ms
+  scanParameters.p_whitelist = NULL; // no whitelist
+  scanParameters.selective   = 0;
+  scanParameters.timeout     = 10;   // 10 seconds timeout
+  scanParameters.window      = 0x20; // 20 ms
+
+  sd_ble_gap_scan_start(&scanParameters);
+}
+
+void nRF51822::stopScanning() {
+  sd_ble_gap_scan_stop();
 }
 
 void nRF51822::disconnect() {

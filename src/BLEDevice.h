@@ -72,6 +72,9 @@ class BLEDevice
     virtual bool setTxPower(int /*txPower*/) { return false; }
 
     virtual void startAdvertising() { }
+    virtual void stopAdvertising() { }
+    virtual void startScanning() { }
+    virtual void stopScanning() { }
     virtual void disconnect() { }
 
     virtual bool updateCharacteristicValue(BLECharacteristic& /*characteristic*/) { return false; }

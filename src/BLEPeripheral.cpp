@@ -203,6 +203,22 @@ void BLEPeripheral::setBondStore(BLEBondStore& bondStore) {
   this->_device->setBondStore(bondStore);
 }
 
+void BLEPeripheral::startAdvertising() {
+  this->_device->startAdvertising();
+}
+
+void BLEPeripheral::stopAdvertising() {
+  this->_device->stopAdvertising();
+}
+
+void BLEPeripheral::startScanning() {
+  this->_device->startScanning();
+}
+
+void BLEPeripheral::stopScanning() {
+  this->_device->stopScanning();
+}
+
 void BLEPeripheral::setDeviceName(const char* deviceName) {
   this->_deviceNameCharacteristic.setValue(deviceName);
 }
