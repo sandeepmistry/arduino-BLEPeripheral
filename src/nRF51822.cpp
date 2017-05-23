@@ -519,6 +519,7 @@ void nRF51822::poll() {
 
   if (sd_ble_evt_get((uint8_t*)evtBuf, &evtLen) == NRF_SUCCESS) {
     switch (bleEvt->header.evt_id) {
+#ifndef __RFduino__
       case BLE_GAP_EVT_ADV_REPORT:
 //#ifdef NRF_51822_DEBUG
         char address[18];
@@ -528,6 +529,7 @@ void nRF51822::poll() {
 //#endif
         this->_scanResult = &(bleEvt->evt.gap_evt.params.adv_report);
         break;
+#endif
 
       case BLE_EVT_TX_COMPLETE:
 #ifdef NRF_51822_DEBUG
@@ -1364,6 +1366,7 @@ void nRF51822::startScanning() {
   Serial.println(F("Start scanning"));
 #endif
 
+#ifndef __RFduino__
   // see https://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.s130.api.v2.0.1%2Fstructble__gap__scan__params__t.html
   ble_gap_scan_params_t scanParameters;
 
@@ -1377,10 +1380,13 @@ void nRF51822::startScanning() {
   scanParameters.window      = 0xA0;  // 100 ms
 
   sd_ble_gap_scan_start(&scanParameters);
+#endif
 }
 
 void nRF51822::stopScanning() {
+#ifndef __RFduino__
   sd_ble_gap_scan_stop();
+#endif
 }
 
 void nRF51822::disconnect() {
