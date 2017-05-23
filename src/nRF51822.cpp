@@ -47,6 +47,7 @@ nRF51822::nRF51822() :
   BLEDevice(),
 
   _advDataLen(0),
+  _hasScanData(false),
   _broadcastCharacteristic(NULL),
 
   _connectionHandle(BLE_CONN_HANDLE_INVALID),
@@ -215,6 +216,7 @@ void nRF51822::begin(unsigned char advertisementDataSize,
       memcpy(&srData[srDataLen], scanData[i].data, scanData[i].length);
 
       srDataLen += scanData[i].length;
+      _hasScanData = true;
     }
   }
 
@@ -1328,7 +1330,7 @@ void nRF51822::startAdvertising() {
 
   memset(&advertisingParameters, 0x00, sizeof(advertisingParameters));
 
-  advertisingParameters.type        = this->_connectable ? BLE_GAP_ADV_TYPE_ADV_IND : BLE_GAP_ADV_TYPE_ADV_NONCONN_IND;
+  advertisingParameters.type        = this->_connectable ? BLE_GAP_ADV_TYPE_ADV_IND : ( this->_hasScanData ? BLE_GAP_ADV_TYPE_ADV_SCAN_IND : BLE_GAP_ADV_TYPE_ADV_NONCONN_IND );
   advertisingParameters.p_peer_addr = NULL;
   advertisingParameters.fp          = BLE_GAP_ADV_FP_ANY;
   advertisingParameters.p_whitelist = NULL;
