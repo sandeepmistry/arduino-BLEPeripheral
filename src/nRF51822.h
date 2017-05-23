@@ -95,6 +95,7 @@ class nRF51822 : public BLEDevice
     unsigned char                     _advData[31];
     unsigned char                     _advDataLen;
     bool                              _hasScanData;
+    ble_gap_evt_adv_report_t*         _scanResult;
     BLECharacteristic*                _broadcastCharacteristic;
 
     uint16_t                          _connectionHandle;

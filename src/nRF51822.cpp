@@ -48,6 +48,7 @@ nRF51822::nRF51822() :
 
   _advDataLen(0),
   _hasScanData(false),
+  _scanResult(NULL),
   _broadcastCharacteristic(NULL),
 
   _connectionHandle(BLE_CONN_HANDLE_INVALID),
@@ -520,10 +521,12 @@ void nRF51822::poll() {
     switch (bleEvt->header.evt_id) {
       case BLE_GAP_EVT_ADV_REPORT:
 //#ifdef NRF_51822_DEBUG
-        Serial.print(F("Evt Adv Report, dlen = "));
-        Serial.println(bleEvt->evt.gap_evt.params.adv_report.dlen);
+        char address[18];
+        BLEUtil::addressToString(bleEvt->evt.gap_evt.params.adv_report.peer_addr.addr, address);
+        Serial.print(F("Evt Adv Report "));
+        Serial.println(address);
 //#endif
-        //this->_scanResult = &(bleEvt->evt.gap_evt.params.adv_report);
+        this->_scanResult = &(bleEvt->evt.gap_evt.params.adv_report);
         break;
 
       case BLE_EVT_TX_COMPLETE:
@@ -1021,6 +1024,10 @@ void nRF51822::poll() {
   // sd_app_evt_wait();
 }
 
+/*uint8_t* nRF51822::getScanResult() {
+  return _scanResult->data;
+}*/
+
 void nRF51822::end() {
   sd_softdevice_disable();
 
@@ -1362,12 +1369,12 @@ void nRF51822::startScanning() {
 
   memset(&scanParameters, 0x00, sizeof(scanParameters));
 
-  scanParameters.active      = 1;    // send scan requests
-  scanParameters.interval    = 0x40; // 40 ms in units of 0.625 ms
-  scanParameters.p_whitelist = NULL; // no whitelist
+  scanParameters.active      = 1;     // send scan requests
+  scanParameters.interval    = 0x140; // 200 ms in units of 0.625 ms
+  scanParameters.p_whitelist = NULL;  // no whitelist
   scanParameters.selective   = 0;
-  scanParameters.timeout     = 10;   // 10 seconds timeout
-  scanParameters.window      = 0x20; // 20 ms
+  scanParameters.timeout     = 10;    // 10 seconds timeout
+  scanParameters.window      = 0xA0;  // 100 ms
 
   sd_ble_gap_scan_start(&scanParameters);
 }
