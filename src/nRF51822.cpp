@@ -505,7 +505,7 @@ void nRF51822::begin(unsigned char advertisementDataSize,
 #endif
   }
 
-  //this->startAdvertising();
+  this->startAdvertising();
 
 #ifdef __RFduino__
   RFduinoBLE_enabled = 1;
