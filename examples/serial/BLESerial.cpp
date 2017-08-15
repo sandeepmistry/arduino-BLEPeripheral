@@ -57,7 +57,7 @@ int BLESerial::available(void) {
 int BLESerial::peek(void) {
   BLEPeripheral::poll();
   if (this->_rxTail == this->_rxHead) return -1;
-  uint8_t byte = this->_rxBuffer[this->_rxTail];
+  uint8_t byte = this->_rxBuffer[ (this->_rxTail + 1) % sizeof(this->_rxBuffer)];
   #ifdef BLE_SERIAL_DEBUG
     Serial.print(F("BLESerial::peek() = "));
     Serial.print((char) byte);
