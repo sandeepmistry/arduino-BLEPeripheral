@@ -558,14 +558,7 @@ void nRF51822::poll() {
 
         if (this->_minimumConnectionInterval >= BLE_GAP_CP_MIN_CONN_INTVL_MIN &&
             this->_maximumConnectionInterval <= BLE_GAP_CP_MAX_CONN_INTVL_MAX) {
-          ble_gap_conn_params_t gap_conn_params;
-
-          gap_conn_params.min_conn_interval = this->_minimumConnectionInterval;  // in 1.25ms units
-          gap_conn_params.max_conn_interval = this->_maximumConnectionInterval;  // in 1.25ms unit
-          gap_conn_params.slave_latency     = 0;
-          gap_conn_params.conn_sup_timeout  = 4000 / 10; // in 10ms unit
-
-          sd_ble_gap_conn_param_update(this->_connectionHandle, &gap_conn_params);
+          updateConnectionInterval(this->_minimumConnectionInterval, this->_maximumConnectionInterval);
         }
 
         if (this->_numRemoteServices > 0) {
@@ -624,6 +617,9 @@ void nRF51822::poll() {
         Serial.print(bleEvt->evt.gap_evt.params.conn_param_update.conn_params.conn_sup_timeout, HEX);
         Serial.println();
 #endif
+        if (this->_eventListener) {
+          this->_eventListener->BLEDeviceConnectionParamsUpdated(*this);
+        }
         break;
 
       case BLE_GAP_EVT_SEC_PARAMS_REQUEST:
@@ -1033,6 +1029,19 @@ void nRF51822::end() {
   this->_numLocalCharacteristics = 0;
   this->_numRemoteServices = 0;
   this->_numRemoteCharacteristics = 0;
+}
+
+void nRF51822::updateConnectionInterval(unsigned short minimumConnectionInterval, unsigned short maximumConnectionInterval) {
+  setConnectionInterval(minimumConnectionInterval, maximumConnectionInterval);
+
+  ble_gap_conn_params_t gap_conn_params;
+
+  gap_conn_params.min_conn_interval = this->_minimumConnectionInterval;  // in 1.25ms units
+  gap_conn_params.max_conn_interval = this->_maximumConnectionInterval;  // in 1.25ms unit
+  gap_conn_params.slave_latency     = 0;
+  gap_conn_params.conn_sup_timeout  = 4000 / 10; // in 10ms unit
+
+  sd_ble_gap_conn_param_update(this->_connectionHandle, &gap_conn_params);
 }
 
 bool nRF51822::updateCharacteristicValue(BLECharacteristic& characteristic) {

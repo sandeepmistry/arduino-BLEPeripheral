@@ -44,7 +44,8 @@ enum BLEPeripheralEvent {
   BLEConnected = 0,
   BLEDisconnected = 1,
   BLEBonded = 2,
-  BLERemoteServicesDiscovered = 3
+  BLERemoteServicesDiscovered = 3,
+  BLEConnectionParamsUpdated = 4
 };
 
 typedef void (*BLEPeripheralEventHandler)(BLECentral& central);
@@ -71,6 +72,7 @@ class BLEPeripheral : public BLEDeviceEventListener,
     // connection intervals in 1.25 ms increments,
     // must be between  0x0006 (7.5 ms) and 0x0c80 (4 s), values outside of this range will be ignored
     void setConnectionInterval(unsigned short minimumConnectionInterval, unsigned short maximumConnectionInterval);
+    void updateConnectionInterval(unsigned short minimumConnectionInterval, unsigned short maximumConnectionInterval);
     bool setTxPower(int txPower);
     void setConnectable(bool connectable);
     void setBondStore(BLEBondStore& bondStore);
@@ -109,6 +111,7 @@ class BLEPeripheral : public BLEDeviceEventListener,
     virtual void BLEDeviceDisconnected(BLEDevice& device);
     virtual void BLEDeviceBonded(BLEDevice& device);
     virtual void BLEDeviceRemoteServicesDiscovered(BLEDevice& device);
+    virtual void BLEDeviceConnectionParamsUpdated(BLEDevice& device);
 
     virtual void BLEDeviceCharacteristicValueChanged(BLEDevice& device, BLECharacteristic& characteristic, const unsigned char* value, unsigned char valueLength);
     virtual void BLEDeviceCharacteristicSubscribedChanged(BLEDevice& device, BLECharacteristic& characteristic, bool subscribed);
@@ -152,7 +155,7 @@ class BLEPeripheral : public BLEDeviceEventListener,
     BLERemoteCharacteristic        _remoteServicesChangedCharacteristic;
 
     BLECentral                     _central;
-    BLEPeripheralEventHandler      _eventHandlers[4];
+    BLEPeripheralEventHandler      _eventHandlers[5];
 };
 
 #endif

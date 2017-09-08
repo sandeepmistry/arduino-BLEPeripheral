@@ -27,6 +27,7 @@ class BLEDeviceEventListener
     virtual void BLEDeviceDisconnected(BLEDevice& /*device*/) { }
     virtual void BLEDeviceBonded(BLEDevice& /*device*/) { }
     virtual void BLEDeviceRemoteServicesDiscovered(BLEDevice& /*device*/) { }
+    virtual void BLEDeviceConnectionParamsUpdated(BLEDevice& /*device*/) { }
 
     virtual void BLEDeviceCharacteristicValueChanged(BLEDevice& /*device*/, BLECharacteristic& /*characteristic*/, const unsigned char* /*value*/, unsigned char /*valueLength*/) { }
     virtual void BLEDeviceCharacteristicSubscribedChanged(BLEDevice& /*device*/, BLECharacteristic& /*characteristic*/, bool /*subscribed*/) { }
@@ -53,6 +54,7 @@ class BLEDevice
 
     void setAdvertisingInterval(unsigned short advertisingInterval);
     void setConnectionInterval(unsigned short minimumConnectionInterval, unsigned short maximumConnectionInterval);
+    virtual void updateConnectionInterval(unsigned short minimumConnectionInterval, unsigned short maximumConnectionInterval) { }
     void setConnectable(bool connectable);
     void setBondStore(BLEBondStore& bondStore);
 
