@@ -1082,15 +1082,9 @@ bool nRF51822::updateCharacteristicValue(BLECharacteristic& characteristic) {
       }
 
       if (localCharacteristicInfo->indicateSubscribed) {
-        if (this->_txBufferCount > 0) {
-          this->_txBufferCount--;
+        hvxParams.type = BLE_GATT_HVX_INDICATION;
 
-          hvxParams.type = BLE_GATT_HVX_INDICATION;
-
-          sd_ble_gatts_hvx(this->_connectionHandle, &hvxParams);
-        } else {
-          success = false;
-        }
+        success = sd_ble_gatts_hvx(this->_connectionHandle, &hvxParams) == NRF_SUCCESS;
       }
     }
   }
@@ -1141,7 +1135,7 @@ bool nRF51822::canNotifyCharacteristic(BLECharacteristic& /*characteristic*/) {
 }
 
 bool nRF51822::canIndicateCharacteristic(BLECharacteristic& /*characteristic*/) {
-  return (this->_txBufferCount > 0);
+  return true;
 }
 
 bool nRF51822::canReadRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
