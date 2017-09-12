@@ -11,13 +11,21 @@
   #include <ble.h>
   #include <ble_hci.h>
   #include <nrf_sdm.h>
+#elif defined(NRF52) && defined(S132) // ARDUINO_RBL_nRF52832
+  #ifndef ARDUINO_RBL_nRF52832
+    #define ARDUINO_RBL_nRF52832
+  #endif
+
+  #include <sdk/softdevice/s132/headers/nrf_ble.h>
+  #include <sdk/softdevice/s132/headers/nrf_ble_hci.h>
+  #include <sdk/softdevice/s132/headers/nrf_sdm.h>
 #else
   #include <s110/ble.h>
   #include <s110/ble_hci.h>
   #include <s110/nrf_sdm.h>
 #endif
 
-#if defined(NRF5) || defined(NRF51_S130)
+#if defined(NRF5) || defined(NRF51_S130) || defined(ARDUINO_RBL_nRF52832)
 uint32_t sd_ble_gatts_value_set(uint16_t handle, uint16_t offset, uint16_t* const p_len, uint8_t const * const p_value) {
   ble_gatts_value_t val;
 
