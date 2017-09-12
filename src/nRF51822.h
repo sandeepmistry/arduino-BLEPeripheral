@@ -11,6 +11,15 @@
   #include <ble_gatts.h>
   #include <ble_gattc.h>
   #include <nrf_soc.h>
+#elif defined(NRF52) && defined(S132) // ARDUINO_RBL_nRF52832
+  #ifndef ARDUINO_RBL_nRF52832
+    #define ARDUINO_RBL_nRF52832
+  #endif
+  #define NRF5
+
+  #include <sdk/softdevice/s132/headers/nrf_ble_gatts.h>
+  #include <sdk/softdevice/s132/headers/nrf_ble_gattc.h>
+  #include <sdk/softdevice/s132/headers/nrf_soc.h>
 #else
   #include <s110/ble_gatts.h>
   #include <s110/ble_gattc.h>
