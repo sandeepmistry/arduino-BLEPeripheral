@@ -117,7 +117,7 @@ BLESerial::operator bool() {
 }
 
 void BLESerial::_received(const uint8_t* data, size_t size) {
-  for (int i = 0; i < size; i++) {
+  for (size_t i = 0; i < size; i++) {
     this->_rxHead = (this->_rxHead + 1) % sizeof(this->_rxBuffer);
     this->_rxBuffer[this->_rxHead] = data[i];
   }
