@@ -251,7 +251,7 @@ Will automatically notify/indicate central, if characteristic has notify/indicat
 bool setValue(const unsigned char value[], unsigned char length);
 ```
  * value - value bytes
- * length - value length (upto value size)
+ * length - value length (up to value size)
 
 Returns true on success (central notified/indicated, if applicable), false on failure (cannot be notified/indicated, if applicable)
 
