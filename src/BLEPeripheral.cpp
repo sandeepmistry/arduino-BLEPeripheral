@@ -49,6 +49,7 @@ BLEPeripheral::BLEPeripheral(unsigned char req, unsigned char rdy, unsigned char
 #endif
 
   memset(this->_eventHandlers, 0x00, sizeof(this->_eventHandlers));
+  memset(this->_deviceEvents,  0x00, sizeof(this->_deviceEvents));
 
   this->setDeviceName(DEFAULT_DEVICE_NAME);
   this->setAppearance(DEFAULT_APPEARANCE);
@@ -286,6 +287,12 @@ void BLEPeripheral::setEventHandler(BLEPeripheralEvent event, BLEPeripheralEvent
   }
 }
 
+void BLEPeripheral::setEventHandler(BLEDeviceEvent event, BLEDeviceEventHandler eventHandler) {
+  if (event < sizeof(this->_deviceEvents)) {
+    this->_deviceEvents[event] = eventHandler;
+  }
+}
+
 bool BLEPeripheral::characteristicValueChanged(BLECharacteristic& characteristic) {
   return this->_device->updateCharacteristicValue(characteristic);
 }
@@ -409,10 +416,25 @@ void BLEPeripheral::BLEDeviceAddressReceived(BLEDevice& /*device*/, const unsign
 #endif
 }
 
-void BLEPeripheral::BLEDeviceTemperatureReceived(BLEDevice& /*device*/, float /*temperature*/) {
+void BLEPeripheral::BLEDeviceTemperatureReceived(BLEDevice& device, float temperature) {
+  BLEDeviceEventHandler eventHandler = this->_deviceEvents[BLETemperatureReceived];
+  if (eventHandler) {
+    eventHandler(&temperature);
+  }
 }
 
-void BLEPeripheral::BLEDeviceBatteryLevelReceived(BLEDevice& /*device*/, float /*batteryLevel*/) {
+void BLEPeripheral::BLEDeviceBatteryLevelReceived(BLEDevice& device, float batteryLevel) {
+  BLEDeviceEventHandler eventHandler = this->_deviceEvents[BLEBatteryLevelReceived];
+  if (eventHandler) {
+    eventHandler(&batteryLevel);
+  }
+}
+
+void BLEPeripheral::BLEDeviceAdvertisementReceived(BLEDevice& device, const unsigned char* advertisement) {
+  BLEDeviceEventHandler eventHandler = this->_deviceEvents[BLEAdvertisementReceived];
+  if (eventHandler) {
+    eventHandler(advertisement);
+  }
 }
 
 void BLEPeripheral::initLocalAttributes() {

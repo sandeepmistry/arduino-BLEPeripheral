@@ -52,7 +52,6 @@ nRF51822::nRF51822() :
 
   _advDataLen(0),
   _hasScanData(false),
-  _scanResult(NULL),
   _broadcastCharacteristic(NULL),
 
   _connectionHandle(BLE_CONN_HANDLE_INVALID),
@@ -534,13 +533,15 @@ void nRF51822::poll() {
     switch (bleEvt->header.evt_id) {
 #ifndef __RFduino__
       case BLE_GAP_EVT_ADV_REPORT:
-//#ifdef NRF_51822_DEBUG
+#ifdef NRF_51822_DEBUG
         char address[18];
         BLEUtil::addressToString(bleEvt->evt.gap_evt.params.adv_report.peer_addr.addr, address);
-        Serial.print(F("Evt Adv Report "));
+        Serial.print(F("Evt Adv Report from "));
         Serial.println(address);
-//#endif
-        this->_scanResult = &(bleEvt->evt.gap_evt.params.adv_report);
+#endif
+        if (this->_eventListener) {
+          this->_eventListener->BLEDeviceAdvertisementReceived(*this, (const unsigned char*)&(bleEvt->evt.gap_evt.params.adv_report));
+        }
         break;
 #endif
 
