@@ -65,6 +65,11 @@ class BLEDevice
                 BLERemoteAttribute** /*remoteAttributes*/,
                 unsigned char /*numRemoteAttributes*/) { }
 
+    virtual void updateAdvertisementData(unsigned char /*advertisementDataSize*/,
+                BLEEirData * /*advertisementData*/,
+                unsigned char /*scanDataSize*/,
+                BLEEirData * /*scanData*/) { }
+
     virtual void poll() { }
 
     virtual void end() { }
