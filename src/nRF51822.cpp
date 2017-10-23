@@ -43,6 +43,10 @@ uint32_t sd_ble_gatts_value_set(uint16_t handle, uint16_t offset, uint16_t* cons
 
 #define BLE_STACK_EVT_MSG_BUF_SIZE       (sizeof(ble_evt_t) + (GATT_MTU_SIZE_DEFAULT))
 
+#ifndef BLE_GATTS_ATTR_TAB_SIZE
+  #define BLE_GATTS_ATTR_TAB_SIZE BLE_GATTS_ATTR_TAB_SIZE_DEFAULT
+#endif
+
 nRF51822::nRF51822() :
   BLEDevice(),
 
@@ -134,7 +138,7 @@ void nRF51822::begin(unsigned char advertisementDataSize,
 
   memset(&enableParams, 0, sizeof(ble_enable_params_t));
   enableParams.common_enable_params.vs_uuid_count   = 10;
-  enableParams.gatts_enable_params.attr_tab_size    = BLE_GATTS_ATTR_TAB_SIZE_DEFAULT;
+  enableParams.gatts_enable_params.attr_tab_size    = BLE_GATTS_ATTR_TAB_SIZE;
   enableParams.gatts_enable_params.service_changed  = 1;
   enableParams.gap_enable_params.periph_conn_count  = 1;
   enableParams.gap_enable_params.central_conn_count = 0;
@@ -145,7 +149,7 @@ void nRF51822::begin(unsigned char advertisementDataSize,
   ble_enable_params_t enableParams = {
       .gatts_enable_params = {
           .service_changed = true,
-          .attr_tab_size = BLE_GATTS_ATTR_TAB_SIZE_DEFAULT
+          .attr_tab_size = BLE_GATTS_ATTR_TAB_SIZE
       }
   };
 

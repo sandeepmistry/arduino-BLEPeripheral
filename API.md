@@ -285,7 +285,7 @@ bool subscribed();
 ```
 
 ## Notify/indicate status
-Can the central be notified/indicated of when the value is set. Only applies to characateristics with notify and/or indicate properties when a central is connected and subscribed
+Can the central be notified/indicated of when the value is set. Only applies to characteristics with notify and/or indicate properties when a central is connected and subscribed
 ```c
 bool canNotify();
 bool canIndicate();
@@ -324,7 +324,7 @@ void bleCharacteristicEventHandler(BLECentral& central, BLECharacteristic& chara
 ```c
 BLE<Data Type>Characteristic(const char* uuid, unsigned char properties);
 ```
-See ```BLECharacteritic```
+See ```BLECharacteristic```
 
 ## Get value
 ```c
