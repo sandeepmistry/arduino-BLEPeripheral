@@ -68,11 +68,8 @@ BLEPeripheral::~BLEPeripheral() {
   }
 }
 
-void BLEPeripheral::begin() {
+unsigned char BLEPeripheral::updateAdvertismentData() {
   unsigned char advertisementDataSize = 0;
-
-  BLEEirData advertisementData[3];
-  BLEEirData scanData;
 
   scanData.length = 0;
 
@@ -131,6 +128,11 @@ void BLEPeripheral::begin() {
     memcpy(scanData.data, this->_localName, scanData.length);
   }
 
+  return advertisementDataSize;
+}
+
+void BLEPeripheral::begin() {
+
   if (this->_localAttributes == NULL) {
     this->initLocalAttributes();
   }
@@ -158,6 +160,7 @@ void BLEPeripheral::begin() {
     this->addRemoteAttribute(this->_remoteServicesChangedCharacteristic);
   }
 
+  int advertisementDataSize = updateAdvertismentData();
   this->_device->begin(advertisementDataSize, advertisementData,
                         scanData.length > 0 ? 1 : 0, &scanData,
                         this->_localAttributes, this->_numLocalAttributes,

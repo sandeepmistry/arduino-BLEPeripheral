@@ -130,6 +130,7 @@ class BLEPeripheral : public BLEDeviceEventListener,
 
   private:
     void initLocalAttributes();
+    unsigned char updateAdvertismentData();
 
   private:
     BLEDevice*                     _device;
@@ -162,6 +163,9 @@ class BLEPeripheral : public BLEDeviceEventListener,
 
     BLECentral                     _central;
     BLEPeripheralEventHandler      _eventHandlers[4];
+
+    BLEEirData                     advertisementData[3];
+    BLEEirData                     scanData;
 };
 
 #endif
