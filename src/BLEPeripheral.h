@@ -57,7 +57,8 @@ typedef void (*BLEPeripheralEventHandler)(BLECentral& central);
 enum BLEDeviceEvent {
   BLETemperatureReceived = 0,
   BLEBatteryLevelReceived = 1,
-  BLEAdvertisementReceived = 2
+  BLEAdvertisementReceived = 2,
+  BLEAddressReceived = 3
 };
 
 typedef void (*BLEDeviceEventHandler)(const void* parameter);

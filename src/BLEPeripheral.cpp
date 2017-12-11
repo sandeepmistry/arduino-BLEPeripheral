@@ -405,7 +405,7 @@ void BLEPeripheral::BLEDeviceRemoteCharacteristicValueChanged(BLEDevice& /*devic
   remoteCharacteristic.setValue(this->_central, value, valueLength);
 }
 
-void BLEPeripheral::BLEDeviceAddressReceived(BLEDevice& /*device*/, const unsigned char* /*address*/) {
+void BLEPeripheral::BLEDeviceAddressReceived(BLEDevice& device, const unsigned char* address) {
 #ifdef BLE_PERIPHERAL_DEBUG
   char addressStr[18];
 
@@ -414,6 +414,10 @@ void BLEPeripheral::BLEDeviceAddressReceived(BLEDevice& /*device*/, const unsign
   Serial.print(F("Peripheral address: "));
   Serial.println(addressStr);
 #endif
+  BLEDeviceEventHandler eventHandler = this->_deviceEvents[BLEAddressReceived];
+  if (eventHandler) {
+    eventHandler(address);
+  }
 }
 
 void BLEPeripheral::BLEDeviceTemperatureReceived(BLEDevice& device, float temperature) {
