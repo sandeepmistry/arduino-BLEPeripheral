@@ -20,12 +20,22 @@ void setup() {
 
   blePeripheral.setLocalName("foobaz"); // optional
   
+  blePeripheral.setEventHandler(BLEAddressReceived, addrHandler);
+  blePeripheral.setEventHandler(BLEAdvertisementReceived, advHandler);
+
   // begin initialization
   blePeripheral.begin();
   blePeripheral.setConnectable(false);
   blePeripheral.setAdvertisingInterval(500);
   blePeripheral.startAdvertising();
-  blePeripheral.setEventHandler(BLEAdvertisementReceived, advHandler);
+}
+
+void addrHandler(const void* _addr) {
+  unsigned char* addr = (unsigned char*)_addr;
+  char address[18];
+  BLEUtil::addressToString(addr, address);
+  Serial.print(F("Got own addr: "));
+  Serial.println(address);
 }
 
 void advHandler(const void* adv) {
