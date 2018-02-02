@@ -1217,7 +1217,7 @@ bool nRF51822::writeRemoteCharacteristic(BLERemoteCharacteristic& characteristic
         ble_gattc_write_params_t writeParams;
 
         writeParams.write_op = (this->_remoteCharacteristicInfo[i].properties.write) ? BLE_GATT_OP_WRITE_REQ : BLE_GATT_OP_WRITE_CMD;
-#if !defined(__z7z77z87__) && !defined(__Simblee__)
+#if !defined(__RFduino__) && !defined(__Simblee__)
         writeParams.flags = 0;
 #endif
         writeParams.handle = this->_remoteCharacteristicInfo[i].valueHandle;
