@@ -37,6 +37,7 @@ Enables you to create more customized BLE Peripheral's compared to the basic UAR
    * [nRF51822](http://redbearlab.com/redbearlab-nrf51822)
    * [BLE Nano](http://redbearlab.com/blenano/)
  * [RFduino](http://www.rfduino.com) with [Arduino Add-on](https://github.com/RFduino/RFduino)
+ * [Simblee](https://www.simblee.com/) **Experimental**
  
 **WARNING**: Adafruit nRF51 boards are **NOT** compatible with this library, this includes the [Bluefruit LE UART Friend](https://www.adafruit.com/products/2479), [Bluefruit LE SPI Friend](https://www.adafruit.com/products/2633), [Bluefruit LE Shield](https://www.adafruit.com/products/2746), [Flora Wearable Bluefruit LE Module](https://www.adafruit.com/products/2487), [Feather 32u4 Bluefruit LE](https://www.adafruit.com/products/2829), and [Feather M0 Bluefruit LE](https://www.adafruit.com/products/2995).
 
@@ -60,6 +61,7 @@ Enables you to create more customized BLE Peripheral's compared to the basic UAR
 | | RedBearLab nRF51822 | -1 (UNUSED) | -1 (UNUSED) | -1 (UNUSED) |
 | | BLE Nano | -1 (UNUSED) | -1 (UNUSED) | -1 (UNUSED) |
 | | RFduino | -1 (UNUSED) | -1 (UNUSED) | -1 (UNUSED) |
+| | Simblee | -1 (UNUSED) | -1 (UNUSED) | -1 (UNUSED) |
 
 ## Compatible IDE's and MCU's
 
