@@ -18,7 +18,7 @@
 
 #endif
 
-#if defined(NRF51) || defined(NRF52) || defined(__RFduino__)
+#if defined(NRF51) || defined(NRF52) || defined(__RFduino__) || defined(__Simblee__)
 
 #define BLE_ADVERTISEMENT_DATA_MAX_VALUE_LENGTH    26
 #define BLE_SCAN_DATA_MAX_VALUE_LENGTH             29

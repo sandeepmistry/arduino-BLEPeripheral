@@ -1,0 +1,1 @@
+It seems like the Simblee is using the S110_V8 Softdevice because these are the only headers, where I can find the peripheral device.

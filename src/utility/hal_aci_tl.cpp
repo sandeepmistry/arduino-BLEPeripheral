@@ -39,7 +39,7 @@ Use the REVERSE_BITS macro to convert from MSBit to LSBit
 The outgoing command and the incoming event needs to be converted
 */
 //Board dependent defines
-#if defined (__AVR__) || defined(__SAM3X8E__) || defined(__SAMD21G18A__)|| defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MKL26Z64__)
+#if defined (__AVR__) || defined(__SAM3X8E__) || defined(__SAMD21G18A__)|| defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MKL26Z64__) || defined(__Simblee__)
     //For Arduino add nothing
 #elif defined(__PIC32MX__)
     //For ChipKit as the transmission has to be reversed, the next definitions have to be added
@@ -478,7 +478,7 @@ bool hal_aci_tl_send(hal_aci_data_t *p_aci_cmd)
 static uint8_t spi_readwrite(const uint8_t aci_byte)
 {
 	//Board dependent defines
-#if defined (__AVR__) || defined(__SAM3X8E__) || defined(__SAMD21G18A__) || defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MKL26Z64__)
+#if defined (__AVR__) || defined(__SAM3X8E__) || defined(__SAMD21G18A__) || defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MKL26Z64__) || defined(__Simblee__)
     //For Arduino the transmission does not have to be reversed
     return SPI.transfer(aci_byte);
 #elif defined(__PIC32MX__)

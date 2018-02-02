@@ -4,7 +4,7 @@
 #ifndef _I_BEACON_H_
 #define _I_BEACON_H_
 
-#if defined(NRF51) || defined(NRF52) || defined(__RFduino__)
+#if defined(NRF51) || defined(NRF52) || defined(__RFduino__) || defined(__Simblee__)
 
 #include "BLEPeripheral.h"
 #include "BLEUuid.h"

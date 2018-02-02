@@ -1,12 +1,21 @@
 // Copyright (c) Sandeep Mistry. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if defined(NRF51) || defined(NRF52) || defined(__RFduino__)
+#ifdef __Simblee__ // TODO: Is this actually correct? It's the only way this file compiles for me using the S110 V8 headers.
+#define NRF5
+#define S110
+#endif
+
+#if defined(NRF51) || defined(NRF52) || defined(__RFduino__) || defined(__Simblee__)
 
 #ifdef __RFduino__
   #include <utility/RFduino/ble.h>
   #include <utility/RFduino/ble_hci.h>
   #include <utility/RFduino/nrf_sdm.h>
+#elif __Simblee__
+  #include <utility/Simblee/ble.h>
+  #include <utility/Simblee/ble_hci.h>
+  #include <utility/Simblee/nrf_sdm.h>
 #elif defined(NRF5) || defined(NRF51_S130)
   #include <ble.h>
   #include <ble_hci.h>
@@ -99,7 +108,7 @@ void nRF51822::begin(unsigned char advertisementDataSize,
                       unsigned char numRemoteAttributes)
 {
 
-#ifdef __RFduino__
+#if defined(__RFduino__) || defined(__Simblee__)
   sd_softdevice_enable(NRF_CLOCK_LFCLKSRC_SYNTH_250_PPM, NULL);
 #elif defined(NRF5) && !defined(S110)
   #if defined(USE_LFRC)
@@ -520,6 +529,8 @@ void nRF51822::begin(unsigned char advertisementDataSize,
 
 #ifdef __RFduino__
   RFduinoBLE_enabled = 1;
+#elif defined(__Simblee__)
+  SimbleeBLE_enabled = 1;
 #endif
 }
 
@@ -1206,7 +1217,7 @@ bool nRF51822::writeRemoteCharacteristic(BLERemoteCharacteristic& characteristic
         ble_gattc_write_params_t writeParams;
 
         writeParams.write_op = (this->_remoteCharacteristicInfo[i].properties.write) ? BLE_GATT_OP_WRITE_REQ : BLE_GATT_OP_WRITE_CMD;
-#ifndef __RFduino__
+#if !defined(__RFduino__) && !defined(__Simblee__)
         writeParams.flags = 0;
 #endif
         writeParams.handle = this->_remoteCharacteristicInfo[i].valueHandle;
@@ -1254,7 +1265,7 @@ bool nRF51822::subscribeRemoteCharacteristic(BLERemoteCharacteristic& characteri
         uint16_t value = (this->_remoteCharacteristicInfo[i].properties.notify ? 0x0001 : 0x002);
 
         writeParams.write_op = BLE_GATT_OP_WRITE_REQ;
-#ifndef __RFduino__
+#if !defined(__RFduino__) && !defined(__Simblee__)
         writeParams.flags = 0;
 #endif
         writeParams.handle = (this->_remoteCharacteristicInfo[i].valueHandle + 1); // don't discover descriptors for now
@@ -1290,7 +1301,7 @@ bool nRF51822::unsubcribeRemoteCharacteristic(BLERemoteCharacteristic& character
         uint16_t value = 0x0000;
 
         writeParams.write_op = BLE_GATT_OP_WRITE_REQ;
-#ifndef __RFduino__
+#if !defined(__RFduino__) && !defined(__Simblee__)
         writeParams.flags = 0;
 #endif
         writeParams.handle = (this->_remoteCharacteristicInfo[i].valueHandle + 1); // don't discover descriptors for now
@@ -1367,7 +1378,7 @@ void nRF51822::requestAddress() {
 }
 
 void nRF51822::requestTemperature() {
-#ifndef __RFduino__
+#if !defined(__RFduino__) && !defined(__Simblee__)
   int32_t rawTemperature = 0;
 
   sd_temp_get(&rawTemperature);

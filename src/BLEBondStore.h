@@ -14,7 +14,7 @@ class BLEBondStore
   private:
 #if defined(__AVR__) || defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MKL26Z64__)
     int             _offset;
-#elif defined(NRF51)|| defined(NRF52) || defined(__RFduino__)
+#elif defined(NRF51)|| defined(NRF52) || defined(__RFduino__) || defined(__Simblee__)
     uint32_t*       _flashPageStartAddress;
 #endif
 };
