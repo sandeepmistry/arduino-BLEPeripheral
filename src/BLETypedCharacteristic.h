@@ -21,6 +21,8 @@ template<typename T> class BLETypedCharacteristic : public BLEFixedLengthCharact
 
     bool setValueBE(T value);
     T valueBE();
+    
+    typedef T value_type;
 
   private:
     T byteSwap(T value);
