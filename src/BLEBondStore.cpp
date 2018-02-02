@@ -3,7 +3,7 @@
 
 #ifdef __AVR__
   #include <avr/eeprom.h>
-#elif defined(__RFduino__)
+#elif defined(__RFduino__) || defined(__Simblee__)
 #define FLASH_WAIT_READY { \
   while (NRF_NVMC->READY == NVMC_READY_READY_Busy) {}; \
 }
@@ -43,7 +43,7 @@ void BLEBondStore::clearData() {
   int32_t pageNo = (uint32_t)_flashPageStartAddress / NRF_FICR->CODEPAGESIZE;
 
   while(sd_flash_page_erase(pageNo) == NRF_ERROR_BUSY);
-#elif defined(__RFduino__)
+#elif defined(__RFduino__) || defined(__Simblee__)
 
   // turn on flash erase enable
   NRF_NVMC->CONFIG = (NVMC_CONFIG_WEN_Een << NVMC_CONFIG_WEN_Pos);
@@ -76,7 +76,7 @@ void BLEBondStore::putData(const unsigned char* data, unsigned int offset, unsig
   this->clearData();
 
   while (sd_flash_write((uint32_t*)_flashPageStartAddress, (uint32_t*)data, (uint32_t)length/4) == NRF_ERROR_BUSY);
-#elif defined(__RFduino__) // ignores offset
+#elif defined(__RFduino__) || defined(__Simblee__) // ignores offset
   this->clearData();
 
   // turn on flash write enable
@@ -111,7 +111,7 @@ void BLEBondStore::getData(unsigned char* data, unsigned int offset, unsigned in
   for (unsigned int i = 0; i < length; i++) {
     data[i] = eeprom_read_byte((unsigned char *)this->_offset + offset + i + 1);
   }
-#elif defined(NRF51) || defined(NRF52) || defined(__RFduino__) // ignores offset
+#elif defined(NRF51) || defined(NRF52) || defined(__RFduino__) || defined(__Simblee__) // ignores offset
   uint32_t *in = this->_flashPageStartAddress;
   uint32_t *out  = (uint32_t*)data;
 
