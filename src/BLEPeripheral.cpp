@@ -241,6 +241,10 @@ void BLEPeripheral::setConnectionInterval(unsigned short minimumConnectionInterv
   this->_device->setConnectionInterval(minimumConnectionInterval, maximumConnectionInterval);
 }
 
+void BLEPeripheral::updateConnectionInterval(unsigned short minimumConnectionInterval, unsigned short maximumConnectionInterval) {
+  this->_device->updateConnectionInterval(minimumConnectionInterval, maximumConnectionInterval);
+}
+
 void BLEPeripheral::disconnect() {
   this->_device->disconnect();
 }
@@ -358,6 +362,18 @@ void BLEPeripheral::BLEDeviceRemoteServicesDiscovered(BLEDevice& /*device*/) {
 #endif
 
   BLEPeripheralEventHandler eventHandler = this->_eventHandlers[BLERemoteServicesDiscovered];
+  if (eventHandler) {
+    eventHandler(this->_central);
+  }
+}
+
+void BLEPeripheral::BLEDeviceConnectionParamsUpdated(BLEDevice& /*device*/) {
+#ifdef BLE_PERIPHERAL_DEBUG
+  Serial.print(F("Updated connection parameters from central: "));
+  Serial.println(this->_central.address());
+#endif
+
+  BLEPeripheralEventHandler eventHandler = this->_eventHandlers[BLEConnectionParamsUpdated];
   if (eventHandler) {
     eventHandler(this->_central);
   }

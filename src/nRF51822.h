@@ -61,6 +61,8 @@ class nRF51822 : public BLEDevice
 
     virtual ~nRF51822();
 
+    virtual void updateConnectionInterval(unsigned short minimumConnectionInterval, unsigned short maximumConnectionInterval);
+
     virtual void begin(unsigned char advertisementDataSize,
                 BLEEirData *advertisementData,
                 unsigned char scanDataSize,

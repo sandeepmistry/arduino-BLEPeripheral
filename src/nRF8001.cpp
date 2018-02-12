@@ -1057,6 +1057,9 @@ void nRF8001::poll() {
         Serial.print(F("Timing change received conn Interval: 0x"));
         Serial.println(aciEvt->params.timing.conn_rf_interval, HEX);
 #endif
+        if (this->_eventListener) {
+          this->_eventListener->BLEDeviceConnectionParamsUpdated(*this);
+        }
         break;
 
       case ACI_EVT_DISCONNECTED:
@@ -1206,6 +1209,12 @@ void nRF8001::end() {
 
   this->_numLocalPipeInfo = 0;
   this->_numRemotePipeInfo = 0;
+}
+
+void nRF8001::updateConnectionInterval(unsigned short minimumConnectionInterval, unsigned short maximumConnectionInterval) {
+  setConnectionInterval(minimumConnectionInterval, maximumConnectionInterval);
+
+  lib_aci_change_timing(this->_minimumConnectionInterval, this->_maximumConnectionInterval, 0, 4000 / 10);
 }
 
 bool nRF8001::updateCharacteristicValue(BLECharacteristic& characteristic) {

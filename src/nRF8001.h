@@ -46,6 +46,8 @@ class nRF8001 : protected BLEDevice
 
     virtual ~nRF8001();
 
+    virtual void updateConnectionInterval(unsigned short minimumConnectionInterval, unsigned short maximumConnectionInterval);
+
     virtual void begin(unsigned char advertisementDataSize,
                 BLEEirData *advertisementData,
                 unsigned char scanDataSize,
