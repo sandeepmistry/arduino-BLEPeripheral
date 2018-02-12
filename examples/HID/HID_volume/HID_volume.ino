@@ -19,6 +19,7 @@
 //#define ANDROID_CENTRAL
 
 //custom boards may override default pin definitions with BLEHIDPeripheral(PIN_REQ, PIN_RDY, PIN_RST)
+//but you will also need to set the pinmode for the output pins PIN_REQ and PIN_RST.  See setup() below.
 BLEHIDPeripheral bleHIDPeripheral = BLEHIDPeripheral();
 BLEMultimedia bleMultimedia;
 
@@ -28,6 +29,10 @@ int buttonState;
 unsigned long lastInputPollTime = 0;
 
 void setup() {
+//set pinMode, if you are using a custom board with different pin assignments
+//pinMode(PIN_REQ, OUTPUT);
+//pinMode(PIN_RST, OUTPUT);
+
   Serial.begin(9600);
 
   pinMode(BUTTON_PIN, INPUT_PULLUP);
