@@ -1,13 +1,13 @@
 {
-  "name": "BLEPeripheral",
+  "name": "BLEPeripheralObserver",
   "version": "0.4.0",
-  "keywords": "BLE, bluetooth, peripheral",
-  "description": "Arduino library for creating custom BLE peripherals. Supports nRF8001 and nRF51822 based boards/shields.",
+  "keywords": "BLE, bluetooth, peripheral, observer",
+  "description": "Arduino library for creating custom BLE peripherals. Supports nRF51 based boards.",
   "repository":
   {
     "type": "git",
-    "url": "https://github.com/sandeepmistry/arduino-BLEPeripheral.git"
+    "url": "https://github.com/floe/BLEPeripheralObserver.git"
   },
   "frameworks": "arduino",
-  "platforms": "nordicnrf51, atmelavr, atmelsam, teensy"
+  "platforms": "nordicnrf51"
 }

@@ -37,6 +37,7 @@ class BLEDeviceEventListener
     virtual void BLEDeviceAddressReceived(BLEDevice& /*device*/, const unsigned char* /*address*/) { }
     virtual void BLEDeviceTemperatureReceived(BLEDevice& /*device*/, float /*temperature*/) { }
     virtual void BLEDeviceBatteryLevelReceived(BLEDevice& /*device*/, float /*batteryLevel*/) { }
+    virtual void BLEDeviceAdvertisementReceived(BLEDevice& /*device*/, const unsigned char* /*advertisement*/) { }
 };
 
 
@@ -65,6 +66,11 @@ class BLEDevice
                 BLERemoteAttribute** /*remoteAttributes*/,
                 unsigned char /*numRemoteAttributes*/) { }
 
+    virtual void updateAdvertisementData(unsigned char /*advertisementDataSize*/,
+                BLEEirData * /*advertisementData*/,
+                unsigned char /*scanDataSize*/,
+                BLEEirData * /*scanData*/) { }
+
     virtual void poll() { }
 
     virtual void end() { }
@@ -72,6 +78,9 @@ class BLEDevice
     virtual bool setTxPower(int /*txPower*/) { return false; }
 
     virtual void startAdvertising() { }
+    virtual void stopAdvertising() { }
+    virtual void startScanning() { }
+    virtual void stopScanning() { }
     virtual void disconnect() { }
 
     virtual bool updateCharacteristicValue(BLECharacteristic& /*characteristic*/) { return false; }

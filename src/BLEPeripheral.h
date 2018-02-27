@@ -54,6 +54,14 @@ enum BLEPeripheralEvent {
 
 typedef void (*BLEPeripheralEventHandler)(BLECentral& central);
 
+enum BLEDeviceEvent {
+  BLETemperatureReceived = 0,
+  BLEBatteryLevelReceived = 1,
+  BLEAdvertisementReceived = 2,
+  BLEAddressReceived = 3
+};
+
+typedef void (*BLEDeviceEventHandler)(const void* parameter);
 
 class BLEPeripheral : public BLEDeviceEventListener,
                         public BLECharacteristicValueChangeListener,
@@ -80,6 +88,10 @@ class BLEPeripheral : public BLEDeviceEventListener,
     void setConnectable(bool connectable);
     void setBondStore(BLEBondStore& bondStore);
 
+    void startAdvertising();
+    void stopAdvertising();
+    void startScanning();
+    void stopScanning();
 
     void setDeviceName(const char* deviceName);
     void setAppearance(unsigned short appearance);
@@ -94,6 +106,7 @@ class BLEPeripheral : public BLEDeviceEventListener,
     bool connected();
 
     void setEventHandler(BLEPeripheralEvent event, BLEPeripheralEventHandler eventHandler);
+    void setEventHandler(BLEDeviceEvent event, BLEDeviceEventHandler eventHandler);
 
   protected:
     bool characteristicValueChanged(BLECharacteristic& characteristic);
@@ -123,9 +136,11 @@ class BLEPeripheral : public BLEDeviceEventListener,
     virtual void BLEDeviceAddressReceived(BLEDevice& device, const unsigned char* address);
     virtual void BLEDeviceTemperatureReceived(BLEDevice& device, float temperature);
     virtual void BLEDeviceBatteryLevelReceived(BLEDevice& device, float batteryLevel);
+    virtual void BLEDeviceAdvertisementReceived(BLEDevice& device, const unsigned char* advertisement);
 
   private:
     void initLocalAttributes();
+    unsigned char updateAdvertismentData();
 
   private:
     BLEDevice*                     _device;
@@ -158,6 +173,10 @@ class BLEPeripheral : public BLEDeviceEventListener,
 
     BLECentral                     _central;
     BLEPeripheralEventHandler      _eventHandlers[4];
+    BLEDeviceEventHandler          _deviceEvents[3];
+
+    BLEEirData                     advertisementData[3];
+    BLEEirData                     scanData;
 };
 
 #endif

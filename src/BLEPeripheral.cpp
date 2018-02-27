@@ -49,6 +49,7 @@ BLEPeripheral::BLEPeripheral(unsigned char req, unsigned char rdy, unsigned char
 #endif
 
   memset(this->_eventHandlers, 0x00, sizeof(this->_eventHandlers));
+  memset(this->_deviceEvents,  0x00, sizeof(this->_deviceEvents));
 
   this->setDeviceName(DEFAULT_DEVICE_NAME);
   this->setAppearance(DEFAULT_APPEARANCE);
@@ -68,11 +69,8 @@ BLEPeripheral::~BLEPeripheral() {
   }
 }
 
-void BLEPeripheral::begin() {
+unsigned char BLEPeripheral::updateAdvertismentData() {
   unsigned char advertisementDataSize = 0;
-
-  BLEEirData advertisementData[3];
-  BLEEirData scanData;
 
   scanData.length = 0;
 
@@ -131,6 +129,11 @@ void BLEPeripheral::begin() {
     memcpy(scanData.data, this->_localName, scanData.length);
   }
 
+  return advertisementDataSize;
+}
+
+void BLEPeripheral::begin() {
+
   if (this->_localAttributes == NULL) {
     this->initLocalAttributes();
   }
@@ -158,6 +161,7 @@ void BLEPeripheral::begin() {
     this->addRemoteAttribute(this->_remoteServicesChangedCharacteristic);
   }
 
+  int advertisementDataSize = updateAdvertismentData();
   this->_device->begin(advertisementDataSize, advertisementData,
                         scanData.length > 0 ? 1 : 0, &scanData,
                         this->_localAttributes, this->_numLocalAttributes,
@@ -201,6 +205,26 @@ bool  BLEPeripheral::setTxPower(int txPower) {
 
 void BLEPeripheral::setBondStore(BLEBondStore& bondStore) {
   this->_device->setBondStore(bondStore);
+}
+
+void BLEPeripheral::startAdvertising() {
+  int advertisementDataSize = updateAdvertismentData();
+  this->_device->updateAdvertisementData(
+      advertisementDataSize, advertisementData,
+      scanData.length > 0 ? 1 : 0, &scanData);
+  this->_device->startAdvertising();
+}
+
+void BLEPeripheral::stopAdvertising() {
+  this->_device->stopAdvertising();
+}
+
+void BLEPeripheral::startScanning() {
+  this->_device->startScanning();
+}
+
+void BLEPeripheral::stopScanning() {
+  this->_device->stopScanning();
 }
 
 void BLEPeripheral::setDeviceName(const char* deviceName) {
@@ -260,6 +284,12 @@ bool BLEPeripheral::connected() {
 void BLEPeripheral::setEventHandler(BLEPeripheralEvent event, BLEPeripheralEventHandler eventHandler) {
   if (event < sizeof(this->_eventHandlers)) {
     this->_eventHandlers[event] = eventHandler;
+  }
+}
+
+void BLEPeripheral::setEventHandler(BLEDeviceEvent event, BLEDeviceEventHandler eventHandler) {
+  if (event < sizeof(this->_deviceEvents)) {
+    this->_deviceEvents[event] = eventHandler;
   }
 }
 
@@ -375,7 +405,7 @@ void BLEPeripheral::BLEDeviceRemoteCharacteristicValueChanged(BLEDevice& /*devic
   remoteCharacteristic.setValue(this->_central, value, valueLength);
 }
 
-void BLEPeripheral::BLEDeviceAddressReceived(BLEDevice& /*device*/, const unsigned char* /*address*/) {
+void BLEPeripheral::BLEDeviceAddressReceived(BLEDevice& device, const unsigned char* address) {
 #ifdef BLE_PERIPHERAL_DEBUG
   char addressStr[18];
 
@@ -384,12 +414,31 @@ void BLEPeripheral::BLEDeviceAddressReceived(BLEDevice& /*device*/, const unsign
   Serial.print(F("Peripheral address: "));
   Serial.println(addressStr);
 #endif
+  BLEDeviceEventHandler eventHandler = this->_deviceEvents[BLEAddressReceived];
+  if (eventHandler) {
+    eventHandler(address);
+  }
 }
 
-void BLEPeripheral::BLEDeviceTemperatureReceived(BLEDevice& /*device*/, float /*temperature*/) {
+void BLEPeripheral::BLEDeviceTemperatureReceived(BLEDevice& device, float temperature) {
+  BLEDeviceEventHandler eventHandler = this->_deviceEvents[BLETemperatureReceived];
+  if (eventHandler) {
+    eventHandler(&temperature);
+  }
 }
 
-void BLEPeripheral::BLEDeviceBatteryLevelReceived(BLEDevice& /*device*/, float /*batteryLevel*/) {
+void BLEPeripheral::BLEDeviceBatteryLevelReceived(BLEDevice& device, float batteryLevel) {
+  BLEDeviceEventHandler eventHandler = this->_deviceEvents[BLEBatteryLevelReceived];
+  if (eventHandler) {
+    eventHandler(&batteryLevel);
+  }
+}
+
+void BLEPeripheral::BLEDeviceAdvertisementReceived(BLEDevice& device, const unsigned char* advertisement) {
+  BLEDeviceEventHandler eventHandler = this->_deviceEvents[BLEAdvertisementReceived];
+  if (eventHandler) {
+    eventHandler(advertisement);
+  }
 }
 
 void BLEPeripheral::initLocalAttributes() {

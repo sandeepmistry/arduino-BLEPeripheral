@@ -89,6 +89,52 @@ nRF51822::~nRF51822() {
   this->end();
 }
 
+void nRF51822::updateAdvertisementData(unsigned char advertisementDataSize,
+                      BLEEirData *advertisementData,
+                      unsigned char scanDataSize,
+                      BLEEirData *scanData)
+{
+  unsigned char srData[31];
+  unsigned char srDataLen = 0;
+
+  this->_advDataLen = 0;
+
+  // flags
+  this->_advData[this->_advDataLen + 0] = 2;
+  this->_advData[this->_advDataLen + 1] = 0x01;
+  this->_advData[this->_advDataLen + 2] = 0x06;
+
+  this->_advDataLen += 3;
+
+  if (advertisementDataSize && advertisementData) {
+    for (int i = 0; i < advertisementDataSize; i++) {
+      this->_advData[this->_advDataLen + 0] = advertisementData[i].length + 1;
+      this->_advData[this->_advDataLen + 1] = advertisementData[i].type;
+      this->_advDataLen += 2;
+
+      memcpy(&this->_advData[this->_advDataLen], advertisementData[i].data, advertisementData[i].length);
+
+      this->_advDataLen += advertisementData[i].length;
+    }
+  }
+
+  if (scanDataSize && scanData) {
+    for (int i = 0; i < scanDataSize; i++) {
+      srData[srDataLen + 0] = scanData[i].length + 1;
+      srData[srDataLen + 1] = scanData[i].type;
+      srDataLen += 2;
+
+      memcpy(&srData[srDataLen], scanData[i].data, scanData[i].length);
+
+      srDataLen += scanData[i].length;
+      _hasScanData = true;
+    }
+  }
+
+  sd_ble_gap_adv_data_set(this->_advData, this->_advDataLen, srData, srDataLen);
+}
+
+
 void nRF51822::begin(unsigned char advertisementDataSize,
                       BLEEirData *advertisementData,
                       unsigned char scanDataSize,
@@ -195,44 +241,7 @@ void nRF51822::begin(unsigned char advertisementDataSize,
   sd_ble_gap_ppcp_set(&gap_conn_params);
   sd_ble_gap_tx_power_set(0);
 
-  unsigned char srData[31];
-  unsigned char srDataLen = 0;
-
-  this->_advDataLen = 0;
-
-  // flags
-  this->_advData[this->_advDataLen + 0] = 2;
-  this->_advData[this->_advDataLen + 1] = 0x01;
-  this->_advData[this->_advDataLen + 2] = 0x06;
-
-  this->_advDataLen += 3;
-
-  if (advertisementDataSize && advertisementData) {
-    for (int i = 0; i < advertisementDataSize; i++) {
-      this->_advData[this->_advDataLen + 0] = advertisementData[i].length + 1;
-      this->_advData[this->_advDataLen + 1] = advertisementData[i].type;
-      this->_advDataLen += 2;
-
-      memcpy(&this->_advData[this->_advDataLen], advertisementData[i].data, advertisementData[i].length);
-
-      this->_advDataLen += advertisementData[i].length;
-    }
-  }
-
-  if (scanDataSize && scanData) {
-    for (int i = 0; i < scanDataSize; i++) {
-      srData[srDataLen + 0] = scanData[i].length + 1;
-      srData[srDataLen + 1] = scanData[i].type;
-      srDataLen += 2;
-
-      memcpy(&srData[srDataLen], scanData[i].data, scanData[i].length);
-
-      srDataLen += scanData[i].length;
-      _hasScanData = true;
-    }
-  }
-
-  sd_ble_gap_adv_data_set(this->_advData, this->_advDataLen, srData, srDataLen);
+  updateAdvertisementData(advertisementDataSize, advertisementData, scanDataSize, scanData);
   sd_ble_gap_appearance_set(0);
 
   for (int i = 0; i < numLocalAttributes; i++) {
@@ -530,6 +539,20 @@ void nRF51822::poll() {
 
   if (sd_ble_evt_get((uint8_t*)evtBuf, &evtLen) == NRF_SUCCESS) {
     switch (bleEvt->header.evt_id) {
+#ifndef __RFduino__
+      case BLE_GAP_EVT_ADV_REPORT:
+#ifdef NRF_51822_DEBUG
+        char address[18];
+        BLEUtil::addressToString(bleEvt->evt.gap_evt.params.adv_report.peer_addr.addr, address);
+        Serial.print(F("Evt Adv Report from "));
+        Serial.println(address);
+#endif
+        if (this->_eventListener) {
+          this->_eventListener->BLEDeviceAdvertisementReceived(*this, (const unsigned char*)&(bleEvt->evt.gap_evt.params.adv_report));
+        }
+        break;
+#endif
+
       case BLE_EVT_TX_COMPLETE:
 #ifdef NRF_51822_DEBUG
         Serial.print(F("Evt TX complete "));
@@ -1025,6 +1048,10 @@ void nRF51822::poll() {
   // sd_app_evt_wait();
 }
 
+/*uint8_t* nRF51822::getScanResult() {
+  return _scanResult->data;
+}*/
+
 void nRF51822::end() {
   sd_softdevice_disable();
 
@@ -1350,6 +1377,38 @@ void nRF51822::startAdvertising() {
   advertisingParameters.timeout     = 0;
 
   sd_ble_gap_adv_start(&advertisingParameters);
+}
+
+void nRF51822::stopAdvertising() {
+  sd_ble_gap_adv_stop();
+}
+
+void nRF51822::startScanning() {
+#ifdef NRF_51822_DEBUG
+  Serial.println(F("Start scanning"));
+#endif
+
+#ifndef __RFduino__
+  // see https://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.s130.api.v2.0.1%2Fstructble__gap__scan__params__t.html
+  ble_gap_scan_params_t scanParameters;
+
+  memset(&scanParameters, 0x00, sizeof(scanParameters));
+
+  scanParameters.active      = 1;     // send scan requests
+  scanParameters.interval    = 0x140; // 200 ms in units of 0.625 ms
+  scanParameters.p_whitelist = NULL;  // no whitelist
+  scanParameters.selective   = 0;
+  scanParameters.timeout     = 10;    // 10 seconds timeout
+  scanParameters.window      = 0xA0;  // 100 ms
+
+  sd_ble_gap_scan_start(&scanParameters);
+#endif
+}
+
+void nRF51822::stopScanning() {
+#ifndef __RFduino__
+  sd_ble_gap_scan_stop();
+#endif
 }
 
 void nRF51822::disconnect() {
