@@ -806,6 +806,9 @@ void nRF8001::poll() {
   if (lib_aci_event_get(&this->_aciState, &this->_aciData)) {
     aci_evt_t* aciEvt = &this->_aciData.evt;
 
+    if(this->_eventListener)
+      this->_eventListener->BLERawEvent(aciEvt->evt_opcode, aciEvt);
+
     switch(aciEvt->evt_opcode) {
       /**
       As soon as you reset the nRF8001 you will get an ACI Device Started Event
@@ -1451,6 +1454,9 @@ void nRF8001::waitForSetupMode()
     if (lib_aci_event_get(&this->_aciState, &this->_aciData)) {
       aci_evt_t* aciEvt = &this->_aciData.evt;
 
+      if(this->_eventListener)
+        this->_eventListener->BLERawEvent(aciEvt->evt_opcode, aciEvt);
+
       switch(aciEvt->evt_opcode) {
         case ACI_EVT_DEVICE_STARTED: {
           switch(aciEvt->params.device_started.device_mode) {
@@ -1502,6 +1508,9 @@ void nRF8001::sendSetupMessage(hal_aci_data_t* data, bool withCrc)
   while (!setupMsgSent) {
     if (lib_aci_event_get(&this->_aciState, &this->_aciData)) {
       aci_evt_t* aciEvt = &this->_aciData.evt;
+
+      if(this->_eventListener)
+        this->_eventListener->BLERawEvent(aciEvt->evt_opcode, aciEvt);
 
       switch(aciEvt->evt_opcode) {
         case ACI_EVT_CMD_RSP: {

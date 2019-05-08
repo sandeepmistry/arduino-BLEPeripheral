@@ -25,6 +25,7 @@ BLEPeripheral::BLEPeripheral(unsigned char req, unsigned char rdy, unsigned char
   _manufacturerData(NULL),
   _manufacturerDataLength(0),
   _localName(NULL),
+  _rawEventHandler(NULL),
 
   _localAttributes(NULL),
   _numLocalAttributes(0),
@@ -263,6 +264,10 @@ void BLEPeripheral::setEventHandler(BLEPeripheralEvent event, BLEPeripheralEvent
   }
 }
 
+void BLEPeripheral::setRawEventHandler(BLEPeripheralRawEventHandler rawEventHandler) {
+    this->_rawEventHandler = rawEventHandler;
+}
+
 bool BLEPeripheral::characteristicValueChanged(BLECharacteristic& characteristic) {
   return this->_device->updateCharacteristicValue(characteristic);
 }
@@ -309,6 +314,11 @@ bool BLEPeripheral::canUnsubscribeRemoteCharacteristic(BLERemoteCharacteristic& 
 
 bool BLEPeripheral::unsubcribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic) {
   return this->_device->unsubcribeRemoteCharacteristic(characteristic);
+}
+
+void BLEPeripheral::BLERawEvent(int eventId, const void* event) {
+    if(this->_rawEventHandler)
+      this->_rawEventHandler(eventId, event);
 }
 
 void BLEPeripheral::BLEDeviceConnected(BLEDevice& /*device*/, const unsigned char* address) {

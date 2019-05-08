@@ -529,6 +529,10 @@ void nRF51822::poll() {
   ble_evt_t* bleEvt = (ble_evt_t*)evtBuf;
 
   if (sd_ble_evt_get((uint8_t*)evtBuf, &evtLen) == NRF_SUCCESS) {
+
+    if(this->_eventListener)
+      this->_eventListener->BLERawEvent(bleEvt->header.evt_id, bleEvt);
+
     switch (bleEvt->header.evt_id) {
       case BLE_EVT_TX_COMPLETE:
 #ifdef NRF_51822_DEBUG
