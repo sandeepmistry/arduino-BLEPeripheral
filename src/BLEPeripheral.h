@@ -53,6 +53,7 @@ enum BLEPeripheralEvent {
 };
 
 typedef void (*BLEPeripheralEventHandler)(BLECentral& central);
+typedef void (*BLEPeripheralRawEventHandler) (int eventId, const void* event);
 
 
 class BLEPeripheral : public BLEDeviceEventListener,
@@ -94,6 +95,7 @@ class BLEPeripheral : public BLEDeviceEventListener,
     bool connected();
 
     void setEventHandler(BLEPeripheralEvent event, BLEPeripheralEventHandler eventHandler);
+    void setRawEventHandler(BLEPeripheralRawEventHandler rawEventHandler);
 
   protected:
     bool characteristicValueChanged(BLECharacteristic& characteristic);
@@ -109,6 +111,8 @@ class BLEPeripheral : public BLEDeviceEventListener,
     bool subscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic);
     bool canUnsubscribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic);
     bool unsubcribeRemoteCharacteristic(BLERemoteCharacteristic& characteristic);
+
+    virtual void BLERawEvent(int eventId, const void* event);
 
     virtual void BLEDeviceConnected(BLEDevice& device, const unsigned char* address);
     virtual void BLEDeviceDisconnected(BLEDevice& device);
@@ -158,6 +162,7 @@ class BLEPeripheral : public BLEDeviceEventListener,
 
     BLECentral                     _central;
     BLEPeripheralEventHandler      _eventHandlers[4];
+    BLEPeripheralRawEventHandler   _rawEventHandler;
 };
 
 #endif

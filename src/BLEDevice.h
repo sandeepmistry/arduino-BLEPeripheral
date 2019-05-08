@@ -23,6 +23,8 @@ class BLEDevice;
 class BLEDeviceEventListener
 {
   public:
+    virtual void BLERawEvent(int eventId, const void* event);
+
     virtual void BLEDeviceConnected(BLEDevice& /*device*/, const unsigned char* /*address*/) { }
     virtual void BLEDeviceDisconnected(BLEDevice& /*device*/) { }
     virtual void BLEDeviceBonded(BLEDevice& /*device*/) { }

@@ -141,6 +141,33 @@ void blePeripheralEventHandler(BLECentral& central) {
  * event - ```BLEConnected``` or ```BLEDisconnected```
  * eventHandler - function callback for event
 
+ 
+### Set raw event handler callbacks
+```c
+void setRawEventHandler(BLEPeripheralRawEventHandler rawEventHandler);
+
+// callback signature
+void blePeripheralRawEventHandler(int eventId, const void* event);
+```
+
+Callback example (for a nRF51822)
+```c
+#include <BLEPeripheral.h>
+#include <ble.h>
+
+// ...
+
+void blePeripheralRawEventHandler(int eventId, const void* event) {
+  // Handling a specific event id unandled by BLEPeripheral.
+  if(eventId == BLE_GAP_EVT_ADV_REPORT) {
+	  // Casting into a BLE event
+	  ble_evt_t* evt = (ble_evt_t*)event;
+	  // ...
+  }
+}
+```
+
+ 
 ## Actions
 
 ### Disconnect
