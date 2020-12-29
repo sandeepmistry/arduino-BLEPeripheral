@@ -1112,16 +1112,26 @@ bool nRF51822::broadcastCharacteristic(BLECharacteristic& characteristic) {
         // copy the existing advertisement data
         memcpy(advData, this->_advData, advDataLen);
 
-        advDataLen += (4 + characteristic.valueLength());
+        BLEUuid serviceUuid = BLEUuid(localCharacteristicInfo->service->uuid());
+        unsigned char serviceUuidLength = serviceUuid.length();
 
-        if (advDataLen <= 31) {
-          BLEUuid uuid = BLEUuid(localCharacteristicInfo->service->uuid());
+        // length + type + uuidLength + value-length
+        advDataLen += 1 + 1 + serviceUuidLength + characteristic.valueLength();
 
-          advData[this->_advDataLen + 0] = 3 + characteristic.valueLength();
-          advData[this->_advDataLen + 1] = 0x16;
+        if (advDataLen <= 31) { // adjust check
 
-          memcpy(&advData[this->_advDataLen + 2], uuid.data(), 2);
-          memcpy(&advData[this->_advDataLen + 4], characteristic.value(), characteristic.valueLength());
+          advData[this->_advDataLen + 0] = 1 + serviceUuidLength + characteristic.valueLength();
+          // https://www.bluetooth.com/specifications/assigned-numbers/generic-access-profile/
+          if (serviceUuidLength == 2) {
+            advData[this->_advDataLen + 1] = 0x16; // Service Data - 16-bit UUID
+          } else if (serviceUuidLength == 4) {
+            advData[this->_advDataLen + 1] = 0x20; // Service Data - 32-bit UUID
+          } else {
+            advData[this->_advDataLen + 1] = 0x21; // Service Data - 128-bit UUID
+          }
+
+          memcpy(&advData[this->_advDataLen + 2], serviceUuid.data(), serviceUuidLength);
+          memcpy(&advData[this->_advDataLen + 2 + serviceUuidLength], characteristic.value(), characteristic.valueLength());
 
           sd_ble_gap_adv_data_set(advData, advDataLen, NULL, 0); // update advertisement data
           success = true;
