@@ -84,7 +84,13 @@ class BLEPeripheral : public BLEDeviceEventListener,
     void setDeviceName(const char* deviceName);
     void setAppearance(unsigned short appearance);
 
+    /**
+     * @brief  Add local services, characteristics and descriptors. Characteristics are assigned to the last added service.
+     */
     void addAttribute(BLELocalAttribute& attribute);
+    /**
+     * @brief  Add local services, characteristics and descriptors. Characteristics are assigned to the last added service.
+     */
     void addLocalAttribute(BLELocalAttribute& localAttribute);
     void addRemoteAttribute(BLERemoteAttribute& remoteAttribute);
 
