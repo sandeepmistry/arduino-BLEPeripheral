@@ -63,12 +63,12 @@ class BLECharacteristic : public BLELocalAttribute
 
     void setValueChangeListener(BLECharacteristicValueChangeListener& listener);
 
-    unsigned char                         _valueSize;
+    unsigned char*                         _valueSize;
     unsigned char*                        _value;
-    unsigned char                         _valueLength;
+    unsigned char*                         _valueLength;
 
   private:
-    unsigned char                         _properties;
+    unsigned char*                         _properties;
 
     bool                                  _written;
     bool                                  _subscribed;
